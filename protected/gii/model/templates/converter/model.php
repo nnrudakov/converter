@@ -46,7 +46,7 @@
             default:
                 echo 'mixed $'.$name."\n";
         }
-	}
+    }
     ?>
 <?php endforeach; ?>
 <?php endif; ?>
@@ -58,98 +58,98 @@
  */
 class <?php echo $modelClass; ?> extends <?php echo $this->baseClass."\n"; ?>
 {
-	/**
-	 * @return string Таблица модели
-	 */
-	public function tableName()
+    /**
+     * @return string Таблица модели
+     */
+    public function tableName()
     {
-		return '<?php echo $tableName; ?>';
-	}
+        return '<?php echo $tableName; ?>';
+    }
 
-	/**
-	 * @return array Правила валидации.
-	 */
-	public function rules()
+    /**
+     * @return array Правила валидации.
+     */
+    public function rules()
     {
-		return [
+        return [
 <?php foreach($rules as $rule): ?>
-			<?php echo str_replace(['array(', '),'], ['[', '],'], $rule.",\n"); ?>
+            <?php echo str_replace(['array(', '),'], ['[', '],'], $rule.",\n"); ?>
 <?php endforeach; ?>
-			['<?php echo implode(', ', array_keys($columns)); ?>', 'safe', 'on'=>'search'],
-		];
-	}
+            ['<?php echo implode(', ', array_keys($columns)); ?>', 'safe', 'on'=>'search'],
+        ];
+    }
 
-	/**
-	 * @return array Отношения модели.
-	 */
-	public function relations()
+    /**
+     * @return array Отношения модели.
+     */
+    public function relations()
     {
 <?php if ($relations): ?>
         return [
 <?php foreach($relations as $name=>$relation): ?>
-			<?php echo "'$name' => $relation,\n"; ?>
+            <?php echo "'$name' => $relation,\n"; ?>
 <?php endforeach; ?>
-		];
+        ];
 <?php else: ?>
         return [];
 <?php endif; ?>
     }
 
-	/**
-	 * @return array Атрибуты модели.
-	 */
-	public function attributeLabels()
+    /**
+     * @return array Атрибуты модели.
+     */
+    public function attributeLabels()
     {
-		return [
+        return [
 <?php foreach($labels as $name=>$label): ?>
-			<?php echo "'$name' => '$label',\n"; ?>
+            <?php echo "'$name' => '$label',\n"; ?>
 <?php endforeach; ?>
-		];
-	}
+        ];
+    }
 
-	/**
-	 * Построение условий поиска.
-	 *
-	 * @return CActiveDataProvider Модели с применением фильтров.
-	 */
-	public function search()
+    /**
+     * Построение условий поиска.
+     *
+     * @return CActiveDataProvider Модели с применением фильтров.
+     */
+    public function search()
     {
-		$criteria = new CDbCriteria();
+        $criteria = new CDbCriteria();
 <?php
 foreach($columns as $name=>$column)
 {
-	if($column->type==='string')
-	{
-		echo "\t\t\$criteria->compare('$name', \$this->$name, true);\n";
-	}
-	else
-	{
-		echo "\t\t\$criteria->compare('$name', \$this->$name);\n";
-	}
+    if($column->type==='string')
+    {
+        echo "\t\t\$criteria->compare('$name', \$this->$name, true);\n";
+    }
+    else
+    {
+        echo "\t\t\$criteria->compare('$name', \$this->$name);\n";
+    }
 }
 ?>
 
-		return new CActiveDataProvider($this, ['criteria' => $criteria]);
-	}
+        return new CActiveDataProvider($this, ['criteria' => $criteria]);
+    }
 
 <?php if($connectionId!='db'):?>
-	/**
-	 * @return CDbConnection Класс соединения с БД.
-	 */
-	public function getDbConnection()
+    /**
+     * @return CDbConnection Класс соединения с БД.
+     */
+    public function getDbConnection()
     {
-		return Yii::app()-><?php echo $connectionId ?>;
-	}
+        return Yii::app()-><?php echo $connectionId ?>;
+    }
 
 <?php endif?>
-	/**
-	 * Статический метод возвращения модели.
-	 *
-	 * @param string $className Имя класса.
-	 * @return <?php echo $modelClass; ?> Модель.
-	 */
-	public static function model($className = __CLASS__)
+    /**
+     * Статический метод возвращения модели.
+     *
+     * @param string $className Имя класса.
+     * @return <?php echo $modelClass; ?> Модель.
+     */
+    public static function model($className = __CLASS__)
     {
-		return parent::model($className);
-	}
+        return parent::model($className);
+    }
 }
