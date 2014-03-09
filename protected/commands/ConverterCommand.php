@@ -41,10 +41,12 @@ EOD;
     public function actionNews()
     {
         $time = microtime(true);
-        //$this->saveCategories(0, 0);
+        // категории и связанные с ними объекты
+        $this->saveCategories(0, 0);
+        // объекты без категорий
         $this->saveObjects();
 
-        print 'Done in ' . sprintf('%f', microtime(true) - $time) . "\n";
+        print 'Done in ' . sprintf('%f', microtime(true) - $time) . ".\n";
     }
 
     /**
@@ -54,12 +56,14 @@ EOD;
      * @param integer $newParent Идентификатор новго родителя.
      *
      * @return bool
+     *
+     * @throws CException
      */
     private function saveCategories($oldParent, $newParent)
     {
         $criteria = new CDbCriteria([
-            'select'    => ['id', 'name', 'description'],
-            'order'     => 'id'
+            'select' => ['id', 'name', 'description'],
+            'order'  => 'id'
         ]);
         if ($oldParent) {
             $criteria->addCondition('parentid=:parent');
@@ -79,7 +83,14 @@ EOD;
             $category->publish    = 1;
             $category->sort       = $i + 1;
             $category->meta_title = $cat->name;
-            $category->save();
+
+            if (!$category->save()) {
+                throw new CException(
+                    'Category not created.' . "\n" .
+                    var_export($category->getErrors(), true) . "\n" .
+                    $cat . "\n"
+                );
+            }
 
             $this->saveObjects($cat, $category);
             $this->saveCategories($cat->id, $category->category_id);
@@ -130,6 +141,8 @@ EOD;
      * @param integer $sort       Порядк в категории.
      *
      * @return bool
+     *
+     * @throws CException
      */
     private function saveObject(News $oldObject, $categoryId, $sort)
     {
@@ -142,14 +155,22 @@ EOD;
         $object->content          = $oldObject->details ?: '';
         $object->important        = (int) $oldObject->priority;
         $object->publish          = 1;
-        $object->publish_date_on  = $oldObject->date;
+        $object->publish_date_on  = $oldObject->date ?: null;
         $object->source_link      = $oldObject->link;
-        $object->created          = $oldObject->date;
+        $object->created          = date('Y-m-d H:i:s');
         $object->meta_title       = $oldObject->metatitle;
         $object->meta_description = $oldObject->metadescription;
         $object->meta_keywords    = $oldObject->metakeywords;
         $object->sort             = $sort;
 
-        return $object->save();
+        if (!$object->save()) {
+            throw new CException(
+                'Object is not created.' . "\n" .
+                'Errors:' . "\n" . var_export($object->getErrors(), true) . "\n" .
+                'Original object:' . "\n" . $oldObject . "\n"
+            );
+        }
+
+        return true;
     }
 }

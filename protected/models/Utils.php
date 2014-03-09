@@ -77,6 +77,7 @@ class Utils
         $string = preg_replace('/[^\w\d\s]*/', '', $string);
         $string = strtolower($string);
         $string = str_replace(' ', '-', $string);
+        $string = substr($string, 0, 50);
 
         return $string;
     }

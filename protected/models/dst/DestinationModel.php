@@ -73,6 +73,10 @@ class DestinationModel extends CActiveRecord
         return parent::__get($name);
     }
 
+    public function __toString()
+    {
+        return var_export($this->getAttributes(), true);
+    }
 
     /**
      * @return CDbConnection|mixed

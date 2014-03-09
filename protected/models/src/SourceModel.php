@@ -17,6 +17,12 @@ class SourceModel extends CActiveRecord
      */
     public static $dbSrc = null;
 
+    public function __toString()
+    {
+        return var_export($this->getAttributes(), true);
+    }
+
+
     /**
      * @return CDbConnection|mixed
      * @throws CDbException
