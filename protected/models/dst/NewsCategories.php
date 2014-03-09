@@ -86,18 +86,18 @@ class NewsCategories extends DestinationModel
     public function search()
     {
         $criteria = new CDbCriteria();
-		$criteria->compare('category_id', $this->category_id, true);
-		$criteria->compare('parent_id', $this->parent_id, true);
-		$criteria->compare('lang_id', $this->lang_id);
-		$criteria->compare('name', $this->name, true);
-		$criteria->compare('title', $this->title, true);
-		$criteria->compare('content', $this->content, true);
-		$criteria->compare('publish', $this->publish);
-		$criteria->compare('share', $this->share);
-		$criteria->compare('sort', $this->sort);
-		$criteria->compare('meta_title', $this->meta_title, true);
-		$criteria->compare('meta_description', $this->meta_description, true);
-		$criteria->compare('meta_keywords', $this->meta_keywords, true);
+        $criteria->compare('category_id', $this->category_id, true);
+        $criteria->compare('parent_id', $this->parent_id, true);
+        $criteria->compare('lang_id', $this->lang_id);
+        $criteria->compare('name', $this->name, true);
+        $criteria->compare('title', $this->title, true);
+        $criteria->compare('content', $this->content, true);
+        $criteria->compare('publish', $this->publish);
+        $criteria->compare('share', $this->share);
+        $criteria->compare('sort', $this->sort);
+        $criteria->compare('meta_title', $this->meta_title, true);
+        $criteria->compare('meta_description', $this->meta_description, true);
+        $criteria->compare('meta_keywords', $this->meta_keywords, true);
 
         return new CActiveDataProvider($this, ['criteria' => $criteria]);
     }

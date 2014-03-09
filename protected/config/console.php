@@ -9,6 +9,7 @@ return [
     'preload'    => ['log'],
     // autoloading model and component classes
     'import'     => [
+        'application.models.Utils',
         'application.models.src.*',
         'application.models.dst.*',
         'application.components.*',

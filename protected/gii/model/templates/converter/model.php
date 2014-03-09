@@ -120,11 +120,11 @@ foreach($columns as $name=>$column)
 {
     if($column->type==='string')
     {
-        echo "\t\t\$criteria->compare('$name', \$this->$name, true);\n";
+        echo "        $criteria->compare('$name', \$this->$name, true);\n";
     }
     else
     {
-        echo "\t\t\$criteria->compare('$name', \$this->$name);\n";
+        echo "        $criteria->compare('$name', \$this->$name);\n";
     }
 }
 ?>
