@@ -6,20 +6,20 @@
  * Доступные поля таблицы "info_store.news_categs":
  *
  * @property string  $id          Идентификатор.
- * @property string  $parentid    Код родителя, максимум - 4, например, новости на главной зенит-м актуальные.
+ * @property string  $parentid    Код родителя
  * @property string  $name        Наименование категории.
  * @property string  $description Описание.
  * @property boolean $hasfilter   Является ли категорией отфильтрованной.
  * @property string  $path        Путь.
  * @property string  $ord         Порядок.
- * @property boolean $hidden      Скрытая.
+ * @property boolean $hidden      Скрытое.
  *
- * @package    Converter
- * @subpackage newscategs
+ * @package    converter
+ * @subpackage source
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class NewsCategs extends CActiveRecord
+class NewsCategs extends SourceModel
 {
     /**
      * @return string Таблица модели

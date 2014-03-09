@@ -43,11 +43,19 @@ return [
         /*'db'           => [
             'connectionString' => 'sqlite:' . dirname(__FILE__) . '/../data/testdrive.db',
         ],*/
-        // uncomment the following to use a MySQL database
-        'db'=>[
+        'db_src' => [
+            'class'            => 'CDbConnection',
             'connectionString' => 'pgsql:host=localhost;port=5432;dbname=krasnodar',
             'emulatePrepare' => true,
             'username' => 'postgres',
+            'password' => '1234',
+            'charset' => 'utf8',
+        ],
+        'db_dst' => [
+            'class'            => 'CDbConnection',
+            'connectionString' => 'mysql:host=localhost;dbname=fc',
+            'emulatePrepare' => true,
+            'username' => 'root',
             'password' => '1234',
             'charset' => 'utf8',
         ],

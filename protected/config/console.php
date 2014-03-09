@@ -2,36 +2,43 @@
 
 // This is the configuration for yiic console application.
 // Any writable CConsoleApplication properties can be configured here.
-return array(
-	'basePath'=>dirname(__FILE__).DIRECTORY_SEPARATOR.'..',
-	'name'=>'My Console Application',
-
-	// preloading 'log' component
-	'preload'=>array('log'),
-
-	// application components
-	'components'=>array(
-		'db'=>array(
-			'connectionString' => 'sqlite:'.dirname(__FILE__).'/../data/testdrive.db',
-		),
-		// uncomment the following to use a MySQL database
-		/*
-		'db'=>array(
-			'connectionString' => 'mysql:host=localhost;dbname=testdrive',
-			'emulatePrepare' => true,
-			'username' => 'root',
-			'password' => '',
-			'charset' => 'utf8',
-		),
-		*/
-		'log'=>array(
-			'class'=>'CLogRouter',
-			'routes'=>array(
-				array(
-					'class'=>'CFileLogRoute',
-					'levels'=>'error, warning',
-				),
-			),
-		),
-	),
-);
+return [
+    'basePath'   => __DIR__ . DIRECTORY_SEPARATOR . '..',
+    'name'       => 'Converter',
+    // preloading 'log' component
+    'preload'    => ['log'],
+    // autoloading model and component classes
+    'import'     => [
+        'application.models.src.*',
+        'application.models.dst.*',
+        'application.components.*',
+    ],
+    // application components
+    'components' => [
+        'db_src' => [
+            'class'            => 'CDbConnection',
+            'connectionString' => 'pgsql:host=localhost;port=5432;dbname=krasnodar',
+            'emulatePrepare' => true,
+            'username' => 'postgres',
+            'password' => '1234',
+            'charset' => 'utf8',
+        ],
+        'db_dst' => [
+            'class'            => 'CDbConnection',
+            'connectionString' => 'mysql:host=localhost;dbname=fc',
+            'emulatePrepare' => true,
+            'username' => 'root',
+            'password' => '1234',
+            'charset' => 'utf8',
+        ],
+        'log' => [
+            'class'  => 'CLogRouter',
+            'routes' => [
+                [
+                    'class'  => 'CFileLogRoute',
+                    'levels' => 'error, warning',
+                ],
+            ],
+        ],
+    ],
+];
