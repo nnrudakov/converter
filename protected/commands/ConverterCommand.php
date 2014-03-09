@@ -38,5 +38,14 @@ EOD;
     public function actionRun()
     {
         $src_news = new NewsCategs();
+        foreach ($src_news->findAll() as $news) {
+            echo $news->name."\n";
+        }
+
+        $dst_news = new NewsCategories();
+
+        foreach ($dst_news->findAll() as $news) {
+            echo $news->name."\n";
+        }
     }
 }

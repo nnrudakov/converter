@@ -23,14 +23,14 @@
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class FcNewsCategories extends DestinationModel
+class NewsCategories extends DestinationModel
 {
     /**
      * @return string Таблица модели
      */
     public function tableName()
     {
-        return 'fc__news__categories';
+        return '{{news__categories}}';
     }
 
     /**

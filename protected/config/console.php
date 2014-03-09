@@ -30,6 +30,7 @@ return [
             'username' => 'root',
             'password' => '1234',
             'charset' => 'utf8',
+            'tablePrefix' => 'fc__'
         ],
         'log' => [
             'class'  => 'CLogRouter',
