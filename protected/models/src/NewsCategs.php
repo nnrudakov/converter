@@ -5,14 +5,17 @@
  *
  * Доступные поля таблицы "info_store.news_categs":
  *
- * @property string  $id          Идентификатор.
- * @property string  $parentid    Код родителя
+ * @property integer $id          Идентификатор.
+ * @property integer $parentid    Код родителя
  * @property string  $name        Наименование категории.
  * @property string  $description Описание.
  * @property boolean $hasfilter   Является ли категорией отфильтрованной.
  * @property string  $path        Путь.
  * @property string  $ord         Порядок.
  * @property boolean $hidden      Скрытое.
+ *
+ * Доступные отношения:
+ * @property NewsLinks[] $links Связь с объектами.
  *
  * @package    converter
  * @subpackage source
@@ -47,7 +50,9 @@ class NewsCategs extends SourceModel
      */
     public function relations()
     {
-        return [];
+        return [
+            'links' => [self::HAS_MANY, 'NewsLinks', 'category']
+        ];
     }
 
     /**

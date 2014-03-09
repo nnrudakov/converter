@@ -3,6 +3,8 @@
 /**
  * Базовый класс приемников.
  *
+ * @property CoreModules $module Модуль модели сущности. Возвращается в случае если в модели указано имя модуля.
+ *
  * @package    converter
  * @subpackage destination
  * @author     rudnik <nnrudakov@gmail.com>
@@ -10,12 +12,67 @@
  */
 class DestinationModel extends CActiveRecord
 {
+    use TMultilang;
+
+    /**
+     * Язык.
+     *
+     * @var integer
+     */
+    const LANG = 1;
+
+    /**
+     * Идентификатор пользователя администратора.
+     *
+     * @var integer
+     */
+    const ADMIN_ID = 1;
+
     /**
      * Соединение с БД.
      *
      * @var CDbConnection
      */
     public static $dbDst = null;
+
+    /**
+     * Модуль модели.
+     *
+     * @var CoreModules
+     */
+    private $modelModule = null;
+
+    /**
+     * Получение свойств.
+     *
+     * @param string $name Имя.
+     *
+     * @return mixed
+     */
+    public function __get($name)
+    {
+        if ('module' == $name) {
+            if (is_null($this->modelModule)) {
+                $const = get_class($this) . '::MODULE';
+
+                if (defined($const)) {
+                    $this->modelModule = CoreModules::model()->find(
+                        new CDbCriteria(
+                            [
+                                'condition' => 'name=:name',
+                                'params'    => [':name' => constant($const)]
+                            ]
+                        )
+                    );
+                }
+            }
+
+            return $this->modelModule;
+        }
+
+        return parent::__get($name);
+    }
+
 
     /**
      * @return CDbConnection|mixed
@@ -42,4 +99,13 @@ class DestinationModel extends CActiveRecord
 
         return self::$dbDst;
     }
+
+    protected function afterSave()
+    {
+        $this->setMultilang();
+
+        parent::afterSave();
+    }
+
+
 }

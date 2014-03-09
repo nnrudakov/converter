@@ -51,10 +51,10 @@
 <?php endforeach; ?>
 <?php endif; ?>
  *
- * @package Converter
+ * @package    converter
  * @subpackage <?php echo strtolower($modelClass)."\n"; ?>
- * @author rudnik <nnrudakov@gmail.com>
- * @copyright 2014
+ * @author     rudnik <nnrudakov@gmail.com>
+ * @copyright  2014
  */
 class <?php echo $modelClass; ?> extends <?php echo $this->baseClass."\n"; ?>
 {
@@ -105,31 +105,6 @@ class <?php echo $modelClass; ?> extends <?php echo $this->baseClass."\n"; ?>
             <?php echo "'$name' => '$label',\n"; ?>
 <?php endforeach; ?>
         ];
-    }
-
-    /**
-     * Построение условий поиска.
-     *
-     * @return CActiveDataProvider Модели с применением фильтров.
-     */
-    public function search()
-    {
-        $criteria = new CDbCriteria();
-<?php
-foreach($columns as $name=>$column)
-{
-    if($column->type==='string')
-    {
-        echo "        $criteria->compare('$name', \$this->$name, true);\n";
-    }
-    else
-    {
-        echo "        $criteria->compare('$name', \$this->$name);\n";
-    }
-}
-?>
-
-        return new CActiveDataProvider($this, ['criteria' => $criteria]);
     }
 
 <?php if($connectionId!='db'):?>

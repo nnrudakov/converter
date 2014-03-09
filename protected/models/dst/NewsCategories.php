@@ -18,6 +18,9 @@
  * @property string  $meta_description SEO описание.
  * @property string  $meta_keywords    SEO ключевые слова.
  *
+ * Доступные отношения:
+ * @property NewsCategoryObjects[] $links Связка с объектами.
+ *
  * @package    Converter
  * @subpackage destination
  * @author     rudnik <nnrudakov@gmail.com>
@@ -25,6 +28,20 @@
  */
 class NewsCategories extends DestinationModel
 {
+    /**
+     * Модуль.
+     *
+     * @var string
+     */
+    const MODULE = 'news';
+
+    /**
+     * Сущность.
+     *
+     * @var string
+     */
+    const ENTITY = 'category';
+
     /**
      * @return string Таблица модели
      */
@@ -45,7 +62,10 @@ class NewsCategories extends DestinationModel
             ['title', 'length', 'max'=>50],
             ['meta_title, meta_description, meta_keywords', 'length', 'max'=>255],
             ['content', 'safe'],
-            ['category_id, parent_id, lang_id, name, title, content, publish, share, sort, meta_title, meta_description, meta_keywords', 'safe', 'on'=>'search'],
+            [
+                'category_id, parent_id, lang_id, name, title, content, publish, share, sort, meta_title, '.
+                'meta_description, meta_keywords', 'safe', 'on'=>'search'
+            ],
         ];
     }
 
@@ -54,7 +74,9 @@ class NewsCategories extends DestinationModel
      */
     public function relations()
     {
-        return [];
+        return [
+            'links' => [self::HAS_MANY, 'NewsCategoryObjects', 'category_id']
+        ];
     }
 
     /**
@@ -63,18 +85,18 @@ class NewsCategories extends DestinationModel
     public function attributeLabels()
     {
         return [
-            'category_id' => 'Идентификатор категории',
-            'parent_id' => 'Идентификатор родительской категории',
-            'lang_id' => 'Идентификатор языка',
-            'name' => 'Имя для URL',
-            'title' => 'Заголовок категории',
-            'content' => 'Описание категории',
-            'publish' => 'Флаг публикации',
-            'share' => 'Доступна подмодулям',
-            'sort' => 'Порядок сортировки',
-            'meta_title' => 'SEO заголовок',
+            'category_id'      => 'Идентификатор категории',
+            'parent_id'        => 'Идентификатор родительской категории',
+            'lang_id'          => 'Идентификатор языка',
+            'name'             => 'Имя для URL',
+            'title'            => 'Заголовок категории',
+            'content'          => 'Описание категории',
+            'publish'          => 'Флаг публикации',
+            'share'            => 'Доступна подмодулям',
+            'sort'             => 'Порядок сортировки',
+            'meta_title'       => 'SEO заголовок',
             'meta_description' => 'SEO описание',
-            'meta_keywords' => 'SEO ключевые слова',
+            'meta_keywords'    => 'SEO ключевые слова',
         ];
     }
 
@@ -106,10 +128,20 @@ class NewsCategories extends DestinationModel
      * Статический метод возвращения модели.
      *
      * @param string $className Имя класса.
-     * @return FcNewsCategories Модель.
+     * @return NewsCategories Модель.
      */
     public static function model($className = __CLASS__)
     {
         return parent::model($className);
+    }
+
+    /**
+     * Получение идентификатора.
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->category_id;
     }
 }

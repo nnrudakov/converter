@@ -30,7 +30,6 @@ return [
             // enable cookie-based authentication
             'allowAutoLogin' => true,
         ],
-        // uncomment the following to enable URLs in path-format
         'urlManager'=>[
             'showScriptName' => false,
             'urlFormat' => 'path',
@@ -40,9 +39,6 @@ return [
                 '<controller:\w+>/<action:\w+>'=>'<controller>/<action>',
             ],
         ],
-        /*'db'           => [
-            'connectionString' => 'sqlite:' . dirname(__FILE__) . '/../data/testdrive.db',
-        ],*/
         'db_src' => [
             'class'            => 'CDbConnection',
             'connectionString' => 'pgsql:host=localhost;port=5432;dbname=krasnodar',
@@ -69,13 +65,7 @@ return [
                 [
                     'class'  => 'CFileLogRoute',
                     'levels' => 'error, warning',
-                ],
-                // uncomment the following to show log messages on web pages
-                /*
-                [
-                    'class'=>'CWebLogRoute',
-                ],
-                */
+                ]
             ],
         ],
     ],

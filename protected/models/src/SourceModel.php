@@ -42,4 +42,9 @@ class SourceModel extends CActiveRecord
 
         return self::$dbSrc;
     }
+
+    public function save($runValidation = true, $attributes = null)
+    {
+        return false;
+    }
 }
