@@ -6,7 +6,7 @@
  * @package    converter
  * @subpackage source
  * @author     rudnik <nnrudakov@gmail.com>
- * @copyright  2013 BST//soft
+ * @copyright  2014
  */
 class SourceModel extends CActiveRecord
 {
@@ -17,11 +17,15 @@ class SourceModel extends CActiveRecord
      */
     public static $dbSrc = null;
 
+    /**
+     * Представление объекта в виде строки.
+     *
+     * @return string
+     */
     public function __toString()
     {
         return var_export($this->getAttributes(), true);
     }
-
 
     /**
      * @return CDbConnection|mixed

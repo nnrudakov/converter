@@ -8,7 +8,7 @@
  * @package    converter
  * @subpackage destination
  * @author     rudnik <nnrudakov@gmail.com>
- * @copyright  2013 BST//soft
+ * @copyright  2014
  */
 class DestinationModel extends CActiveRecord
 {
@@ -73,6 +73,11 @@ class DestinationModel extends CActiveRecord
         return parent::__get($name);
     }
 
+    /**
+     * Представление объекта в виде строки.
+     *
+     * @return string
+     */
     public function __toString()
     {
         return var_export($this->getAttributes(), true);
