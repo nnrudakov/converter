@@ -115,6 +115,4 @@ class DestinationModel extends CActiveRecord
 
         parent::afterSave();
     }
-
-
 }

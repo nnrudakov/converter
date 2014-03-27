@@ -41,10 +41,18 @@ return [
         ],
         'db_src' => [
             'class'            => 'CDbConnection',
-            'connectionString' => 'pgsql:host=localhost;port=5432;dbname=krasnodar',
+            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodar',
             'emulatePrepare' => true,
             'username' => 'postgres',
-            'password' => '1234',
+            'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
+            'charset' => 'utf8',
+        ],
+        'db_media' => [
+            'class'            => 'CDbConnection',
+            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodar_media',
+            'emulatePrepare' => true,
+            'username' => 'postgres',
+            'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
             'charset' => 'utf8',
         ],
         'db_dst' => [
