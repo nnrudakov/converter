@@ -35,8 +35,12 @@ EXAMPLES
     * yiic converter news
         Convert news.
 
-    * yiic converter players
-        Convert players.
+    * yiic converter persons
+        Convert persons.
+
+        Parameters:
+
+        - persons: players, coaches, admins, medics, press, select.
 
 EOD;
     }
@@ -55,11 +59,27 @@ EOD;
 
     /**
      * Конвертация персон.
+     *
+     * @param string $persons Персоны:
+     *                        <ul>
+     *                          <li>players;</li>
+     *                          <li>coaches;</li>
+     *                          <li>admins;</li>
+     *                          <li>medics;</li>
+     *                          <li>press;</li>
+     *                          <li>select.</li>
+     *                        </ul>
+     *
+     * @throws CException
      */
-    public function actionPlayers ()
+    public function actionPersons ($persons = null)
     {
+        if (!is_null($persons) && !in_array($persons, ['players', 'coaches', 'admins', 'medics', 'press', 'select'])) {
+            throw new CException('Wrong "persons".' . "\n");
+        }
+
         $this->startTime();
-        $p = new PlayersConverter();
+        $p = new PersonsConverter($persons);
         $p->convert();
 
         print 'Done in ' . $this->getTime() . ".\n";
