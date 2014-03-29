@@ -11,6 +11,13 @@
 class ConverterCommand extends CConsoleCommand
 {
     /**
+     * Начальное время.
+     *
+     * @var integer
+     */
+    private $startTime = 0;
+
+    /**
      * Справка.
      *
      * @see CConsoleCommand::getHelp()
@@ -28,9 +35,8 @@ EXAMPLES
     * yiic converter news
         Convert news.
 
-        Parameters:
-
-        --.
+    * yiic converter players
+        Convert players.
 
 EOD;
     }
@@ -40,137 +46,40 @@ EOD;
      */
     public function actionNews()
     {
-        $time = microtime(true);
-        // категории и связанные с ними объекты
-        $this->saveCategories(0, 0);
-        // объекты без категорий
-        $this->saveObjects();
+        $this->startTime();
+        $n = new NewsConverter();
+        $n->convert();
 
-        print 'Done in ' . sprintf('%f', microtime(true) - $time) . ".\n";
+        print 'Done in ' . $this->getTime() . ".\n";
     }
 
     /**
-     * Сохранение категорий.
-     *
-     * @param integer $oldParent Идентификатор старого родителя.
-     * @param integer $newParent Идентификатор новго родителя.
-     *
-     * @return bool
-     *
-     * @throws CException
+     * Конвертация персон.
      */
-    private function saveCategories($oldParent, $newParent)
+    public function actionPlayers ()
     {
-        $criteria = new CDbCriteria([
-            'select' => ['id', 'name', 'description'],
-            'order'  => 'id'
-        ]);
-        if ($oldParent) {
-            $criteria->addCondition('parentid=:parent');
-            $criteria->params = [':parent' => $oldParent];
-        } else {
-            $criteria->addCondition('parentid IS NULL');
-        }
-        $src_cats = new NewsCategs();
+        $this->startTime();
+        $p = new PlayersConverter();
+        $p->convert();
 
-        foreach ($src_cats->findAll($criteria) as $i => $cat) {
-            $category = new NewsCategories();
-            $category->parent_id  = $newParent;
-            $category->lang_id    = NewsCategories::LANG;
-            $category->name       = Utils::nameString($cat->name);
-            $category->title      = $cat->name;
-            $category->content    = $cat->description ?: '';
-            $category->publish    = 1;
-            $category->sort       = $i + 1;
-            $category->meta_title = $cat->name;
-
-            if (!$category->save()) {
-                throw new CException(
-                    'Category not created.' . "\n" .
-                    var_export($category->getErrors(), true) . "\n" .
-                    $cat . "\n"
-                );
-            }
-
-            $this->saveObjects($cat, $category);
-            $this->saveCategories($cat->id, $category->category_id);
-        }
-
-        return true;
+        print 'Done in ' . $this->getTime() . ".\n";
     }
 
     /**
-     * Сохранение объектов.
-     *
-     * @param NewsCategs     $oldCategory Старая категория.
-     * @param NewsCategories $newCategory Новая категория.
-     *
-     * @return bool
+     * Начало отстчета времени выполнения.
      */
-    private function saveObjects($oldCategory = null, $newCategory = null)
+    private function startTime()
     {
-        if (is_null($oldCategory) && is_null($newCategory)) {
-            $criteria = new CDbCriteria();
-            $criteria->select = [
-                'id', 'date', 'title', 'message', 'link', 'details', 'metadescription', 'metatitle', 'metakeywords',
-                'priority'
-            ];
-            $criteria->condition = 'id NOT IN (SELECT news FROM ' . NewsLinks::model()->tableName() . ')';
-            $objects = News::model()->findAll($criteria);
-
-            foreach ($objects as $i => $obj) {
-                $this->saveObject($obj, 0, $i + 1);
-            }
-        } else {
-            /* @var NewsLinks $link */
-            foreach ($oldCategory->links as $link) {
-                foreach ($link->news_obj as $i => $obj) {
-                    $this->saveObject($obj, $newCategory->getId(), $i + 1);
-                }
-            }
-        }
-
-        return true;
+        $this->startTime = microtime(true);
     }
 
     /**
-     * Сохранение объекта.
+     * Получение времени выполнения.
      *
-     * @param News    $oldObject  Объект.
-     * @param integer $categoryId Идентификатор категории.
-     * @param integer $sort       Порядк в категории.
-     *
-     * @return bool
-     *
-     * @throws CException
+     * @return string Строка секунд.
      */
-    private function saveObject(News $oldObject, $categoryId, $sort)
+    private function getTime()
     {
-        $object = new NewsObjects();
-        $object->main_category_id = $categoryId;
-        $object->lang_id          = NewsObjects::LANG;
-        $object->name             = Utils::nameString($oldObject->title);
-        $object->title            = $oldObject->title;
-        $object->announce         = $oldObject->message ?: '';
-        $object->content          = $oldObject->details ?: '';
-        $object->important        = (int) $oldObject->priority;
-        $object->publish          = 1;
-        $object->publish_date_on  = $oldObject->date ?: null;
-        $object->source_link      = $oldObject->link;
-        $object->created          = date('Y-m-d H:i:s');
-        $object->meta_title       = $oldObject->metatitle;
-        $object->meta_description = $oldObject->metadescription;
-        $object->meta_keywords    = $oldObject->metakeywords;
-        $object->sort             = $sort;
-
-        if (!$object->save()) {
-            throw new CException(
-                'Object is not created.' . "\n" .
-                'Errors:' . "\n" . var_export($object->getErrors(), true) . "\n" .
-                'Original object:' . "\n" . $oldObject . "\n"
-            );
-        }
-
-        return true;
+        return sprintf('%f', microtime(true) - $this->startTime);
     }
 }
