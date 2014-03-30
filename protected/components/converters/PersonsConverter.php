@@ -222,6 +222,20 @@ class PersonsConverter implements IConverter
     private $persons = [];
 
     /**
+     * Файл соответствий текущих идентификаторов игроков новым.
+     *
+     * @var string
+     */
+    private $playersFile = '';
+
+    /**
+     * Файл соответствий текущих идентификаторов персон новым.
+     *
+     * @var string
+     */
+    private $personsFile = '';
+
+    /**
      * Инициализация.
      *
      * @param string $persons Персоны (если не указано, то все):
@@ -236,6 +250,9 @@ class PersonsConverter implements IConverter
      */
     public function __construct($persons = null)
     {
+        $this->playersFile = __DIR__ . '/players.php';
+        $this->personsFile = __DIR__ . '/persons.php';
+
         if (is_null($persons)) {
             $this->persons = array_merge([self::PROFILE_PLAYER], array_keys(self::$profiles));
         } else {
@@ -296,6 +313,7 @@ class PersonsConverter implements IConverter
             'order'  => 'id'
         ]);
         $src_players = new Players();
+        $players = [];
 
         foreach ($src_players->findAll($criteria) as $player) {
             if (empty($player->first_name) && empty($player->surname) && empty($player->patronymic)) {
@@ -324,7 +342,11 @@ class PersonsConverter implements IConverter
                     $player . "\n"
                 );
             }
+
+            $players[$player->id] = $person->id;
         }
+
+        file_put_contents($this->playersFile, '<?php return ' . var_export($players, true) . ';' . "\n");
 
         return true;
     }
@@ -345,14 +367,15 @@ class PersonsConverter implements IConverter
             $this->persons
         );
         $criteria = new CDbCriteria([
-            'select' => [
+            'select'    => [
                 'id', 'citizenship', 'surname', 'first_name', 'patronymic', 'bio', 'borned', 'post', 'path',
                 'achivements'
             ],
             'condition' => 'path IN (' . implode(', ', $path) . ')',
-            'order'  => 'id'
+            'order'     => 'id'
         ]);
         $src_persons = new Persons();
+        $persons = [];
 
         foreach ($src_persons->findAll($criteria) as $p) {
             if (empty($p->first_name) && empty($p->surname) && empty($p->patronymic)) {
@@ -377,7 +400,11 @@ class PersonsConverter implements IConverter
                     $p . "\n"
                 );
             }
+
+            $persons[$p->id] = $person->id;
         }
+
+        file_put_contents($this->personsFile, '<?php return ' . var_export($persons, true) . ';' . "\n");
 
         return true;
     }

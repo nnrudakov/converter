@@ -45,6 +45,11 @@ EXAMPLES
     * yiic converter teams
         Convert teams.
 
+    * yiic convert contracts
+        Convert contracts.
+
+        - persons: players, persons.
+
 EOD;
     }
 
@@ -89,6 +94,27 @@ EOD;
     {
         $t = new TeamsConverter();
         $t->convert();
+    }
+
+    /**
+     * Конвертация контрактов.
+     *
+     * @param string $persons Персоны:
+     *                        <ul>
+     *                          <li>players;</li>
+     *                          <li>persons.</li>
+     *                        </ul>
+     *
+     * @throws CException
+     */
+    public function actionContracts ($persons = null)
+    {
+        if (!is_null($persons) && !in_array($persons, ['players', 'persons'])) {
+            throw new CException('Wrong "persons".' . "\n");
+        }
+
+        $c = new ContractsConverter($persons);
+        $c->convert();
     }
 
     protected function beforeAction($action, $params)

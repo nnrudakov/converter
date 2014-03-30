@@ -39,6 +39,21 @@ class TeamsConverter implements IConverter
     const JUNIOR_ID = 588;
 
     /**
+     * Файл соответствий текущих идентификаторов команд новым.
+     *
+     * @var string
+     */
+    private $teamsFile = '';
+
+    /**
+     * Инициализация.
+     */
+    public function __construct()
+    {
+        $this->teamsFile = __DIR__ . '/teams.php';
+    }
+
+    /**
      * Запуск преобразований.
      */
     public function convert()
@@ -49,6 +64,7 @@ class TeamsConverter implements IConverter
             'order'     => 'id'
         ]);
         $src_teams = new Teams();
+        $teams = [];
 
         foreach ($src_teams->findAll($criteria) as $t) {
             $team = new FcTeams();
@@ -64,6 +80,10 @@ class TeamsConverter implements IConverter
                     $t . "\n"
                 );
             }
+
+            $teams[$t->id] = $team->id;
         }
+
+        file_put_contents($this->teamsFile, '<?php return ' . var_export($teams, true) . ';' . "\n");
     }
 }
