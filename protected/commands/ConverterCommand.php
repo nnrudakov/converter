@@ -42,6 +42,9 @@ EXAMPLES
 
         - persons: players, coaches, admins, medics, press, select.
 
+    * yiic converter teams
+        Convert teams.
+
 EOD;
     }
 
@@ -50,11 +53,8 @@ EOD;
      */
     public function actionNews()
     {
-        $this->startTime();
         $n = new NewsConverter();
         $n->convert();
-
-        print 'Done in ' . $this->getTime() . ".\n";
     }
 
     /**
@@ -78,28 +78,30 @@ EOD;
             throw new CException('Wrong "persons".' . "\n");
         }
 
-        $this->startTime();
         $p = new PersonsConverter($persons);
         $p->convert();
-
-        print 'Done in ' . $this->getTime() . ".\n";
     }
 
     /**
-     * Начало отстчета времени выполнения.
+     * Конвертация команд.
      */
-    private function startTime()
+    public function actionTeams()
+    {
+        $t = new TeamsConverter();
+        $t->convert();
+    }
+
+    protected function beforeAction($action, $params)
     {
         $this->startTime = microtime(true);
+
+        return parent::beforeAction($action, $params);
     }
 
-    /**
-     * Получение времени выполнения.
-     *
-     * @return string Строка секунд.
-     */
-    private function getTime()
+    protected function afterAction($action, $params, $exitCode = 0)
     {
-        return sprintf('%f', microtime(true) - $this->startTime);
+        print 'Done in ' . sprintf('%f', microtime(true) - $this->startTime) . ".\n";
+
+        return parent::afterAction($action, $params, $exitCode);
     }
 }
