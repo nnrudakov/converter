@@ -338,6 +338,47 @@ class PersonsConverter implements IConverter
      */
     private function convertPersons()
     {
+        $path = array_map(
+            function ($p) {
+                return 'CAST(' . $p .' AS VARCHAR)';
+            },
+            $this->persons
+        );
+        $criteria = new CDbCriteria([
+            'select' => [
+                'id', 'citizenship', 'surname', 'first_name', 'patronymic', 'bio', 'borned', 'post', 'path',
+                'achivements'
+            ],
+            'condition' => 'path IN (' . implode(', ', $path) . ')',
+            'order'  => 'id'
+        ]);
+        $src_persons = new Persons();
+
+        foreach ($src_persons->findAll($criteria) as $p) {
+            if (empty($p->first_name) && empty($p->surname) && empty($p->patronymic)) {
+                continue;
+            }
+
+            $person = new FcPerson();
+            $person->firstname  = $p->first_name;
+            $person->lastname   = $p->surname;
+            $person->middlename = $p->patronymic;
+            $person->birthday   = $p->borned;
+            $person->country    = $p->citizenship;
+            $person->biograpy   = $p->bio;
+            $person->profile    = isset(self::$profiles[$p->path]) ? self::$profiles[$p->path] : null;
+            $person->progress   = $p->achivements;
+            $person->post       = $p->post;
+
+            if (!$person->save()) {
+                throw new CException(
+                    'Person not created.' . "\n" .
+                    var_export($person->getErrors(), true) . "\n" .
+                    $p . "\n"
+                );
+            }
+        }
+
         return true;
     }
 }

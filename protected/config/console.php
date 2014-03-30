@@ -23,6 +23,8 @@ return [
             'username' => 'postgres',
             'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
             'charset' => 'utf8',
+            'enableParamLogging' => true,
+            'enableProfiling' => true
         ],
         'db_media' => [
             'class'            => 'CDbConnection',
@@ -31,6 +33,8 @@ return [
             'username' => 'postgres',
             'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
             'charset' => 'utf8',
+            'enableParamLogging' => true,
+            'enableProfiling' => true
         ],
         'db_dst' => [
             'class'            => 'CDbConnection',
@@ -39,14 +43,16 @@ return [
             'username' => 'root',
             'password' => '1234',
             'charset' => 'utf8',
-            'tablePrefix' => 'fc__'
+            'tablePrefix' => 'fc__',
+            'enableParamLogging' => true,
+            'enableProfiling' => true
         ],
         'log' => [
             'class'  => 'CLogRouter',
             'routes' => [
                 [
                     'class'  => 'CFileLogRoute',
-                    'levels' => 'error, warning',
+                    'levels' => 'error, warning, trace',
                 ],
             ],
         ],
