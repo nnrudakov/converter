@@ -84,6 +84,6 @@ class TeamsConverter implements IConverter
             $teams[$t->id] = $team->id;
         }
 
-        file_put_contents($this->teamsFile, '<?php return ' . var_export($teams, true) . ';' . "\n");
+        //file_put_contents($this->teamsFile, '<?php return ' . var_export($teams, true) . ';' . "\n");
     }
 }

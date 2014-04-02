@@ -190,7 +190,7 @@ class PersonsConverter implements IConverter
      *
      * @var array
      */
-    protected static $ampluas = [
+    public static $ampluas = [
         self::AMPLUA_CUR_FORWARD    => self::AMPLUA_NEW_FORWARD,
         self::AMPLUA_CUR_BACK       => self::AMPLUA_NEW_BACK,
         self::AMPLUA_CUR_GOALKEEPER => self::AMPLUA_NEW_GOALKEEPER,
@@ -204,7 +204,7 @@ class PersonsConverter implements IConverter
      *
      * @var array
      */
-    protected static $profiles = [
+    public static $profiles = [
         self::COACHES_MAIN   => self::PROFILE_COACH,
         self::COACHES_JUNIOR => self::PROFILE_COACH,
         self::ADMINS_MAIN    => self::PROFILE_ADMINS,
@@ -346,7 +346,7 @@ class PersonsConverter implements IConverter
             $players[$player->id] = $person->id;
         }
 
-        file_put_contents($this->playersFile, '<?php return ' . var_export($players, true) . ';' . "\n");
+        //file_put_contents($this->playersFile, '<?php return ' . var_export($players, true) . ';' . "\n");
 
         return true;
     }
@@ -404,7 +404,7 @@ class PersonsConverter implements IConverter
             $persons[$p->id] = $person->id;
         }
 
-        file_put_contents($this->personsFile, '<?php return ' . var_export($persons, true) . ';' . "\n");
+        //file_put_contents($this->personsFile, '<?php return ' . var_export($persons, true) . ';' . "\n");
 
         return true;
     }

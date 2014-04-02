@@ -11,6 +11,10 @@
  * @property string $datefrom Дата начала контракта.
  * @property string $dateto Дата окончания контракта.
  *
+ * Доступные отношения:
+ * @property Teams $personTeam
+ * @property Persons $personPerson
+ *
  * @package    converter
  * @subpackage personscontracts
  * @author     rudnik <nnrudakov@gmail.com>
@@ -43,7 +47,10 @@ class PersonsContracts extends SourceModel
      */
     public function relations()
     {
-        return [];
+        return [
+            'personTeam'   => [self::BELONGS_TO, 'Teams', 'team'],
+            'personPerson' => [self::BELONGS_TO, 'Persons', 'person']
+        ];
     }
 
     /**

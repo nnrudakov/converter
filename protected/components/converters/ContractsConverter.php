@@ -93,7 +93,7 @@ class ContractsConverter implements IConverter
         }
 
         if (!$this->entity || 'persons' == $this->entity) {
-            $this->convertPersons();
+            //$this->convertPersons();
         }
     }
 
@@ -102,7 +102,98 @@ class ContractsConverter implements IConverter
      */
     private function convertPlayers()
     {
-        $teams   = include $this->teamsFile;
+        $criteria = new CDbCriteria(
+            [
+                'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
+                'with'   => ['playerTeam', 'playerPlayer'],
+                'order'  => 't.id'
+            ]
+        );
+        $src_contracts = new PlayersContracts();
+
+        foreach ($src_contracts->findAll($criteria) as $c) {
+            /* @var Players $p */
+            $p = $c->playerPlayer;
+            /* @var Teams $t */
+            $t = $c->playerTeam;
+
+            $person = FcPerson::model()->findByAttributes(
+                [
+                    'firstname'  => $p->first_name,
+                    'lastname'   => $p->surname,
+                    'middlename' => $p->patronymic,
+                    'birthday'   => $p->borned
+                ]
+            );
+
+            if (is_null($person)) {
+                $person = new FcPerson();
+                $person->firstname  = $p->first_name;
+                $person->lastname   = $p->surname;
+                $person->middlename = $p->patronymic;
+                $person->birthday   = $p->borned;
+                $person->country    = $p->citizenship;
+                $person->resident   = $p->resident;
+                $person->biograpy   = $p->bio;
+                $person->profile    = PersonsConverter::PROFILE_PLAYER;
+                $person->progress   = $p->achivements;
+                $person->nickname   = $p->nickname;
+                $person->height     = $p->height;
+                $person->weight     = $p->weight;
+                $person->amplua     = isset(PersonsConverter::$ampluas[$p->amplua])
+                    ? PersonsConverter::$ampluas[$p->amplua]
+                    : null;
+
+                if (!$person->save()) {
+                    throw new CException(
+                        'Player not created.' . "\n" .
+                        var_export($person->getErrors(), true) . "\n" .
+                        $p . "\n"
+                    );
+                }
+            }
+
+            $team = FcTeams::model()->findByAttributes(
+                [
+                    'title' => $t->title,
+                    'city'  => $t->region,
+                    'staff' => $c->staff ? TeamsConverter::JUNIOR : TeamsConverter::MAIN
+                ]
+            );
+
+            if (is_null($team)) {
+                $team = new FcTeams();
+                $team->title = $t->title;
+                $team->info  = $t->info;
+                $team->city  = $t->region;
+                $team->staff = $c->staff ? TeamsConverter::JUNIOR : TeamsConverter::MAIN;
+
+                if (!$team->save()) {
+                    throw new CException(
+                        'Team not created.' . "\n" .
+                        var_export($team->getErrors(), true) . "\n" .
+                        $t . "\n"
+                    );
+                }
+
+            }
+
+            $contract = new FcContracts();
+            $contract->team_id   = $team->id;
+            $contract->person_id = $person->id;
+            $contract->fromtime  = $c->date_from;
+            $contract->untiltime = $c->date_to;
+            $contract->number    = $c->number;
+
+            if (!$contract->save()) {
+                throw new CException(
+                    'Player\'s contract not created.' . "\n" .
+                    var_export($contract->getErrors(), true) . "\n" .
+                    $c . "\n"
+                );
+            }
+        }
+        /*$teams   = include $this->teamsFile;
         $players = include $this->playersFile;
 
         $criteria = new CDbCriteria(
@@ -142,7 +233,7 @@ class ContractsConverter implements IConverter
                     $c . "\n"
                 );
             }
-        }
+        }*/
     }
 
     /**

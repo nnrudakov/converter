@@ -13,6 +13,10 @@
  * @property integer $number Номер игрока.
  * @property string $zenit .
  *
+ * Доступные отношения:
+ * @property Teams $playerTeam
+ * @property Players $playerPlayer
+ *
  * @package    converter
  * @subpackage playerscontracts
  * @author     rudnik <nnrudakov@gmail.com>
@@ -45,7 +49,10 @@ class PlayersContracts extends SourceModel
      */
     public function relations()
     {
-        return [];
+        return [
+            'playerTeam'   => [self::BELONGS_TO, 'Teams', 'team', 'joinType'=>'INNER JOIN'],
+            'playerPlayer' => [self::BELONGS_TO, 'Players', 'player', 'joinType'=>'INNER JOIN']
+        ];
     }
 
     /**

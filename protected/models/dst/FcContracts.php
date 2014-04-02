@@ -12,6 +12,10 @@
  * @property integer $team_id Команда.
  * @property integer $person_id Персона.
  *
+ * Доступные отношения:
+ * @property FcTeam $team
+ * @property FcPerson $person
+ *
  * @package    converter
  * @subpackage fccontracts
  * @author     rudnik <nnrudakov@gmail.com>
@@ -45,7 +49,10 @@ class FcContracts extends DestinationModel
      */
     public function relations()
     {
-        return [];
+        return [
+            'team'   => [self::BELONGS_TO, 'FcTeams', 'team_id'],
+            'person' => [self::BELONGS_TO, 'FcPerson', 'person_id']
+        ];
     }
 
     /**

@@ -10,6 +10,10 @@
  * @property string $city Город.
  * @property string $staff Состав.
  *
+ * Доступные отношения:
+ * @property FcContracts[] $contracts
+ * @property FcPerson[] $persons
+ *
  * @package    converter
  * @subpackage fcteams
  * @author     rudnik <nnrudakov@gmail.com>
@@ -17,6 +21,31 @@
  */
 class FcTeams extends DestinationModel
 {
+    /**
+     * Список персон команды.
+     *
+     * @var FcPesron[]
+     */
+    private $personsList = null;
+
+    public function __get($name)
+    {
+        if ('persons' == $name) {
+            if (is_null($this->personsList)) {
+                $this->personsList = [];
+
+                foreach ($this->contracts as $contract) {
+                    $this->personsList[] = $contract->person;
+                }
+            }
+
+            return $this->personsList;
+        }
+
+        return parent::__get($name);
+    }
+
+
     /**
      * @return string Таблица модели
      */
@@ -44,7 +73,9 @@ class FcTeams extends DestinationModel
      */
     public function relations()
     {
-        return [];
+        return [
+            'contracts' => [self::HAS_MANY, 'FcContracts', 'id']
+        ];
     }
 
     /**
