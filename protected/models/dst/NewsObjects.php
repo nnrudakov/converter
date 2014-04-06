@@ -49,6 +49,20 @@ class NewsObjects extends DestinationModel
     const ENTITY = 'object';
 
     /**
+     * Имя файла оригинала.
+     *
+     * @var string
+     */
+    const FILE = 'images/news.orig.%d.jpg';
+
+    /**
+     * Имя поля связки файла.
+     *
+     * @param string
+     */
+    const FILE_FIELD = 'file';
+
+    /**
      * Порядок в категории.
      *
      * @var integer

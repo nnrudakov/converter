@@ -122,11 +122,32 @@ class DestinationModel extends CActiveRecord
      *
      * @param integer $oldId
      * @param string  $name
+     * @param integer $categoryId
      * @param string  $fieldId
      */
-    public function setFileParams($oldId, $name = null, $fieldId = null)
+    public function setFileParams($oldId, $name = null, $categoryId = 0, $fieldId = null)
     {
-        $this->fileParams = ['old_id' => $oldId, 'name' => $name, 'field_id' => $fieldId];
+        $this->fileParams = ['old_id' => $oldId, 'name' => $name, 'category_id' => $categoryId, 'field_id' => $fieldId];
+    }
+
+    /**
+     * Вывод ошибки.
+     *
+     * @param string           $message
+     * @param DestinationModel $model
+     *
+     * @return string
+     */
+    public function getErrorMsg($message, $model = null)
+    {
+        return implode(
+            "\n",
+            [
+                $message,
+                'Errors: ' . var_export($this->getErrors(), true),
+                isset($model) ? 'Original object: ' . $model : ''
+            ]
+        ) . "\n";
     }
 
     protected function afterSave()

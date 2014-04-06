@@ -57,11 +57,7 @@ class NewsConverter implements IConverter
             $category->meta_title = $cat->name;
 
             if (!$category->save()) {
-                throw new CException(
-                    'Category not created.' . "\n" .
-                    var_export($category->getErrors(), true) . "\n" .
-                    $cat . "\n"
-                );
+                throw new CException($category->getErrorMsg('Category not created.', $cat));
             }
 
             $this->saveObjects($cat, $category);
@@ -119,6 +115,7 @@ class NewsConverter implements IConverter
     private function saveObject(News $oldObject, $categoryId, $sort)
     {
         $object = new NewsObjects();
+        $object->setFileParams($oldObject->id, null, $categoryId);
         $object->main_category_id = $categoryId;
         $object->lang_id          = NewsObjects::LANG;
         $object->name             = Utils::nameString($oldObject->title);
@@ -136,11 +133,7 @@ class NewsConverter implements IConverter
         $object->sort             = $sort;
 
         if (!$object->save()) {
-            throw new CException(
-                'Object is not created.' . "\n" .
-                'Errors:' . "\n" . var_export($object->getErrors(), true) . "\n" .
-                'Original object:' . "\n" . $oldObject . "\n"
-            );
+            throw new CException($object->getErrorMsg('Object is not created.', $oldObject));
         }
 
         return true;

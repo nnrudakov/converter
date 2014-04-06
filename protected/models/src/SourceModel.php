@@ -57,4 +57,24 @@ class SourceModel extends CActiveRecord
     {
         return false;
     }
+
+    /**
+     * Вывод ошибки.
+     *
+     * @param string      $message
+     * @param SourceModel $model
+     *
+     * @return string
+     */
+    public function getErrorMsg($message, $model = null)
+    {
+        return implode(
+            "\n",
+            [
+                $message,
+                'Errors: ' . var_export($this->getErrors(), true),
+                isset($model) ? 'Original object: ' . $model : ''
+            ]
+        ) . "\n";
+    }
 }

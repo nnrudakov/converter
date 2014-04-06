@@ -37,7 +37,7 @@ trait TFiles {
         $link = new FilesLink();
         $link->file_id     = $file->file_id;
         $link->module_id   = $this->module->module_id;;
-        $link->category_id = 0;
+        $link->category_id = $this->fileParams['category_id'];
         $link->object_id   = $this->id;
         $link->field_id    = $field_id;
         $link->main        = 1;
@@ -46,5 +46,7 @@ trait TFiles {
         if (!$link->save()) {
             throw new CException('Link not created.' . "\n" . var_export($link->getErrors(), true) . "\n");
         }
+
+        $this->fileParams = [];
     }
 }
