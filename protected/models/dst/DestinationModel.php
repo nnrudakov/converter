@@ -13,6 +13,7 @@
 class DestinationModel extends CActiveRecord
 {
     use TMultilang;
+    use TFiles;
 
     /**
      * Язык.
@@ -34,6 +35,13 @@ class DestinationModel extends CActiveRecord
      * @var CDbConnection
      */
     public static $dbDst = null;
+
+    /**
+     * Параметры файла модели.
+     *
+     * @var array
+     */
+    protected $fileParams = [];
 
     /**
      * Модуль модели.
@@ -109,9 +117,22 @@ class DestinationModel extends CActiveRecord
         return self::$dbDst;
     }
 
+    /**
+     * Установка параметров файла.
+     *
+     * @param integer $oldId
+     * @param string  $name
+     * @param string  $fieldId
+     */
+    public function setFileParams($oldId, $name = null, $fieldId = null)
+    {
+        $this->fileParams = ['old_id' => $oldId, 'name' => $name, 'field_id' => $fieldId];
+    }
+
     protected function afterSave()
     {
         $this->setMultilang();
+        $this->saveFile();
 
         parent::afterSave();
     }

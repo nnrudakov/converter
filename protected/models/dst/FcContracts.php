@@ -13,7 +13,7 @@
  * @property integer $person_id Персона.
  *
  * Доступные отношения:
- * @property FcTeam $team
+ * @property FcTeams $team
  * @property FcPerson $person
  *
  * @package    converter
@@ -23,6 +23,13 @@
  */
 class FcContracts extends DestinationModel
 {
+    /**
+     * Модуль.
+     *
+     * @var string
+     */
+    const MODULE = 'fc';
+
     /**
      * @return string Таблица модели
      */

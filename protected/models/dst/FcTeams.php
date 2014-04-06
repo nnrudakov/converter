@@ -22,9 +22,30 @@
 class FcTeams extends DestinationModel
 {
     /**
+     * Модуль.
+     *
+     * @var string
+     */
+    const MODULE = 'fc';
+
+    /**
+     * Имя файла оригинала.
+     *
+     * @var string
+     */
+    const FILE = 'images/teams.image.orig.%d.jpg';
+
+    /**
+     * Имя поля связки файла.
+     *
+     * @param string
+     */
+    const FILE_FIELD = 'team_file';
+
+    /**
      * Список персон команды.
      *
-     * @var FcPesron[]
+     * @var FcPerson[]
      */
     private $personsList = null;
 
