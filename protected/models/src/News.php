@@ -148,4 +148,34 @@ class News extends SourceModel
     {
         return parent::model($className);
     }
+
+    /**
+     * Текстовая новость.
+     *
+     * @return bool
+     */
+    public function isText()
+    {
+        return $this->type == 'text' || !$this->type;
+    }
+
+    /**
+     * Фоторепортаж.
+     *
+     * @return bool
+     */
+    public function isPhoto()
+    {
+        return $this->type == 'photo';
+    }
+
+    /**
+     * Видеорепортаж.
+     *
+     * @return bool
+     */
+    public function isVideo()
+    {
+        return $this->type == 'video' || $this->type == 'blog' || $this->type == 'link';
+    }
 }

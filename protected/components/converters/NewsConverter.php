@@ -16,7 +16,7 @@ class NewsConverter implements IConverter
     public function convert()
     {
         // категории и связанные с ними объекты
-        $this->saveCategories(0, 0);
+        $this->saveCategories(0, NewsCategories::CAT_NEWS_CAT);
         // объекты без категорий
         $this->saveObjects();
     }
@@ -80,14 +80,15 @@ class NewsConverter implements IConverter
         if (is_null($oldCategory) && is_null($newCategory)) {
             $criteria = new CDbCriteria();
             $criteria->select = [
-                'id', 'date', 'title', 'message', 'link', 'details', 'metadescription', 'metatitle', 'metakeywords',
-                'priority'
+                'id', 'date', 'title', 'type', 'message', 'link', 'details', 'metadescription', 'metatitle',
+                'metakeywords', 'priority'
             ];
             $criteria->condition = 'id NOT IN (SELECT news FROM ' . NewsLinks::model()->tableName() . ')';
+            $criteria->addCondition('title!=\'\'');
             $objects = News::model()->findAll($criteria);
 
             foreach ($objects as $i => $obj) {
-                $this->saveObject($obj, 0, $i + 1);
+                $this->saveObject($obj, NewsCategories::CAT_NEWS_CAT, $i + 1);
             }
         } else {
             /* @var NewsLinks $link */
@@ -115,8 +116,10 @@ class NewsConverter implements IConverter
     private function saveObject(News $oldObject, $categoryId, $sort)
     {
         $object = new NewsObjects();
-        $object->setFileParams($oldObject->id, null, $categoryId);
-        $object->main_category_id = $categoryId;
+        $object->setFileParams($oldObject->id);
+        $object->main_category_id = $oldObject->isText()
+            ? NewsCategories::CAT_NEWS
+            : ($oldObject->isPhoto() ? NewsCategories::CAT_PHOTO : NewsCategories::CAT_VIDEO);
         $object->lang_id          = NewsObjects::LANG;
         $object->name             = Utils::nameString($oldObject->title);
         $object->title            = $oldObject->title;
@@ -130,6 +133,8 @@ class NewsConverter implements IConverter
         $object->meta_title       = $oldObject->metatitle;
         $object->meta_description = $oldObject->metadescription;
         $object->meta_keywords    = $oldObject->metakeywords;
+        // поля для связки с категориями
+        $object->minorCategoryId  = $categoryId;
         $object->sort             = $sort;
 
         if (!$object->save()) {

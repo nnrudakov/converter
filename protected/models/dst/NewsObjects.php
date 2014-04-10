@@ -22,6 +22,7 @@
  * @property string  $meta_title       SEO заголовок.
  * @property string  $meta_description SEO описание.
  * @property string  $meta_keywords    SEO ключевые слова.
+ * @property integer $minorCategoryId  Идентификатор не основной категории.
  * @property integer $sort             Порядок в категории.
  *
  * Доступные отношения:
@@ -61,6 +62,13 @@ class NewsObjects extends DestinationModel
      * @param string
      */
     const FILE_FIELD = 'file';
+
+    /**
+     * Идентификатор не основной категории.
+     *
+     * @var integer
+     */
+    public $minorCategoryId = 0;
 
     /**
      * Порядок в категории.
@@ -194,16 +202,16 @@ class NewsObjects extends DestinationModel
             throw new CException('Can\'t save news object owner.');
         }
 
-        $link = new NewsCategoryObjects();
-        $link->category_id = $this->main_category_id;
-        $link->object_id   = $this->object_id;
-        $link->sort        = $this->sort;
-        if (!$link->save()) {
-            throw new CException('Can\'t save news object link.');
+        foreach ([$this->main_category_id, $this->minorCategoryId] as $category_id) {
+            $link = new NewsCategoryObjects();
+            $link->category_id = $category_id;
+            $link->object_id   = $this->object_id;
+            $link->sort        = $this->sort;
+            if (!$link->save()) {
+                throw new CException($link->getErrorMsg('Can\'t save news object link.', $this));
+            }
         }
 
         parent::afterSave();
     }
-
-
 }
