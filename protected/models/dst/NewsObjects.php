@@ -64,11 +64,25 @@ class NewsObjects extends DestinationModel
     const FILE_FIELD = 'file';
 
     /**
-     * Имя файла оригинала фотоотчета.
+     * Имя файла оригинала фоторепортажа.
      *
      * @var string
      */
     const FILE_PHOTO = '{path}image.orig.%d.jpg';
+
+    /**
+     * Имя файла оригинала видеорепортажа.
+     *
+     * @var string
+     */
+    const FILE_VIDEO = '{path}image.orig.%d.mp4';
+
+    /**
+     * Имя файла превью видеорепортажа.
+     *
+     * @var string
+     */
+    const FILE_VIDEO_THUMB = '{path}image.%d.611x360.jpg';
 
     /**
      * Идентификатор не основной категории.

@@ -116,27 +116,7 @@ class NewsConverter implements IConverter
     private function saveObject(News $oldObject, $categoryId, $sort)
     {
         $object = new NewsObjects();
-
-        // фотки обычных новостей
-        if ($oldObject->isText()) {
-            $object->setFileParams($oldObject->id);
-        } elseif ($oldObject->isPhoto() && ($gallery_id = $oldObject->getGalleyId())) {
-            // есть ли галерея
-            if ($gallery = Gallery::model()->findByPk($gallery_id)) {
-                // собираем каждый файл галерии
-                foreach ($gallery->files as $file) {
-                    $object->setFileParams(
-                        $file->id,
-                        str_replace(['{path}', '/res/'], [$gallery->location, ''], NewsObjects::FILE_PHOTO),
-                        0,
-                        null,
-                        $file->caption,
-                        $file->ord
-                    );
-                }
-            }
-        }
-
+        $this->setFilesParams($oldObject, $object);
         $object->main_category_id = $oldObject->isText()
             ? NewsCategories::CAT_NEWS
             : ($oldObject->isPhoto() ? NewsCategories::CAT_PHOTO : NewsCategories::CAT_VIDEO);
@@ -161,5 +141,40 @@ class NewsConverter implements IConverter
         }
 
         return true;
+    }
+
+    /**
+     * Установка параметров файлов.
+     *
+     * @param News        $oldObject Старый объект.
+     * @param NewsObjects $object    Новый объект.
+     */
+    private function setFilesParams($oldObject, $object)
+    {
+        // фотки обычных новостей
+        if ($oldObject->isText()) {
+            $object->setFileParams($oldObject->id);
+        } elseif ($gallery_id = $oldObject->getGalleyId()) {// есть ли галерея
+            if ($gallery = Gallery::model()->findByPk($gallery_id)) {
+                $filename = $oldObject->isPhoto() ? NewsObjects::FILE_PHOTO : NewsObjects::FILE_VIDEO;
+                $filename = str_replace(['{path}', '/res/'], [$gallery->location, ''], $filename);
+                // собираем каждый файл галерии
+                foreach ($gallery->files as $file) {
+                    // тумбочка для видео
+                    if ($oldObject->isVideo()) {
+                        $object->setFileParams(
+                            $file->id,
+                            str_replace(['{path}', '/res/'], [$gallery->location, ''], NewsObjects::FILE_VIDEO_THUMB),
+                            0,
+                            null,
+                            $file->caption,
+                            $file->ord
+                        );
+                    }
+
+                    $object->setFileParams($file->id, $filename, 0, null, $file->caption, $file->ord);
+                }
+            }
+        }
     }
 }
