@@ -93,7 +93,7 @@ class ContractsConverter implements IConverter
         }
 
         if (!$this->entity || 'persons' == $this->entity) {
-            //$this->convertPersons();
+            $this->convertPersons();
         }
     }
 

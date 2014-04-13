@@ -35,6 +35,10 @@ EXAMPLES
     * yiic converter news
         Convert news.
 
+        Parameters:
+
+        - writeFiles
+
     * yiic converter persons
         Convert persons.
 
@@ -55,10 +59,13 @@ EOD;
 
     /**
      * Конвертация новостей.
+     *
+     * @param bool $writeFiles Сохранить файлы на диск.
      */
-    public function actionNews()
+    public function actionNews($writeFiles = false)
     {
         $n = new NewsConverter();
+        $n->writeFiles = $writeFiles;
         $n->convert();
     }
 

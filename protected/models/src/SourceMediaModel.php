@@ -8,14 +8,14 @@
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class SourceModel extends CActiveRecord
+class SourceMediaModel extends BaseFcModel
 {
     /**
      * Соединение с БД.
      *
      * @var CDbConnection
      */
-    public static $dbSrc = null;
+    public static $dbMedia = null;
 
     /**
      * @return CDbConnection|mixed
@@ -23,24 +23,24 @@ class SourceModel extends CActiveRecord
      */
     public function getDbConnection()
     {
-        if (is_null(self::$dbSrc)) {
+        if (is_null(self::$dbMedia)) {
 
-            self::$dbSrc = Yii::app()->db_src;
+            self::$dbMedia = Yii::app()->db_media;
 
-            if (self::$dbSrc instanceof CDbConnection) {
-                self::$dbSrc->setActive(true);
-                return self::$dbSrc;
+            if (self::$dbMedia instanceof CDbConnection) {
+                self::$dbMedia->setActive(true);
+                return self::$dbMedia;
             } else {
                 throw new CDbException(
                     Yii::t(
                         'yii',
-                        'Active Record requires a "db_src" CDbConnection application component.'
+                        'Active Record requires a "db_media" CDbConnection application component.'
                     )
                 );
             }
         }
 
-        return self::$dbSrc;
+        return self::$dbMedia;
     }
 
     public function save($runValidation = true, $attributes = null)
