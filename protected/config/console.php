@@ -53,9 +53,12 @@ return [
             'routes' => [
                 [
                     'class'  => 'CFileLogRoute',
-                    'levels' => 'error, warning, trace',
+                    'levels' => 'error, warning, trace, info',
                 ],
             ],
         ],
     ],
+    'params'     => [
+        'files_dir' => '/home/rudnik/www/fc/files/',
+    ]
 ];

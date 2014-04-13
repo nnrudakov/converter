@@ -5,11 +5,18 @@
  *
  * @package    converter
  * @subpackage news
- * @author     Nikolaj Rudakov <n.rudakov@bstsoft.ru>
+ * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
 class NewsConverter implements IConverter
 {
+    /**
+     * Сохранить файлы на диск.
+     *
+     * @var bool
+     */
+    public $writeFiles = false;
+
     /**
      * Запуск преобразований.
      */
@@ -116,6 +123,7 @@ class NewsConverter implements IConverter
     private function saveObject(News $oldObject, $categoryId, $sort)
     {
         $object = new NewsObjects();
+        $object->writeFiles = $this->writeFiles;
         $this->setFilesParams($oldObject, $object);
         $object->main_category_id = $oldObject->isText()
             ? NewsCategories::CAT_NEWS
@@ -151,6 +159,10 @@ class NewsConverter implements IConverter
      */
     private function setFilesParams($oldObject, $object)
     {
+        $object->filesUrl = $oldObject->isText()
+            ? News::TEXT_URL
+            : ($oldObject->isPhoto() ? News::PHOTO_URL : News::VIDEO_URL);
+
         // фотки обычных новостей
         if ($oldObject->isText()) {
             $object->setFileParams($oldObject->id);

@@ -38,6 +38,27 @@
 class News extends SourceModel
 {
     /**
+     * Префикс ссылки на фотографии обычных новостей.
+     *
+     * @var string
+     */
+    const TEXT_URL = 'http://fckrasnodar.ru/app/mods/info_store/res/';
+
+    /**
+     * Префикс ссылки на фотографии фоторепортажей.
+     *
+     * @var string
+     */
+    const PHOTO_URL = 'http://media.fckrasnodar.ru/res/';
+
+    /**
+     * Префикс ссылки на фотографии видеорепортажей.
+     *
+     * @var string
+     */
+    const VIDEO_URL = 'http://media.fckrasnodar.ru/res/';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

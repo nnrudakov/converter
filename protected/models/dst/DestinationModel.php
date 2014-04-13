@@ -37,6 +37,20 @@ class DestinationModel extends BaseFcModel
     public static $dbDst = null;
 
     /**
+     * Префикс внешних файлов модели.
+     *
+     * @var string
+     */
+    public $filesUrl = '';
+
+    /**
+     * Сохранить файлы на диск.
+     *
+     * @var bool
+     */
+    public $writeFiles = false;
+
+    /**
      * Параметры файла модели.
      *
      * @var array
