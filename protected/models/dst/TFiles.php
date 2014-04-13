@@ -22,29 +22,37 @@ trait TFiles {
 
         $const_file = get_class($this) . '::FILE';
         $const_field = get_class($this) . '::FILE_FIELD';
-        $name = isset($this->fileParams['name']) ? $this->fileParams['name'] : constant($const_file);
-        $field_id = isset($this->fileParams['field_id']) ? $this->fileParams['field_id'] : constant($const_field);
+        $main = 1;
 
-        $file = new Files();
-        $file->ext       = substr($name, -3);
-        $file->name      = sprintf($name, $this->fileParams['old_id']);
-        $file->load_date = date('Y-m-d H:i:s');
+        foreach ($this->fileParams as $params) {
+            $name = isset($params['name']) ? $params['name'] : constant($const_file);
+            $field_id = isset($params['field_id']) ? $params['field_id'] : constant($const_field);
 
-        if (!$file->save()) {
-            throw new CException('Files not created.' . "\n" . var_export($file->getErrors(), true) . "\n");
-        }
+            $file = new Files();
+            $file->ext   = substr($name, -3);
+            $file->name  = sprintf($name, $params['old_id']);
+            $file->descr = $params['descr'];
 
-        $link = new FilesLink();
-        $link->file_id     = $file->file_id;
-        $link->module_id   = $this->module->module_id;;
-        $link->category_id = $this->fileParams['category_id'];
-        $link->object_id   = $this->id;
-        $link->field_id    = $field_id;
-        $link->main        = 1;
-        $link->sort        = 1;
+            if (!$file->save()) {
+                throw new CException('Files not created.' . "\n" . var_export($file->getErrors(), true) . "\n");
+            }
 
-        if (!$link->save()) {
-            throw new CException('Link not created.' . "\n" . var_export($link->getErrors(), true) . "\n");
+            $link = new FilesLink();
+            $link->file_id     = $file->file_id;
+            $link->module_id   = $this->module->module_id;
+            $link->category_id = $params['category_id'];
+            $link->object_id   = $this->id;
+            $link->field_id    = $field_id;
+            $link->main        = $main;
+            $link->sort        = $params['sort'];
+
+            if (!$link->save()) {
+                throw new CException('Link not created.' . "\n" . var_export($link->getErrors(), true) . "\n");
+            }
+
+            if ($main) {
+                $main = 0;
+            }
         }
 
         $this->fileParams = [];

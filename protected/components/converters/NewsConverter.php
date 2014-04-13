@@ -117,8 +117,24 @@ class NewsConverter implements IConverter
     {
         $object = new NewsObjects();
 
+        // фотки обычных новостей
         if ($oldObject->isText()) {
             $object->setFileParams($oldObject->id);
+        } elseif ($oldObject->isPhoto() && ($gallery_id = $oldObject->getGalleyId())) {
+            // есть ли галерея
+            if ($gallery = Gallery::model()->findByPk($gallery_id)) {
+                // собираем каждый файл галерии
+                foreach ($gallery->files as $file) {
+                    $object->setFileParams(
+                        $file->id,
+                        str_replace(['{path}', '/res/'], [$gallery->location, ''], NewsObjects::FILE_PHOTO),
+                        0,
+                        null,
+                        $file->caption,
+                        $file->ord
+                    );
+                }
+            }
         }
 
         $object->main_category_id = $oldObject->isText()
@@ -132,7 +148,6 @@ class NewsConverter implements IConverter
         $object->important        = (int) $oldObject->priority;
         $object->publish          = 1;
         $object->publish_date_on  = $oldObject->date ?: null;
-        $object->source_link      = $oldObject->link;
         $object->created          = date('Y-m-d H:i:s');
         $object->meta_title       = $oldObject->metatitle;
         $object->meta_description = $oldObject->metadescription;

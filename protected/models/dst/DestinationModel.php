@@ -10,7 +10,7 @@
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class DestinationModel extends CActiveRecord
+class DestinationModel extends BaseFcModel
 {
     use TMultilang;
     use TFiles;
@@ -82,16 +82,6 @@ class DestinationModel extends CActiveRecord
     }
 
     /**
-     * Представление объекта в виде строки.
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        return var_export($this->getAttributes(), true);
-    }
-
-    /**
      * @return CDbConnection|mixed
      * @throws CDbException
      */
@@ -124,30 +114,19 @@ class DestinationModel extends CActiveRecord
      * @param string  $name
      * @param integer $categoryId
      * @param string  $fieldId
+     * @param string  $descr
+     * @param integer $sort
      */
-    public function setFileParams($oldId, $name = null, $categoryId = 0, $fieldId = null)
+    public function setFileParams($oldId, $name = null, $categoryId = 0, $fieldId = null, $descr = '', $sort = 1)
     {
-        $this->fileParams = ['old_id' => $oldId, 'name' => $name, 'category_id' => $categoryId, 'field_id' => $fieldId];
-    }
-
-    /**
-     * Вывод ошибки.
-     *
-     * @param string                       $message
-     * @param DestinationModel|SourceModel $model
-     *
-     * @return string
-     */
-    public function getErrorMsg($message, $model = null)
-    {
-        return implode(
-            "\n",
-            [
-                $message,
-                'Errors: ' . var_export($this->getErrors(), true),
-                isset($model) ? 'Original object: ' . $model : ''
-            ]
-        ) . "\n";
+        $this->fileParams[] = [
+            'old_id'      => $oldId,
+            'name'        => $name,
+            'category_id' => $categoryId,
+            'field_id'    => $fieldId,
+            'descr'       => $descr,
+            'sort'        => $sort
+        ];
     }
 
     protected function afterSave()

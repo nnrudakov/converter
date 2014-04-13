@@ -9,6 +9,7 @@ return [
     'preload'    => ['log'],
     // autoloading model and component classes
     'import'     => [
+        'application.models.BaseFcModel',
         'application.models.src.*',
         'application.models.dst.*',
         'application.components.*',
@@ -28,7 +29,7 @@ return [
         ],
         'db_media' => [
             'class'            => 'CDbConnection',
-            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodar_media',
+            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodarmedia',
             'emulatePrepare' => true,
             'username' => 'postgres',
             'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',

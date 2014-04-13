@@ -43,7 +43,7 @@ class Files extends DestinationModel
     public function rules()
     {
         return [
-            ['load_date', 'required'],
+            ['load_date', 'safe'],
             ['ext', 'length', 'max'=>5],
             ['name, thumb1, thumb2, thumb3, thumb4, thumb5', 'length', 'max'=>200],
             ['author', 'length', 'max'=>50],

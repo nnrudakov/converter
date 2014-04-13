@@ -50,7 +50,7 @@ class NewsObjects extends DestinationModel
     const ENTITY = 'object';
 
     /**
-     * Имя файла оригинала.
+     * Имя файла оригинала обычной новости.
      *
      * @var string
      */
@@ -62,6 +62,13 @@ class NewsObjects extends DestinationModel
      * @param string
      */
     const FILE_FIELD = 'file';
+
+    /**
+     * Имя файла оригинала фотоотчета.
+     *
+     * @var string
+     */
+    const FILE_PHOTO = '{path}image.orig.%d.jpg';
 
     /**
      * Идентификатор не основной категории.

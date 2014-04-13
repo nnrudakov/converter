@@ -178,4 +178,22 @@ class News extends SourceModel
     {
         return $this->type == 'video' || $this->type == 'blog' || $this->type == 'link';
     }
+
+    /**
+     * Идентификатор галереии фоторепортажа или видеорепортажа.
+     *
+     * @return integer
+     */
+    public function getGalleyId()
+    {
+        if ($this->isText()) {
+            return 0;
+        }
+
+        if (!preg_match('/(?<id>\d+)\.html$/', $this->link, $m)) {
+             return 0;
+        }
+
+        return $m['id'];
+    }
 }
