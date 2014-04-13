@@ -133,8 +133,8 @@ class DestinationModel extends CActiveRecord
     /**
      * Вывод ошибки.
      *
-     * @param string           $message
-     * @param DestinationModel $model
+     * @param string                       $message
+     * @param DestinationModel|SourceModel $model
      *
      * @return string
      */

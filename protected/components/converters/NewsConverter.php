@@ -116,7 +116,11 @@ class NewsConverter implements IConverter
     private function saveObject(News $oldObject, $categoryId, $sort)
     {
         $object = new NewsObjects();
-        $object->setFileParams($oldObject->id);
+
+        if ($oldObject->isText()) {
+            $object->setFileParams($oldObject->id);
+        }
+
         $object->main_category_id = $oldObject->isText()
             ? NewsCategories::CAT_NEWS
             : ($oldObject->isPhoto() ? NewsCategories::CAT_PHOTO : NewsCategories::CAT_VIDEO);
