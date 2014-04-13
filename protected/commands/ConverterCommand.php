@@ -52,7 +52,9 @@ EXAMPLES
     * yiic convert contracts
         Convert contracts.
 
-        - persons: players, persons.
+
+        - persons: players, persons;
+        - writeFiles
 
 EOD;
     }
@@ -111,16 +113,18 @@ EOD;
      *                          <li>players;</li>
      *                          <li>persons.</li>
      *                        </ul>
+     * @param bool $writeFiles Сохранить файлы на диск.
      *
      * @throws CException
      */
-    public function actionContracts ($persons = null)
+    public function actionContracts ($persons = null, $writeFiles = false)
     {
         if (!is_null($persons) && !in_array($persons, ['players', 'persons'])) {
             throw new CException('Wrong "persons".' . "\n");
         }
 
         $c = new ContractsConverter($persons);
+        $c->writeFiles = $writeFiles;
         $c->convert();
     }
 

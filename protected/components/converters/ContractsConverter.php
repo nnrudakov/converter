@@ -5,11 +5,18 @@
  *
  * @package    converter
  * @subpackage contracts
- * @author     Nikolaj Rudakov <n.rudakov@bstsoft.ru>
+ * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
 class ContractsConverter implements IConverter
 {
+    /**
+     * Сохранить файлы на диск.
+     *
+     * @var bool
+     */
+    public $writeFiles = false;
+
     /**
      * Сущности для переноса.
      *
@@ -106,7 +113,7 @@ class ContractsConverter implements IConverter
             [
                 'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
                 'with'   => ['playerTeam', 'playerPlayer'],
-                'order'  => 't.id'
+                'order'  => 't.player'
             ]
         );
         $src_contracts = new PlayersContracts();
@@ -145,9 +152,9 @@ class ContractsConverter implements IConverter
     {
         $criteria = new CDbCriteria(
             [
-                'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
+                'select' => ['id', 'team', 'person', 'datefrom', 'dateto', 'position'],
                 'with'   => ['personTeam', 'personPerson'],
-                'order'  => 't.id'
+                'order'  => 't.person'
             ]
         );
         $src_contracts = new PersonsContracts();
@@ -168,6 +175,7 @@ class ContractsConverter implements IConverter
             $contract->fromtime  = $c->datefrom;
             $contract->untiltime = $c->dateto;
             $contract->number    = 0;
+            $contract->position  = $c->position;
 
             if (!$contract->save()) {
                 throw new CException(
@@ -182,9 +190,9 @@ class ContractsConverter implements IConverter
     /**
      * Сохранение персоны.
      *
-     * @param Players $p
-     * @param string  $profile
-     * @param string  $amplua
+     * @param Players|Persons $p
+     * @param string          $profile
+     * @param string          $amplua
      *
      * @return FcPerson $person
      *
@@ -203,31 +211,39 @@ class ContractsConverter implements IConverter
 
         if (is_null($person)) {
             $person = new FcPerson();
-            $person->setFileParams(
-                $p->id,
-                $profile == PersonsConverter::PROFILE_PLAYER ? FcPerson::FILE_PLAYER : FcPerson::FILE_PERSON
-            );
             $person->firstname  = $p->first_name;
             $person->lastname   = $p->surname;
             $person->middlename = $p->patronymic;
             $person->birthday   = $p->borned;
             $person->country    = $p->citizenship;
-            $person->resident   = $p->resident;
             $person->biograpy   = $p->bio;
             $person->profile    = $profile;
             $person->progress   = $p->achivements;
-            $person->nickname   = $p->nickname;
-            $person->height     = $p->height;
-            $person->weight     = $p->weight;
-            $person->amplua     = $amplua;
 
-            if (!$person->save()) {
-                throw new CException(
-                    'Player not created.' . "\n" .
-                    var_export($person->getErrors(), true) . "\n" .
-                    $p . "\n"
-                );
+            if ($p instanceof Players) {
+                $person->resident   = $p->resident;
+                $person->nickname   = $p->nickname;
+                $person->height     = $p->height;
+                $person->weight     = $p->weight;
+                $person->amplua     = $amplua;
+            } else {
+                $person->post = $p->post;
             }
+        }
+
+        $person->writeFiles = $this->writeFiles;
+        $person->filesUrl = $profile == PersonsConverter::PROFILE_PLAYER ? Players::PHOTO_URL : Persons::PHOTO_URL;
+        $person->setFileParams(
+            $p->id,
+            $profile == PersonsConverter::PROFILE_PLAYER ? FcPerson::FILE_PLAYER : FcPerson::FILE_PERSON
+        );
+
+        if (!$person->save()) {
+            throw new CException(
+                'Player not created.' . "\n" .
+                var_export($person->getErrors(), true) . "\n" .
+                $p . "\n"
+            );
         }
 
         return $person;
@@ -255,19 +271,22 @@ class ContractsConverter implements IConverter
 
         if (is_null($team)) {
             $team = new FcTeams();
-            $team->setFileParams($t->id);
             $team->title = $t->title;
             $team->info  = $t->info;
             $team->city  = $t->region;
             $team->staff = $staff;
+        }
 
-            if (!$team->save()) {
-                throw new CException(
-                    'Team not created.' . "\n" .
-                    var_export($team->getErrors(), true) . "\n" .
-                    $t . "\n"
-                );
-            }
+        $team->writeFiles = $this->writeFiles;
+        $team->filesUrl = Teams::PHOTO_URL;
+        $team->setFileParams($t->id);
+
+        if (!$team->save()) {
+            throw new CException(
+                'Team not created.' . "\n" .
+                var_export($team->getErrors(), true) . "\n" .
+                $t . "\n"
+            );
         }
 
         return $team;

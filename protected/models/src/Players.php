@@ -29,6 +29,13 @@
 class Players extends SourceModel
 {
     /**
+     * Префикс ссылки на фотографии обычных новостей.
+     *
+     * @var string
+     */
+    const PHOTO_URL = 'http://fckrasnodar.ru/app/mods/tsi/res/';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

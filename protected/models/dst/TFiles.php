@@ -5,7 +5,7 @@
  *
  * @package    converter
  * @subpackage files
- * @author     Nikolaj Rudakov <nnrudakov@gmail.com>
+ * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
 trait TFiles {
@@ -31,7 +31,7 @@ trait TFiles {
             $remote_file = $this->getFile($name);
 
             if (false === $remote_file) {
-                Yii::log('File "' . $name . '" not found.');
+                //echo 'File "' . $name . '" not found.' . "\n";
                 continue;
             }
 
