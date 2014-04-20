@@ -81,9 +81,8 @@ class ContractsConverter implements IConverter
             $this->convertPersons();
         }
 
-        $format  = "<?php\n\nreturn %s;\n";
-        file_put_contents($this->playersFile, sprintf($format, var_export($this->players, true)));
-        file_put_contents($this->teamsFile, sprintf($format, var_export($this->teams, true)));
+        file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
+        file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
     }
 
     public function getTeams()
@@ -237,7 +236,7 @@ class ContractsConverter implements IConverter
         }
 
         if ($is_player) {
-            $this->players[$p->id] = $person->id;
+            $this->players[$p->id] = (int) $person->id;
         }
 
         return $person;
@@ -283,7 +282,7 @@ class ContractsConverter implements IConverter
             );
         }
 
-        $this->teams[$t->id] = $team->id;
+        $this->teams[$t->id] = (int) $team->id;
 
         return $team;
     }

@@ -69,53 +69,37 @@ class ChampsConverter implements IConverter
      */
     public function convert()
     {
-        /*if (!$this->entity || 'players' == $this->entity) {
-            $this->convertPlayers();
-        }
+        $this->convertSeasons();
 
-        if (!$this->entity || 'persons' == $this->entity) {
-            $this->convertPersons();
-        }*/
+        file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
     }
 
     /**
      * Перенос сезонов.
      */
-    private function convertPlayers()
+    private function convertSeasons()
     {
-        $criteria = new CDbCriteria(
-            [
-                'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
-                'with'   => ['playerTeam', 'playerPlayer'],
-                'order'  => 't.player'
-            ]
-        );
-        $src_contracts = new PlayersContracts();
+        $criteria = new CDbCriteria();
+        $criteria->select = ['id', 'title', 'description', 'dts', 'dte'];
+        $criteria->order = 'id';
+        $src_seasons = new Seasons();
 
-        foreach ($src_contracts->findAll($criteria) as $c) {
-            $person = $this->savePerson(
-                $c->playerPlayer,
-                PersonsConverter::PROFILE_PLAYER,
-                isset(PersonsConverter::$ampluas[$c->playerPlayer->amplua])
-                    ? PersonsConverter::$ampluas[$c->playerPlayer->amplua]
-                    : null
-            );
-            $team = $this->saveTeam($c->playerTeam, $c->staff ? TeamsConverter::JUNIOR : TeamsConverter::MAIN);
+        foreach ($src_seasons->findAll($criteria) as $s) {
+            $season = new FcSeason();
+            $season->title   = $s->title;
+            $season->description = $s->description;
+            $season->fromtime  = $s->dts;
+            $season->untiltime = $s->dte;
 
-            $contract = new FcContracts();
-            $contract->team_id   = $team->id;
-            $contract->person_id = $person->id;
-            $contract->fromtime  = $c->date_from;
-            $contract->untiltime = $c->date_to;
-            $contract->number    = $c->number;
-
-            if (!$contract->save()) {
+            if (!$season->save()) {
                 throw new CException(
-                    'Player\'s contract not created.' . "\n" .
-                    var_export($contract->getErrors(), true) . "\n" .
-                    $c . "\n"
+                    'Season not created.' . "\n" .
+                    var_export($season->getErrors(), true) . "\n" .
+                    $s . "\n"
                 );
             }
+
+            $this->seasons[$s->id] = (int) $season->id;
         }
     }
 
