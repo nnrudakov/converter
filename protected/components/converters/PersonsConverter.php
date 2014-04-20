@@ -346,8 +346,6 @@ class PersonsConverter implements IConverter
             $players[$player->id] = $person->id;
         }
 
-        //file_put_contents($this->playersFile, '<?php return ' . var_export($players, true) . ';' . "\n");
-
         return true;
     }
 
@@ -403,8 +401,6 @@ class PersonsConverter implements IConverter
 
             $persons[$p->id] = $person->id;
         }
-
-        //file_put_contents($this->personsFile, '<?php return ' . var_export($persons, true) . ';' . "\n");
 
         return true;
     }

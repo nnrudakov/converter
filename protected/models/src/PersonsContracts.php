@@ -48,8 +48,8 @@ class PersonsContracts extends SourceModel
     public function relations()
     {
         return [
-            'personTeam'   => [self::BELONGS_TO, 'Teams', 'team'],
-            'personPerson' => [self::BELONGS_TO, 'Persons', 'person']
+            'personTeam'   => [self::BELONGS_TO, 'Teams', 'team', 'joinType'=>'INNER JOIN'],
+            'personPerson' => [self::BELONGS_TO, 'Persons', 'person', 'joinType'=>'INNER JOIN']
         ];
     }
 

@@ -27,6 +27,13 @@
 class Persons extends SourceModel
 {
     /**
+     * Префикс ссылки на фотографии обычных новостей.
+     *
+     * @var string
+     */
+    const PHOTO_URL = 'http://fckrasnodar.ru/app/mods/info_store/res/';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()
