@@ -11,6 +11,13 @@
 class ConverterCommand extends CConsoleCommand
 {
     /**
+     * Начальное время.
+     *
+     * @var integer
+     */
+    private $startTime = 0;
+
+    /**
      * Справка.
      *
      * @see CConsoleCommand::getHelp()
@@ -30,147 +37,108 @@ EXAMPLES
 
         Parameters:
 
-        --.
+        - writeFiles
+
+    * yiic converter persons
+        Convert persons.
+
+        Parameters:
+
+        - persons: players, coaches, admins, medics, press, select.
+
+    * yiic converter teams
+        Convert teams.
+
+    * yiic convert contracts
+        Convert contracts.
+
+
+        - persons: players, persons;
+        - writeFiles
 
 EOD;
     }
 
     /**
      * Конвертация новостей.
+     *
+     * @param bool $writeFiles Сохранить файлы на диск.
      */
-    public function actionNews()
+    public function actionNews($writeFiles = false)
     {
-        $time = microtime(true);
-        // категории и связанные с ними объекты
-        $this->saveCategories(0, 0);
-        // объекты без категорий
-        $this->saveObjects();
-
-        print 'Done in ' . sprintf('%f', microtime(true) - $time) . ".\n";
+        $n = new NewsConverter();
+        $n->writeFiles = $writeFiles;
+        $n->convert();
     }
 
     /**
-     * Сохранение категорий.
+     * Конвертация персон.
      *
-     * @param integer $oldParent Идентификатор старого родителя.
-     * @param integer $newParent Идентификатор новго родителя.
-     *
-     * @return bool
+     * @param string $persons Персоны:
+     *                        <ul>
+     *                          <li>players;</li>
+     *                          <li>coaches;</li>
+     *                          <li>admins;</li>
+     *                          <li>medics;</li>
+     *                          <li>press;</li>
+     *                          <li>select.</li>
+     *                        </ul>
      *
      * @throws CException
      */
-    private function saveCategories($oldParent, $newParent)
+    public function actionPersons ($persons = null)
     {
-        $criteria = new CDbCriteria([
-            'select' => ['id', 'name', 'description'],
-            'order'  => 'id'
-        ]);
-        if ($oldParent) {
-            $criteria->addCondition('parentid=:parent');
-            $criteria->params = [':parent' => $oldParent];
-        } else {
-            $criteria->addCondition('parentid IS NULL');
-        }
-        $src_cats = new NewsCategs();
-
-        foreach ($src_cats->findAll($criteria) as $i => $cat) {
-            $category = new NewsCategories();
-            $category->parent_id  = $newParent;
-            $category->lang_id    = NewsCategories::LANG;
-            $category->name       = Utils::nameString($cat->name);
-            $category->title      = $cat->name;
-            $category->content    = $cat->description ?: '';
-            $category->publish    = 1;
-            $category->sort       = $i + 1;
-            $category->meta_title = $cat->name;
-
-            if (!$category->save()) {
-                throw new CException(
-                    'Category not created.' . "\n" .
-                    var_export($category->getErrors(), true) . "\n" .
-                    $cat . "\n"
-                );
-            }
-
-            $this->saveObjects($cat, $category);
-            $this->saveCategories($cat->id, $category->category_id);
+        if (!is_null($persons) && !in_array($persons, ['players', 'coaches', 'admins', 'medics', 'press', 'select'])) {
+            throw new CException('Wrong "persons".' . "\n");
         }
 
-        return true;
+        $p = new PersonsConverter($persons);
+        $p->convert();
     }
 
     /**
-     * Сохранение объектов.
-     *
-     * @param NewsCategs     $oldCategory Старая категория.
-     * @param NewsCategories $newCategory Новая категория.
-     *
-     * @return bool
+     * Конвертация команд.
      */
-    private function saveObjects($oldCategory = null, $newCategory = null)
+    public function actionTeams()
     {
-        if (is_null($oldCategory) && is_null($newCategory)) {
-            $criteria = new CDbCriteria();
-            $criteria->select = [
-                'id', 'date', 'title', 'message', 'link', 'details', 'metadescription', 'metatitle', 'metakeywords',
-                'priority'
-            ];
-            $criteria->condition = 'id NOT IN (SELECT news FROM ' . NewsLinks::model()->tableName() . ')';
-            $objects = News::model()->findAll($criteria);
-
-            foreach ($objects as $i => $obj) {
-                $this->saveObject($obj, 0, $i + 1);
-            }
-        } else {
-            /* @var NewsLinks $link */
-            foreach ($oldCategory->links as $link) {
-                foreach ($link->news_obj as $i => $obj) {
-                    $this->saveObject($obj, $newCategory->getId(), $i + 1);
-                }
-            }
-        }
-
-        return true;
+        $t = new TeamsConverter();
+        $t->convert();
     }
 
     /**
-     * Сохранение объекта.
+     * Конвертация контрактов.
      *
-     * @param News    $oldObject  Объект.
-     * @param integer $categoryId Идентификатор категории.
-     * @param integer $sort       Порядк в категории.
-     *
-     * @return bool
+     * @param string $persons Персоны:
+     *                        <ul>
+     *                          <li>players;</li>
+     *                          <li>persons.</li>
+     *                        </ul>
+     * @param bool $writeFiles Сохранить файлы на диск.
      *
      * @throws CException
      */
-    private function saveObject(News $oldObject, $categoryId, $sort)
+    public function actionContracts ($persons = null, $writeFiles = false)
     {
-        $object = new NewsObjects();
-        $object->main_category_id = $categoryId;
-        $object->lang_id          = NewsObjects::LANG;
-        $object->name             = Utils::nameString($oldObject->title);
-        $object->title            = $oldObject->title;
-        $object->announce         = $oldObject->message ?: '';
-        $object->content          = $oldObject->details ?: '';
-        $object->important        = (int) $oldObject->priority;
-        $object->publish          = 1;
-        $object->publish_date_on  = $oldObject->date ?: null;
-        $object->source_link      = $oldObject->link;
-        $object->created          = date('Y-m-d H:i:s');
-        $object->meta_title       = $oldObject->metatitle;
-        $object->meta_description = $oldObject->metadescription;
-        $object->meta_keywords    = $oldObject->metakeywords;
-        $object->sort             = $sort;
-
-        if (!$object->save()) {
-            throw new CException(
-                'Object is not created.' . "\n" .
-                'Errors:' . "\n" . var_export($object->getErrors(), true) . "\n" .
-                'Original object:' . "\n" . $oldObject . "\n"
-            );
+        if (!is_null($persons) && !in_array($persons, ['players', 'persons'])) {
+            throw new CException('Wrong "persons".' . "\n");
         }
 
-        return true;
+        $c = new ContractsConverter($persons);
+        $c->writeFiles = $writeFiles;
+        $c->convert();
+    }
+
+    protected function beforeAction($action, $params)
+    {
+        $this->startTime = microtime(true);
+
+        return parent::beforeAction($action, $params);
+    }
+
+    protected function afterAction($action, $params, $exitCode = 0)
+    {
+        print 'Done in ' . sprintf('%f', microtime(true) - $this->startTime) . ".\n";
+
+        return parent::afterAction($action, $params, $exitCode);
     }
 }

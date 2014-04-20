@@ -49,7 +49,7 @@ return [
         ],
         'db_media' => [
             'class'            => 'CDbConnection',
-            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodar_media',
+            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodarmedia',
             'emulatePrepare' => true,
             'username' => 'postgres',
             'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
@@ -62,6 +62,7 @@ return [
             'username' => 'root',
             'password' => '1234',
             'charset' => 'utf8',
+            'tablePrefix' => 'fc__'
         ],
         'errorHandler' => [
             // use 'site/error' action to display errors

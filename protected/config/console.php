@@ -9,20 +9,33 @@ return [
     'preload'    => ['log'],
     // autoloading model and component classes
     'import'     => [
-        'application.models.Utils',
+        'application.models.BaseFcModel',
         'application.models.src.*',
         'application.models.dst.*',
         'application.components.*',
+        'application.components.converters.*',
     ],
     // application components
     'components' => [
         'db_src' => [
             'class'            => 'CDbConnection',
-            'connectionString' => 'pgsql:host=localhost;port=5432;dbname=krasnodar',
+            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodar',
             'emulatePrepare' => true,
             'username' => 'postgres',
-            'password' => '1234',
+            'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
             'charset' => 'utf8',
+            'enableParamLogging' => true,
+            'enableProfiling' => true
+        ],
+        'db_media' => [
+            'class'            => 'CDbConnection',
+            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodarmedia',
+            'emulatePrepare' => true,
+            'username' => 'postgres',
+            'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
+            'charset' => 'utf8',
+            'enableParamLogging' => true,
+            'enableProfiling' => true
         ],
         'db_dst' => [
             'class'            => 'CDbConnection',
@@ -31,16 +44,21 @@ return [
             'username' => 'root',
             'password' => '1234',
             'charset' => 'utf8',
-            'tablePrefix' => 'fc__'
+            'tablePrefix' => 'fc__',
+            'enableParamLogging' => true,
+            'enableProfiling' => true
         ],
         'log' => [
             'class'  => 'CLogRouter',
             'routes' => [
                 [
                     'class'  => 'CFileLogRoute',
-                    'levels' => 'error, warning',
+                    'levels' => 'error, warning, trace, info',
                 ],
             ],
         ],
     ],
+    'params'     => [
+        'files_dir' => '/home/rudnik/www/fc/files/',
+    ]
 ];
