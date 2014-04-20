@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Интерфейс конвертеров.
  *
@@ -7,7 +8,6 @@
  * @author     rudnik <n.rudakov@bstsoft.ru>
  * @copyright  2014
  */
-
 interface IConverter {
     /**
      * Запуск преобразований.
