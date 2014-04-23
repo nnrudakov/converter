@@ -130,8 +130,9 @@ class DestinationModel extends BaseFcModel
      * @param string  $fieldId
      * @param string  $descr
      * @param integer $sort
+     * @param integer $videoTime
      */
-    public function setFileParams($oldId, $name = null, $categoryId = 0, $fieldId = null, $descr = '', $sort = 1)
+    public function setFileParams($oldId, $name = null, $categoryId = 0, $fieldId = null, $descr = '', $sort = 1, $videoTime = 0)
     {
         $this->fileParams[] = [
             'old_id'      => $oldId,
@@ -139,7 +140,8 @@ class DestinationModel extends BaseFcModel
             'category_id' => $categoryId,
             'field_id'    => $fieldId,
             'descr'       => $descr,
-            'sort'        => $sort
+            'sort'        => $sort,
+            'video_time'  => $videoTime
         ];
     }
 

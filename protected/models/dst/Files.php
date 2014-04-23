@@ -17,6 +17,7 @@
  * @property string $descr Описание файла.
  * @property string $tags Тэги.
  * @property integer $size Размер файла.
+ * @property integer $video_time Продолжительность видео.
  * @property string $load_date Дата загрузки файла.
  *
  * Доступные отношения:
@@ -43,7 +44,6 @@ class Files extends DestinationModel
     public function rules()
     {
         return [
-            ['load_date', 'safe'],
             ['ext', 'length', 'max'=>5],
             ['name, thumb1, thumb2, thumb3, thumb4, thumb5', 'length', 'max'=>200],
             ['author', 'length', 'max'=>50],
@@ -51,7 +51,8 @@ class Files extends DestinationModel
             ['descr', 'length', 'max'=>500],
             ['tags', 'length', 'max'=>100],
             ['size', 'length', 'max'=>10],
-            ['file_id, ext, name, thumb1, thumb2, thumb3, thumb4, thumb5, author, source, descr, tags, size, load_date', 'safe', 'on'=>'search'],
+            ['video_time, load_date', 'safe'],
+            ['file_id, ext, name, thumb1, thumb2, thumb3, thumb4, thumb5, author, source, descr, tags, size, video_time, load_date', 'safe', 'on'=>'search'],
         ];
     }
 
@@ -71,20 +72,21 @@ class Files extends DestinationModel
     public function attributeLabels()
     {
         return [
-            'file_id' => 'Идентификатор файла',
-            'ext' => 'Расширение файла',
-            'name' => 'Имя файла',
-            'thumb1' => 'Имя первого превью',
-            'thumb2' => 'Имя второго превью',
-            'thumb3' => 'Имя третьего превью',
-            'thumb4' => 'Имя четвертого превью',
-            'thumb5' => 'Имя пятого превью',
-            'author' => 'Автор',
-            'source' => 'Источник',
-            'descr' => 'Описание файла',
-            'tags' => 'Тэги',
-            'size' => 'Размер файла',
-            'load_date' => 'Дата загрузки файла',
+            'file_id'    => 'Идентификатор файла',
+            'ext'        => 'Расширение файла',
+            'name'       => 'Имя файла',
+            'thumb1'     => 'Имя первого превью',
+            'thumb2'     => 'Имя второго превью',
+            'thumb3'     => 'Имя третьего превью',
+            'thumb4'     => 'Имя четвертого превью',
+            'thumb5'     => 'Имя пятого превью',
+            'author'     => 'Автор',
+            'source'     => 'Источник',
+            'descr'      => 'Описание файла',
+            'tags'       => 'Тэги',
+            'size'       => 'Размер файла',
+            'video_time' => 'Продолжительность видео',
+            'load_date'  => 'Дата загрузки файла'
         ];
     }
 

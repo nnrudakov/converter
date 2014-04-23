@@ -184,7 +184,15 @@ class NewsConverter implements IConverter
                         );
                     }
 
-                    $object->setFileParams($file->id, $filename, 0, null, $file->caption, $file->ord);
+                    $object->setFileParams(
+                        $file->id,
+                        $filename,
+                        0,
+                        null,
+                        $file->caption,
+                        $file->ord,
+                        $oldObject->isVideo() ? $file->duration : 0
+                    );
                 }
             }
         }

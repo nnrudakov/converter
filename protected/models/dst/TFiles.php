@@ -39,10 +39,11 @@ trait TFiles {
             $field_id = isset($params['field_id']) ? $params['field_id'] : constant($const_field);
 
             $file = new Files();
-            $file->ext   = substr($name, -3);
-            $file->name  = $name;
-            $file->size  = $size;
-            $file->descr = $params['descr'];
+            $file->ext        = substr($name, -3);
+            $file->name       = $name;
+            $file->size       = $size;
+            $file->descr      = $params['descr'];
+            $file->video_time = $params['video_time'];
 
             if (!$file->save()) {
                 throw new CException('Files not created.' . "\n" . var_export($file->getErrors(), true) . "\n");
