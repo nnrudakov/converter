@@ -17,7 +17,7 @@
  *
  * Доступные поля таблицы "<?php echo $tableName; ?>":
 <?php foreach($columns as $column): ?>
-<?$labels[$column->name] = $column->comment;?>
+<?php $labels[$column->name] = $column->comment;?>
  * @property <?php echo $column->type.' $'.$column->name.' '.$labels[$column->name].".\n"; ?>
 <?php endforeach; ?>
 <?php if(!empty($relations)): ?>

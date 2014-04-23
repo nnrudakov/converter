@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Файл, бля, для чего?
+ * Конвертер контрактов, персон и команд.
  *
  * @package    converter
  * @subpackage contracts
@@ -32,11 +32,11 @@ class ContractsConverter implements IConverter
     private $teams = [];
 
     /**
-     * Соотвествие персон.
+     * Соотвествие игроков.
      *
      * @var array
      */
-    private $persons = [];
+    private $players = [];
 
     /**
      * Файл соответствий текущих идентификаторов игроков новым.
@@ -60,14 +60,12 @@ class ContractsConverter implements IConverter
      *                         <li>players;</li>
      *                         <li>persons.</li>
      *                       </ul>
-     *
-     * @throws CException
      */
     public function __construct($entity = null)
     {
         $this->entity = $entity;
-        $this->teamsFile   = __DIR__ . '/teams.php';
-        $this->playersFile = __DIR__ . '/players.php';
+        $this->teamsFile   = Yii::getPathOfAlias('accordance') . '/teams.php';
+        $this->playersFile = Yii::getPathOfAlias('accordance') . '/players.php';
     }
 
     /**
@@ -82,6 +80,19 @@ class ContractsConverter implements IConverter
         if (!$this->entity || 'persons' == $this->entity) {
             $this->convertPersons();
         }
+
+        file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
+        file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
+    }
+
+    public function getTeams()
+    {
+        return file_exists($this->teamsFile) ? include $this->teamsFile : [];
+    }
+
+    public function getPlayers()
+    {
+        return file_exists($this->playersFile) ? include $this->playersFile : [];
     }
 
     /**
@@ -180,6 +191,7 @@ class ContractsConverter implements IConverter
      */
     private function savePerson($p, $profile, $amplua)
     {
+        $is_player = PersonsConverter::PROFILE_PLAYER;
         $person = FcPerson::model()->findByAttributes(
             [
                 'firstname'  => $p->first_name,
@@ -212,11 +224,8 @@ class ContractsConverter implements IConverter
         }
 
         $person->writeFiles = $this->writeFiles;
-        $person->filesUrl = $profile == PersonsConverter::PROFILE_PLAYER ? Players::PHOTO_URL : Persons::PHOTO_URL;
-        $person->setFileParams(
-            $p->id,
-            $profile == PersonsConverter::PROFILE_PLAYER ? FcPerson::FILE_PLAYER : FcPerson::FILE_PERSON
-        );
+        $person->filesUrl = $is_player ? Players::PHOTO_URL : Persons::PHOTO_URL;
+        $person->setFileParams($p->id, $profile == $is_player ? FcPerson::FILE_PLAYER : FcPerson::FILE_PERSON);
 
         if (!$person->save()) {
             throw new CException(
@@ -224,6 +233,10 @@ class ContractsConverter implements IConverter
                 var_export($person->getErrors(), true) . "\n" .
                 $p . "\n"
             );
+        }
+
+        if ($is_player) {
+            $this->players[$p->id] = (int) $person->id;
         }
 
         return $person;
@@ -268,6 +281,8 @@ class ContractsConverter implements IConverter
                 $t . "\n"
             );
         }
+
+        $this->teams[$t->id] = (int) $team->id;
 
         return $team;
     }
