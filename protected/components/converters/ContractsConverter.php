@@ -27,14 +27,14 @@ class ContractsConverter implements IConverter
     /**
      * Соотвествие текущих команд новым.
      *
-     * @var Teams[]|FcTeams[]
+     * @var array
      */
     private $teams = [];
 
     /**
      * Соотвествие персон.
      *
-     * @var Players[]|Persons[]|FcPerson[]
+     * @var array
      */
     private $persons = [];
 
@@ -44,13 +44,6 @@ class ContractsConverter implements IConverter
      * @var string
      */
     private $playersFile = '';
-
-    /**
-     * Файл соответствий текущих идентификаторов персон новым.
-     *
-     * @var string
-     */
-    private $personsFile = '';
 
     /**
      * Файл соответствий текущих идентификаторов команд новым.
@@ -75,19 +68,6 @@ class ContractsConverter implements IConverter
         $this->entity = $entity;
         $this->teamsFile   = __DIR__ . '/teams.php';
         $this->playersFile = __DIR__ . '/players.php';
-        $this->personsFile = __DIR__ . '/persons.php';
-
-        if (!file_exists($this->teamsFile)) {
-            throw new CException('File with teams does not exists.');
-        }
-
-        if ((!$this->entity || 'players' == $this->entity) && !file_exists($this->playersFile)) {
-            throw new CException('File with players does not exists.');
-        }
-
-        if ((!$this->entity || 'persons' == $this->entity) && !file_exists($this->personsFile)) {
-            throw new CException('File with persons does not exists.');
-        }
     }
 
     /**
