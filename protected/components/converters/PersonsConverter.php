@@ -15,42 +15,42 @@ class PersonsConverter implements IConverter
      *
      * @var string
      */
-    const PROFILE_COACH = 'тренерский штаб';
+    const PROFILE_COACH = 'couch';
 
     /**
      * Профиль игроков.
      *
      * @var string
      */
-    const PROFILE_PLAYER = 'футболист';
+    const PROFILE_PLAYER = 'player';
 
     /**
      * Профиль администраторов.
      *
      * @var string
      */
-    const PROFILE_ADMINS = 'административная служба';
+    const PROFILE_ADMINS = 'admin';
 
     /**
      * Профиль медиков.
      *
      * @var string
      */
-    const PROFILE_MEDIC = 'медицинская служба';
+    const PROFILE_MEDIC = 'medic';
 
     /**
      * Профиль прессы.
      *
      * @var string
      */
-    const PROFILE_PRESS = 'пресс-служба';
+    const PROFILE_PRESS = 'press';
 
     /**
      * Профиль селекционеров.
      *
      * @var string
      */
-    const PROFILE_SELECT = 'селекционная служба';
+    const PROFILE_SELECT = 'selection';
 
     /**
      * Текущее амплуа нападающего.
@@ -99,42 +99,42 @@ class PersonsConverter implements IConverter
      *
      * @var string
      */
-    const AMPLUA_NEW_FORWARD = 'нападающий';
+    const AMPLUA_NEW_FORWARD = 'striker';
 
     /**
      * Новое амплуа защитника.
      *
      * @var string
      */
-    const AMPLUA_NEW_BACK = 'защитник';
+    const AMPLUA_NEW_BACK = 'defender';
 
     /**
      * Новое амплуа вратаря.
      *
      * @var string
      */
-    const AMPLUA_NEW_GOALKEEPER = 'вратарь';
+    const AMPLUA_NEW_GOALKEEPER = 'goalkeeper';
 
     /**
      * Новое амплуа полузащитника.
      *
      * @var string
      */
-    const AMPLUA_NEW_HALFBACK = 'полузащитник';
+    const AMPLUA_NEW_HALFBACK = 'midfielder';
 
     /**
      * Новое амплуа пз/нп.
      *
      * @var string
      */
-    const AMPLUA_NEW_PZNP = 'пз/нп';
+    const AMPLUA_NEW_PZNP = 'mf/str';
 
     /**
      * Новое амплуа полевого игрока.
      *
      * @var string
      */
-    const AMPLUA_NEW_FIELD = 'полевой игрок';
+    const AMPLUA_NEW_FIELD = 'fielder';
 
     /**
      * Тренеры основной команды.
