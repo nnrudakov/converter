@@ -9,7 +9,7 @@
  * @property string $lastname Фамилия.
  * @property string $middlename Отчество.
  * @property string $birthday Дата рождения.
- * @property string $country Страна (гражданство).
+ * @property string $citizenship Страна (гражданство).
  * @property integer $resident Резидент.
  * @property string $city Город.
  * @property string $biograpy Биография.
@@ -71,11 +71,11 @@ class FcPerson extends DestinationModel
     {
         return [
             ['resident, height, weight', 'numerical', 'integerOnly'=>true],
-            ['firstname, lastname, middlename, country, city, nickname, post', 'length', 'max'=>128],
+            ['firstname, lastname, middlename, citizenship, city, nickname, post', 'length', 'max'=>128],
             ['profile', 'length', 'max'=>45],
             ['amplua', 'length', 'max'=>25],
             ['birthday, biograpy, progress', 'safe'],
-            ['id, firstname, lastname, middlename, birthday, country, resident, city, biograpy, profile, progress, nickname, height, weight, amplua, post', 'safe', 'on'=>'search'],
+            ['id, firstname, lastname, middlename, birthday, citizenship, resident, city, biograpy, profile, progress, nickname, height, weight, amplua, post', 'safe', 'on'=>'search'],
         ];
     }
 
@@ -98,7 +98,7 @@ class FcPerson extends DestinationModel
             'lastname' => 'Фамилия',
             'middlename' => 'Отчество',
             'birthday' => 'Дата рождения',
-            'country' => 'Страна (гражданство)',
+            'citizenship' => 'Страна (гражданство)',
             'resident' => 'Резидент',
             'city' => 'Город',
             'biograpy' => 'Биография',
