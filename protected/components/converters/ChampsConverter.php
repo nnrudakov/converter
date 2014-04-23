@@ -72,6 +72,8 @@ class ChampsConverter implements IConverter
         $this->convertSeasons();
 
         file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
+        file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
+        file_put_contents($this->stagesFile, sprintf(self::FILE_ACCORDANCE, var_export($this->stages, true)));
     }
 
     /**
@@ -106,147 +108,47 @@ class ChampsConverter implements IConverter
     /**
      * Перенос чемпионатов.
      */
-    private function convertPersons()
+    private function convertChamps()
     {
-        $criteria = new CDbCriteria(
-            [
-                'select' => ['id', 'team', 'person', 'datefrom', 'dateto', 'position'],
-                'with'   => ['personTeam', 'personPerson'],
-                'order'  => 't.person'
-            ]
-        );
-        $src_contracts = new PersonsContracts();
+        $criteria = new CDbCriteria();
+        $criteria->select = ['id', 'title', 'short', 'sponsor'];
+        $criteria->order  = 'id';
+        $src_champs = new Tournaments();
 
-        foreach ($src_contracts->findAll($criteria) as $c) {
-            $person = $this->savePerson(
-                $c->personPerson,
-                isset(PersonsConverter::$profiles[$c->personPerson->path])
-                    ? PersonsConverter::$profiles[$c->personPerson->path]
-                    : null,
-                null
-            );
-            $team = $this->saveTeam($c->personTeam, null);
+        foreach ($src_champs->findAll($criteria) as $t) {
+            $champ = new FcChampionship();
+            $champ->title = $t->short;
+            $champ->fullTitle = $t->title;
+            $champ->sponsor = $t->sponsor;
 
-            $contract = new FcContracts();
-            $contract->team_id   = $team->id;
-            $contract->person_id = $person->id;
-            $contract->fromtime  = $c->datefrom;
-            $contract->untiltime = $c->dateto;
-            $contract->number    = 0;
-            $contract->position  = $c->position;
-
-            if (!$contract->save()) {
+            if (!$champ->save()) {
                 throw new CException(
-                    'Person\'s contract not created.' . "\n" .
-                    var_export($contract->getErrors(), true) . "\n" .
-                    $c . "\n"
+                    'Championship not created.' . "\n" .
+                    var_export($champ->getErrors(), true) . "\n" .
+                    $t . "\n"
                 );
             }
-        }
-    }
 
-    /**
-     * Перенос этапов.
-     *
-     * @param Players|Persons $p
-     * @param string          $profile
-     * @param string          $amplua
-     *
-     * @return FcPerson $person
-     *
-     * @throws CException
-     */
-    private function savePerson($p, $profile, $amplua)
-    {
-        $person = FcPerson::model()->findByAttributes(
-            [
-                'firstname'  => $p->first_name,
-                'lastname'   => $p->surname,
-                'middlename' => $p->patronymic,
-                'birthday'   => $p->borned
-            ]
-        );
+            $this->champs[$t->id] = $champ->id;
 
-        if (is_null($person)) {
-            $person = new FcPerson();
-            $person->firstname  = $p->first_name;
-            $person->lastname   = $p->surname;
-            $person->middlename = $p->patronymic;
-            $person->birthday   = $p->borned;
-            $person->country    = $p->citizenship;
-            $person->biograpy   = $p->bio;
-            $person->profile    = $profile;
-            $person->progress   = $p->achivements;
-
-            if ($p instanceof Players) {
-                $person->resident   = $p->resident;
-                $person->nickname   = $p->nickname;
-                $person->height     = $p->height;
-                $person->weight     = $p->weight;
-                $person->amplua     = $amplua;
-            } else {
-                $person->post = $p->post;
+            /* @var Stages $s */
+            foreach ($t->stages as $s) {
+                $stage = new FcStage();
+                $stage->title = $s->short;
+                $stage->fullTitle = $s->title;
+                $stage->style = $s->isCap() ? FcStage::STYLE_CAP : FcStage::STYLE_ROUND;
+                $stage->reglament = $s->reglamentar;
             }
+
+            if (!$stage->save()) {
+                throw new CException(
+                    'Stage not created.' . "\n" .
+                    var_export($stage->getErrors(), true) . "\n" .
+                    $s . "\n"
+                );
+            }
+
+            $this->stages[$s->id] = $stage->id;
         }
-
-        $person->writeFiles = $this->writeFiles;
-        $person->filesUrl = $profile == PersonsConverter::PROFILE_PLAYER ? Players::PHOTO_URL : Persons::PHOTO_URL;
-        $person->setFileParams(
-            $p->id,
-            $profile == PersonsConverter::PROFILE_PLAYER ? FcPerson::FILE_PLAYER : FcPerson::FILE_PERSON
-        );
-
-        if (!$person->save()) {
-            throw new CException(
-                'Player not created.' . "\n" .
-                var_export($person->getErrors(), true) . "\n" .
-                $p . "\n"
-            );
-        }
-
-        return $person;
-    }
-
-    /**
-     * Сохранение команды.
-     *
-     * @param Teams  $t
-     * @param string $staff
-     *
-     * @return FcTeams $team
-     *
-     * @throws CException
-     */
-    private function saveTeam($t, $staff)
-    {
-        $team = FcTeams::model()->findByAttributes(
-            [
-                'title' => $t->title,
-                'city'  => $t->region,
-                'staff' => $staff
-            ]
-        );
-
-        if (is_null($team)) {
-            $team = new FcTeams();
-            $team->title = $t->title;
-            $team->info  = $t->info;
-            $team->city  = $t->region;
-            $team->staff = $staff;
-        }
-
-        $team->writeFiles = $this->writeFiles;
-        $team->filesUrl = Teams::PHOTO_URL;
-        $team->setFileParams($t->id);
-
-        if (!$team->save()) {
-            throw new CException(
-                'Team not created.' . "\n" .
-                var_export($team->getErrors(), true) . "\n" .
-                $t . "\n"
-            );
-        }
-
-        return $team;
     }
 }

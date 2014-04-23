@@ -47,7 +47,11 @@ class Tournaments extends SourceModel
     public function relations()
     {
         return [
-            'stages' => [self::HAS_MANY, 'Stages', 'tournament', 'condition' => 'title!=""', 'order' => 'ord']
+            'stages' => [self::HAS_MANY, 'Stages', 'tournament',
+                'select'    => ['id', 'title', 'short', 'style', 'reglamentar'],
+                'condition' => 'title!=""',
+                'order'     => 'ord'
+            ]
         ];
     }
 
