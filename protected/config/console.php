@@ -27,7 +27,8 @@ return [
             'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
             'charset' => 'utf8',
             'enableParamLogging' => true,
-            'enableProfiling' => true
+            'enableProfiling' => true,
+            'persistent' => true
         ],
         'db_media' => [
             'class'            => 'CDbConnection',
@@ -37,7 +38,8 @@ return [
             'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
             'charset' => 'utf8',
             'enableParamLogging' => true,
-            'enableProfiling' => true
+            'enableProfiling' => true,
+            'persistent' => true
         ],
         'db_dst' => [
             'class'            => 'CDbConnection',
@@ -48,7 +50,8 @@ return [
             'charset' => 'utf8',
             'tablePrefix' => 'fc__',
             'enableParamLogging' => true,
-            'enableProfiling' => true
+            'enableProfiling' => true,
+            'persistent' => true
         ],
         'log' => [
             'class'  => 'CLogRouter',

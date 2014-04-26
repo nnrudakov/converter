@@ -83,13 +83,14 @@ trait TFiles {
      */
     protected function getFile($filename)
     {
+        $url = $this->filesUrl . $filename;
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->filesUrl . $filename);
+        curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $file = curl_exec($ch);
 
         if (curl_errno($ch)) {
-            throw new CException('Curl error: ' . curl_error($ch));
+            throw new CException('Curl error: ' . curl_error($ch) . '. File: ' . $url);
         }
 
         $info = curl_getinfo($ch);
