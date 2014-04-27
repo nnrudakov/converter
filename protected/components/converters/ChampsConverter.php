@@ -70,6 +70,7 @@ class ChampsConverter implements IConverter
     public function convert()
     {
         $this->convertSeasons();
+        $this->convertChamps();
 
         file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
         file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
