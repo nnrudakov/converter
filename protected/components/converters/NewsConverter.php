@@ -36,7 +36,7 @@ class NewsConverter implements IConverter
      */
     public function __construct()
     {
-        $this->newsFile = Yii::getPathOfAlias('accordance') . '/news.php';
+        $this->newsFile = Yii::getPathOfAlias('accordance') . '/news.txt';
 
         if (file_exists($this->newsFile)) {
             $this->savedNews = file($this->newsFile);
