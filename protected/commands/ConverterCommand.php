@@ -52,7 +52,6 @@ EXAMPLES
     * yiic convert contracts
         Convert contracts.
 
-
         - persons: players, persons;
         - writeFiles
 

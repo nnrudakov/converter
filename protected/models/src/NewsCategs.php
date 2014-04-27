@@ -51,7 +51,9 @@ class NewsCategs extends SourceModel
     public function relations()
     {
         return [
-            'links' => [self::HAS_MANY, 'NewsLinks', 'category']
+            'links' => [self::HAS_MANY, 'NewsLinks', 'category',
+                'order' => 'news'
+            ]
         ];
     }
 

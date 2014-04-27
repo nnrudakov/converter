@@ -151,6 +151,7 @@ class ContractsConverter implements IConverter
         $src_contracts = new PersonsContracts();
 
         foreach ($src_contracts->findAll($criteria) as $c) {
+            // @todo проставить правильные профили
             $person = $this->savePerson(
                 $c->personPerson,
                 isset(PersonsConverter::$profiles[$c->personPerson->path])
@@ -191,7 +192,7 @@ class ContractsConverter implements IConverter
      */
     private function savePerson($p, $profile, $amplua)
     {
-        $is_player = PersonsConverter::PROFILE_PLAYER;
+        $is_player = PersonsConverter::PROFILE_PLAYER == $profile;
         $person = FcPerson::model()->findByAttributes(
             [
                 'firstname'  => $p->first_name,
@@ -203,14 +204,14 @@ class ContractsConverter implements IConverter
 
         if (is_null($person)) {
             $person = new FcPerson();
-            $person->firstname  = $p->first_name;
-            $person->lastname   = $p->surname;
-            $person->middlename = $p->patronymic;
-            $person->birthday   = $p->borned;
-            $person->country    = $p->citizenship;
-            $person->biograpy   = $p->bio;
-            $person->profile    = $profile;
-            $person->progress   = $p->achivements;
+            $person->firstname   = $p->first_name;
+            $person->lastname    = $p->surname;
+            $person->middlename  = $p->patronymic;
+            $person->birthday    = $p->borned;
+            $person->citizenship = $p->citizenship;
+            $person->biograpy    = $p->bio;
+            $person->profile     = $profile;
+            $person->progress    = $p->achivements;
 
             if ($p instanceof Players) {
                 $person->resident   = $p->resident;
@@ -264,10 +265,11 @@ class ContractsConverter implements IConverter
 
         if (is_null($team)) {
             $team = new FcTeams();
-            $team->title = $t->title;
-            $team->info  = $t->info;
-            $team->city  = $t->region;
-            $team->staff = $staff;
+            $team->title   = $t->title;
+            $team->info    = $t->info;
+            $team->city    = $t->region;
+            $team->staff   = $staff;
+            $team->country = $t->country;
         }
 
         $team->writeFiles = $this->writeFiles;
