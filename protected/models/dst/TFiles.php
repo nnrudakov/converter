@@ -31,7 +31,6 @@ trait TFiles {
             $remote_file = $this->getFile($name);
 
             if (false === $remote_file) {
-                //echo 'File "' . $name . '" not found.' . "\n";
                 continue;
             }
 
