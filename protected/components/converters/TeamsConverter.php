@@ -15,14 +15,14 @@ class TeamsConverter implements IConverter
      *
      * @var string
      */
-    const MAIN = 'основной';
+    const MAIN = 'basic';
 
     /**
      * Молодёжный состав.
      *
      * @var string
      */
-    const JUNIOR = 'молодёжный';
+    const JUNIOR = 'youth';
 
     /**
      * Идентификатор команды "Краснодар".

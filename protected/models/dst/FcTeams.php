@@ -4,11 +4,13 @@
  * Модель таблицы "{{fc__teams}}".
  *
  * Доступные поля таблицы "{{fc__teams}}":
- * @property integer $id Идентификатор.
- * @property string $title Название.
- * @property string $info Информация о команде.
- * @property string $city Город.
- * @property string $staff Состав.
+ *
+ * @property integer $id      Идентификатор.
+ * @property string  $title   Название.
+ * @property string  $info    Информация о команде.
+ * @property string  $city    Город.
+ * @property string  $staff   Состав.
+ * @property string  $country Страна.
  *
  * Доступные отношения:
  * @property FcContracts[] $contracts
@@ -66,7 +68,6 @@ class FcTeams extends DestinationModel
         return parent::__get($name);
     }
 
-
     /**
      * @return string Таблица модели
      */
@@ -82,10 +83,10 @@ class FcTeams extends DestinationModel
     {
         return [
             ['title', 'required'],
-            ['title, city', 'length', 'max'=>128],
+            ['title, city, country', 'length', 'max'=>128],
             ['staff', 'length', 'max'=>20],
             ['info', 'safe'],
-            ['id, title, info, city, staff', 'safe', 'on'=>'search'],
+            ['id, title, info, city, staff, country', 'safe', 'on'=>'search'],
         ];
     }
 
@@ -105,11 +106,12 @@ class FcTeams extends DestinationModel
     public function attributeLabels()
     {
         return [
-            'id' => 'Идентификатор',
-            'title' => 'Название',
-            'info' => 'Информация о команде',
-            'city' => 'Город',
-            'staff' => 'Состав',
+            'id'      => 'Идентификатор',
+            'title'   => 'Название',
+            'info'    => 'Информация о команде',
+            'city'    => 'Город',
+            'staff'   => 'Состав',
+            'country' => 'Страна'
         ];
     }
 
