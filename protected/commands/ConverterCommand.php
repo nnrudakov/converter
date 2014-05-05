@@ -52,9 +52,11 @@ EXAMPLES
     * yiic convert contracts
         Convert contracts.
 
-
         - persons: players, persons;
         - writeFiles
+
+    * yiic convert champs
+        Convert seasons, championships and stages.
 
 EOD;
     }
@@ -128,8 +130,20 @@ EOD;
         $c->convert();
     }
 
+    /**
+     * Конвертация сезонов, чемпионатов и этапов.
+     *
+     * @throws CException
+     */
+    public function actionChamps()
+    {
+        $c = new ChampsConverter();
+        $c->convert();
+    }
+
     protected function beforeAction($action, $params)
     {
+        $this->ensureDirectory(Yii::getPathOfAlias('accordance'));
         $this->startTime = microtime(true);
 
         return parent::beforeAction($action, $params);
