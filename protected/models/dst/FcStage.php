@@ -64,7 +64,7 @@ class FcStage extends DestinationModel
     public function rules()
     {
         return [
-            ['championship_id, title, fullTitle', 'required'],
+            ['championship_id, fullTitle', 'required'],
             ['group0placefrom, group0placeto, group1placefrom, group1placeto, group2placefrom, group2placeto, group3placefrom, group3placeto, group4placefrom, group4placeto', 'numerical', 'integerOnly'=>true, 'allowEmpty' => true],
             ['title, fullTitle, group0title, group1title, group2title, group3title, group4title', 'length', 'max'=>128],
             ['style', 'length', 'max'=>16],

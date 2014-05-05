@@ -49,7 +49,7 @@ class Tournaments extends SourceModel
         return [
             'stages' => [self::HAS_MANY, 'Stages', 'tournament',
                 'select'    => ['id', 'title', 'short', 'style', 'reglamentar'],
-                'condition' => 'title!=""',
+                'condition' => 'title!=\'\'',
                 'order'     => 'ord'
             ]
         ];
