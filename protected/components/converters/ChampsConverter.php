@@ -135,21 +135,22 @@ class ChampsConverter implements IConverter
             /* @var Stages $s */
             foreach ($t->stages as $s) {
                 $stage = new FcStage();
+                $stage->championship_id = $champ->id;
                 $stage->title = $s->short;
                 $stage->fullTitle = $s->title;
                 $stage->style = $s->isCap() ? FcStage::STYLE_CAP : FcStage::STYLE_ROUND;
                 $stage->reglament = $s->reglamentar;
-            }
 
-            if (!$stage->save()) {
-                throw new CException(
-                    'Stage not created.' . "\n" .
-                    var_export($stage->getErrors(), true) . "\n" .
-                    $s . "\n"
-                );
-            }
+                if (!$stage->save()) {
+                    throw new CException(
+                        'Stage not created.' . "\n" .
+                        var_export($stage->getErrors(), true) . "\n" .
+                        $s . "\n"
+                    );
+                }
 
-            $this->stages[$s->id] = $stage->id;
+                $this->stages[$s->id] = $stage->id;
+            }
         }
     }
 }
