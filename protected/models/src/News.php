@@ -38,6 +38,27 @@
 class News extends SourceModel
 {
     /**
+     * Префикс ссылки на фотографии обычных новостей.
+     *
+     * @var string
+     */
+    const TEXT_URL = 'http://fckrasnodar.ru/app/mods/info_store/res/';
+
+    /**
+     * Префикс ссылки на фотографии фоторепортажей.
+     *
+     * @var string
+     */
+    const PHOTO_URL = 'http://media.fckrasnodar.ru/res/';
+
+    /**
+     * Префикс ссылки на фотографии видеорепортажей.
+     *
+     * @var string
+     */
+    const VIDEO_URL = 'http://media.fckrasnodar.ru/res/';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()
@@ -147,5 +168,53 @@ class News extends SourceModel
     public static function model($className = __CLASS__)
     {
         return parent::model($className);
+    }
+
+    /**
+     * Текстовая новость.
+     *
+     * @return bool
+     */
+    public function isText()
+    {
+        return $this->type == 'text' || !$this->type;
+    }
+
+    /**
+     * Фоторепортаж.
+     *
+     * @return bool
+     */
+    public function isPhoto()
+    {
+        return $this->type == 'photo';
+    }
+
+    /**
+     * Видеорепортаж.
+     *
+     * @return bool
+     */
+    public function isVideo()
+    {
+        return $this->type == 'video' || $this->type == 'blog' || $this->type == 'link';
+    }
+
+    /**
+     * Идентификатор галереии фоторепортажа или видеорепортажа.
+     *
+     * @return integer
+     */
+    public function getGalleyId()
+    {
+        if ($this->isText()) {
+            return 0;
+        }
+
+        if (!preg_match('/(?<id>\d+)\.html$/', $this->link, $m)) {
+             return 0;
+        }
+
+        return $m['id'];
     }
 }

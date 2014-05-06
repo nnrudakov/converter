@@ -1,5 +1,7 @@
 <?php
 
+Yii::setPathOfAlias('accordance', __DIR__ . '/../components/converters/accordance');
+
 // This is the configuration for yiic console application.
 // Any writable CConsoleApplication properties can be configured here.
 return [
@@ -9,6 +11,7 @@ return [
     'preload'    => ['log'],
     // autoloading model and component classes
     'import'     => [
+        'application.models.BaseFcModel',
         'application.models.src.*',
         'application.models.dst.*',
         'application.components.*',
@@ -24,17 +27,19 @@ return [
             'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
             'charset' => 'utf8',
             'enableParamLogging' => true,
-            'enableProfiling' => true
+            'enableProfiling' => true,
+            'persistent' => true
         ],
         'db_media' => [
             'class'            => 'CDbConnection',
-            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodar_media',
+            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodarmedia',
             'emulatePrepare' => true,
             'username' => 'postgres',
             'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',
             'charset' => 'utf8',
             'enableParamLogging' => true,
-            'enableProfiling' => true
+            'enableProfiling' => true,
+            'persistent' => true
         ],
         'db_dst' => [
             'class'            => 'CDbConnection',
@@ -45,16 +50,20 @@ return [
             'charset' => 'utf8',
             'tablePrefix' => 'fc__',
             'enableParamLogging' => true,
-            'enableProfiling' => true
+            'enableProfiling' => true,
+            'persistent' => true
         ],
         'log' => [
             'class'  => 'CLogRouter',
             'routes' => [
                 [
                     'class'  => 'CFileLogRoute',
-                    'levels' => 'error, warning, trace',
+                    'levels' => 'error, warning, trace, info',
                 ],
             ],
         ],
     ],
+    'params'     => [
+        'files_dir' => '/home/rudnik/www/fc/files/',
+    ]
 ];

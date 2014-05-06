@@ -11,46 +11,53 @@
 class PersonsConverter implements IConverter
 {
     /**
+     * Профиль руководства.
+     *
+     * @var string
+     */
+    const PROFILE_HEAD = 'head';
+
+    /**
      * Профиль тренеров.
      *
      * @var string
      */
-    const PROFILE_COACH = 'тренерский штаб';
+    const PROFILE_COACH = 'couch';
 
     /**
      * Профиль игроков.
      *
      * @var string
      */
-    const PROFILE_PLAYER = 'футболист';
+    const PROFILE_PLAYER = 'player';
 
     /**
      * Профиль администраторов.
      *
      * @var string
      */
-    const PROFILE_ADMINS = 'административная служба';
+    const PROFILE_ADMINS = 'admin';
 
     /**
      * Профиль медиков.
      *
      * @var string
      */
-    const PROFILE_MEDIC = 'медицинская служба';
+    const PROFILE_MEDIC = 'medic';
 
     /**
      * Профиль прессы.
      *
      * @var string
      */
-    const PROFILE_PRESS = 'пресс-служба';
+    const PROFILE_PRESS = 'press';
 
     /**
      * Профиль селекционеров.
      *
      * @var string
      */
-    const PROFILE_SELECT = 'селекционная служба';
+    const PROFILE_SELECT = 'selection';
 
     /**
      * Текущее амплуа нападающего.
@@ -99,98 +106,49 @@ class PersonsConverter implements IConverter
      *
      * @var string
      */
-    const AMPLUA_NEW_FORWARD = 'нападающий';
+    const AMPLUA_NEW_FORWARD = 'striker';
 
     /**
      * Новое амплуа защитника.
      *
      * @var string
      */
-    const AMPLUA_NEW_BACK = 'защитник';
+    const AMPLUA_NEW_BACK = 'defender';
 
     /**
      * Новое амплуа вратаря.
      *
      * @var string
      */
-    const AMPLUA_NEW_GOALKEEPER = 'вратарь';
+    const AMPLUA_NEW_GOALKEEPER = 'goalkeeper';
 
     /**
      * Новое амплуа полузащитника.
      *
      * @var string
      */
-    const AMPLUA_NEW_HALFBACK = 'полузащитник';
+    const AMPLUA_NEW_HALFBACK = 'midfielder';
 
     /**
      * Новое амплуа пз/нп.
      *
      * @var string
      */
-    const AMPLUA_NEW_PZNP = 'пз/нп';
+    const AMPLUA_NEW_PZNP = 'mf/str';
 
     /**
      * Новое амплуа полевого игрока.
      *
      * @var string
      */
-    const AMPLUA_NEW_FIELD = 'полевой игрок';
-
-    /**
-     * Тренеры основной команды.
-     *
-     * @var string
-     */
-    const COACHES_MAIN = '634327703968554462';
-
-    /**
-     * Администаторы основной команды.
-     *
-     * @var string
-     */
-    const ADMINS_MAIN = '634327704292614462';
-
-    /**
-     * Медики основной команды.
-     *
-     * @var string
-     */
-    const MEDICS_MAIN = '634460819371416698';
-
-    /**
-     * Пресса основной команды.
-     *
-     * @var string
-     */
-    const PRESS_MAIN = '634460819777869946';
-
-    /**
-     * Селекционеры основной команды.
-     *
-     * @var string
-     */
-    const SELECT_MAIN = '634460820642589405';
-
-    /**
-     * Тренеры молодежной команды.
-     *
-     * @var string
-     */
-    const COACHES_JUNIOR = '634378824976006501';
-
-    /**
-     * Администаторы основной команды.
-     *
-     * @var string
-     */
-    const ADMINS_JUNIOR = '6340036650992571485';
+    const AMPLUA_NEW_FIELD = 'fielder';
 
     /**
      * Соответствие между текущими и новыми амплуа.
      *
      * @var array
      */
-    protected static $ampluas = [
+    public static $ampluas = [
         self::AMPLUA_CUR_FORWARD    => self::AMPLUA_NEW_FORWARD,
         self::AMPLUA_CUR_BACK       => self::AMPLUA_NEW_BACK,
         self::AMPLUA_CUR_GOALKEEPER => self::AMPLUA_NEW_GOALKEEPER,
@@ -204,14 +162,22 @@ class PersonsConverter implements IConverter
      *
      * @var array
      */
-    protected static $profiles = [
-        self::COACHES_MAIN   => self::PROFILE_COACH,
-        self::COACHES_JUNIOR => self::PROFILE_COACH,
-        self::ADMINS_MAIN    => self::PROFILE_ADMINS,
-        self::ADMINS_JUNIOR  => self::PROFILE_ADMINS,
-        self::MEDICS_MAIN    => self::PROFILE_MEDIC,
-        self::PRESS_MAIN     => self::PROFILE_PRESS,
-        self::SELECT_MAIN    => self::PROFILE_SELECT
+    public static $profiles = [
+        '6340036650992571485' => self::PROFILE_COACH,
+        '634003665154257148'  => null, //self::PROFILE_HEAD,
+        '634080560806044986'  => null, //self::PROFILE_HEAD,
+        '634080561412439670'  => self::PROFILE_SELECT,
+        '634327703371394462'  => self::PROFILE_MEDIC,
+        '634327703968554462'  => self::PROFILE_COACH,
+        '634327704292614462'  => self::PROFILE_ADMINS,
+        '634327711323574462'  => null, // сотрудники
+        '634327711464684462'  => self::PROFILE_COACH,
+        '634378824976006501'  => self::PROFILE_COACH,
+        '634460819371416698'  => self::PROFILE_MEDIC,
+        '634460819777869946'  => self::PROFILE_PRESS,
+        '634460820642589405'  => self::PROFILE_SELECT,
+        '635091372580586616'  => self::PROFILE_COACH,
+        '635091373206982443'  => null // персонал
     ];
 
     /**
@@ -220,6 +186,20 @@ class PersonsConverter implements IConverter
      * @var array
      */
     private $persons = [];
+
+    /**
+     * Файл соответствий текущих идентификаторов игроков новым.
+     *
+     * @var string
+     */
+    private $playersFile = '';
+
+    /**
+     * Файл соответствий текущих идентификаторов персон новым.
+     *
+     * @var string
+     */
+    private $personsFile = '';
 
     /**
      * Инициализация.
@@ -236,6 +216,9 @@ class PersonsConverter implements IConverter
      */
     public function __construct($persons = null)
     {
+        $this->playersFile = __DIR__ . '/players.php';
+        $this->personsFile = __DIR__ . '/persons.php';
+
         if (is_null($persons)) {
             $this->persons = array_merge([self::PROFILE_PLAYER], array_keys(self::$profiles));
         } else {
@@ -296,6 +279,7 @@ class PersonsConverter implements IConverter
             'order'  => 'id'
         ]);
         $src_players = new Players();
+        $players = [];
 
         foreach ($src_players->findAll($criteria) as $player) {
             if (empty($player->first_name) && empty($player->surname) && empty($player->patronymic)) {
@@ -324,6 +308,8 @@ class PersonsConverter implements IConverter
                     $player . "\n"
                 );
             }
+
+            $players[$player->id] = $person->id;
         }
 
         return true;
@@ -345,14 +331,15 @@ class PersonsConverter implements IConverter
             $this->persons
         );
         $criteria = new CDbCriteria([
-            'select' => [
+            'select'    => [
                 'id', 'citizenship', 'surname', 'first_name', 'patronymic', 'bio', 'borned', 'post', 'path',
                 'achivements'
             ],
             'condition' => 'path IN (' . implode(', ', $path) . ')',
-            'order'  => 'id'
+            'order'     => 'id'
         ]);
         $src_persons = new Persons();
+        $persons = [];
 
         foreach ($src_persons->findAll($criteria) as $p) {
             if (empty($p->first_name) && empty($p->surname) && empty($p->patronymic)) {
@@ -377,6 +364,8 @@ class PersonsConverter implements IConverter
                     $p . "\n"
                 );
             }
+
+            $persons[$p->id] = $person->id;
         }
 
         return true;

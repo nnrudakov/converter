@@ -43,6 +43,34 @@ class NewsCategories extends DestinationModel
     const ENTITY = 'category';
 
     /**
+     * Категория "чужих" новостей.
+     *
+     * @var integer
+     */
+    const CAT_NEWS_CAT = 2;
+
+    /**
+     * Категория новостей.
+     *
+     * @var integer
+     */
+    const CAT_NEWS = 3;
+
+    /**
+     * Категория фоторепортажей.
+     *
+     * @var integer
+     */
+    const CAT_PHOTO = 4;
+
+    /**
+     * Категория видеорепортажей.
+     *
+     * @var integer
+     */
+    const CAT_VIDEO = 5;
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

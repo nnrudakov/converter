@@ -49,7 +49,7 @@ return [
         ],
         'db_media' => [
             'class'            => 'CDbConnection',
-            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodar_media',
+            'connectionString' => 'pgsql:host=mail.fckrasnodar.ru;port=5432;dbname=krasnodarmedia',
             'emulatePrepare' => true,
             'username' => 'postgres',
             'password' => 'W1CWDhFmt1W9uElLy2TpixOVQgqHCE',

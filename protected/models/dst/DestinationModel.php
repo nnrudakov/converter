@@ -10,9 +10,10 @@
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class DestinationModel extends CActiveRecord
+class DestinationModel extends BaseFcModel
 {
     use TMultilang;
+    use TFiles;
 
     /**
      * Язык.
@@ -34,6 +35,27 @@ class DestinationModel extends CActiveRecord
      * @var CDbConnection
      */
     public static $dbDst = null;
+
+    /**
+     * Префикс внешних файлов модели.
+     *
+     * @var string
+     */
+    public $filesUrl = '';
+
+    /**
+     * Сохранить файлы на диск.
+     *
+     * @var bool
+     */
+    public $writeFiles = false;
+
+    /**
+     * Параметры файла модели.
+     *
+     * @var array
+     */
+    protected $fileParams = [];
 
     /**
      * Модуль модели.
@@ -74,16 +96,6 @@ class DestinationModel extends CActiveRecord
     }
 
     /**
-     * Представление объекта в виде строки.
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        return var_export($this->getAttributes(), true);
-    }
-
-    /**
      * @return CDbConnection|mixed
      * @throws CDbException
      */
@@ -109,9 +121,34 @@ class DestinationModel extends CActiveRecord
         return self::$dbDst;
     }
 
+    /**
+     * Установка параметров файла.
+     *
+     * @param integer $oldId
+     * @param string  $name
+     * @param integer $categoryId
+     * @param string  $fieldId
+     * @param string  $descr
+     * @param integer $sort
+     * @param integer $videoTime
+     */
+    public function setFileParams($oldId, $name = null, $categoryId = 0, $fieldId = null, $descr = '', $sort = 1, $videoTime = 0)
+    {
+        $this->fileParams[] = [
+            'old_id'      => $oldId,
+            'name'        => $name,
+            'category_id' => $categoryId,
+            'field_id'    => $fieldId,
+            'descr'       => $descr,
+            'sort'        => $sort,
+            'video_time'  => $videoTime
+        ];
+    }
+
     protected function afterSave()
     {
         $this->setMultilang();
+        $this->saveFile();
 
         parent::afterSave();
     }

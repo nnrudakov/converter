@@ -2,3 +2,11 @@ assets/
 protected/runtime/
 themes/classic/views/
 .idea/
+players.php
+persons.php
+teams.php
+matches.php
+champs.php
+stages.php
+seasons.php
+news.txt
