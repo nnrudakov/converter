@@ -36,24 +36,20 @@ EXAMPLES
         Convert news.
 
         Parameters:
-
-        - writeFiles
+            - writeFiles
 
     * yiic converter persons
         Convert persons.
 
-        Parameters:
-
-        - persons: players, coaches, admins, medics, press, select.
-
     * yiic converter teams
-        Convert teams.
+        Parameters:
+            - writeFiles
 
     * yiic convert contracts
         Convert contracts.
 
-        - persons: players, persons;
-        - writeFiles
+        Parameters:
+            - writeFiles
 
     * yiic convert champs
         Convert seasons, championships and stages.
@@ -76,25 +72,12 @@ EOD;
     /**
      * Конвертация персон.
      *
-     * @param string $persons Персоны:
-     *                        <ul>
-     *                          <li>players;</li>
-     *                          <li>coaches;</li>
-     *                          <li>admins;</li>
-     *                          <li>medics;</li>
-     *                          <li>press;</li>
-     *                          <li>select.</li>
-     *                        </ul>
-     *
-     * @throws CException
+     * @param bool $writeFiles Сохранить файлы на диск.
      */
-    public function actionPersons ($persons = null)
+    public function actionPersons ($writeFiles = false)
     {
-        if (!is_null($persons) && !in_array($persons, ['players', 'coaches', 'admins', 'medics', 'press', 'select'])) {
-            throw new CException('Wrong "persons".' . "\n");
-        }
-
-        $p = new PersonsConverter($persons);
+        $p = new PersonsConverter();
+        $p->writeFiles = $writeFiles;
         $p->convert();
     }
 
@@ -108,24 +91,15 @@ EOD;
     }
 
     /**
-     * Конвертация контрактов.
+     * Конвертация контрактов, игроков и команд.
      *
-     * @param string $persons Персоны:
-     *                        <ul>
-     *                          <li>players;</li>
-     *                          <li>persons.</li>
-     *                        </ul>
      * @param bool $writeFiles Сохранить файлы на диск.
      *
      * @throws CException
      */
-    public function actionContracts ($persons = null, $writeFiles = false)
+    public function actionContracts ($writeFiles = false)
     {
-        if (!is_null($persons) && !in_array($persons, ['players', 'persons'])) {
-            throw new CException('Wrong "persons".' . "\n");
-        }
-
-        $c = new ContractsConverter($persons);
+        $c = new ContractsConverter();
         $c->writeFiles = $writeFiles;
         $c->convert();
     }

@@ -11,18 +11,116 @@
 class ContractsConverter implements IConverter
 {
     /**
+     * Профиль игроков.
+     *
+     * @var string
+     */
+    const PROFILE_PLAYER = 'player';
+
+    /**
+     * Текущее амплуа нападающего.
+     *
+     * @var string
+     */
+    const AMPLUA_CUR_FORWARD = 1;
+
+    /**
+     * Текущее амплуа защитника.
+     *
+     * @var string
+     */
+    const AMPLUA_CUR_BACK = 2;
+
+    /**
+     * Текущее амплуа вратаря.
+     *
+     * @var string
+     */
+    const AMPLUA_CUR_GOALKEEPER = 3;
+
+    /**
+     * Текущее амплуа полузащитника.
+     *
+     * @var string
+     */
+    const AMPLUA_CUR_HALFBACK = 4;
+
+    /**
+     * Текущее амплуа пз/нп.
+     *
+     * @var string
+     */
+    const AMPLUA_CUR_PZNP = 5;
+
+    /**
+     * Текущее амплуа полевого игрока.
+     *
+     * @var string
+     */
+    const AMPLUA_CUR_FIELD = 7;
+
+    /**
+     * Новое амплуа нападающего.
+     *
+     * @var string
+     */
+    const AMPLUA_NEW_FORWARD = 'striker';
+
+    /**
+     * Новое амплуа защитника.
+     *
+     * @var string
+     */
+    const AMPLUA_NEW_BACK = 'defender';
+
+    /**
+     * Новое амплуа вратаря.
+     *
+     * @var string
+     */
+    const AMPLUA_NEW_GOALKEEPER = 'goalkeeper';
+
+    /**
+     * Новое амплуа полузащитника.
+     *
+     * @var string
+     */
+    const AMPLUA_NEW_HALFBACK = 'midfielder';
+
+    /**
+     * Новое амплуа пз/нп.
+     *
+     * @var string
+     */
+    const AMPLUA_NEW_PZNP = 'mf/str';
+
+    /**
+     * Новое амплуа полевого игрока.
+     *
+     * @var string
+     */
+    const AMPLUA_NEW_FIELD = 'fielder';
+
+    /**
+     * Соответствие между текущими и новыми амплуа.
+     *
+     * @var array
+     */
+    public static $ampluas = [
+        self::AMPLUA_CUR_FORWARD    => self::AMPLUA_NEW_FORWARD,
+        self::AMPLUA_CUR_BACK       => self::AMPLUA_NEW_BACK,
+        self::AMPLUA_CUR_GOALKEEPER => self::AMPLUA_NEW_GOALKEEPER,
+        self::AMPLUA_CUR_HALFBACK   => self::AMPLUA_NEW_HALFBACK,
+        self::AMPLUA_CUR_PZNP       => self::AMPLUA_NEW_PZNP,
+        self::AMPLUA_CUR_FIELD      => self::AMPLUA_NEW_FIELD
+    ];
+
+    /**
      * Сохранить файлы на диск.
      *
      * @var bool
      */
     public $writeFiles = false;
-
-    /**
-     * Сущности для переноса.
-     *
-     * @var string
-     */
-    private $entity = null;
 
     /**
      * Соотвествие текущих команд новым.
@@ -54,16 +152,9 @@ class ContractsConverter implements IConverter
 
     /**
      * Инициализация.
-     *
-     * @param string $entity Персоны (если не указано, то все):
-     *                       <ul>
-     *                         <li>players;</li>
-     *                         <li>persons.</li>
-     *                       </ul>
      */
-    public function __construct($entity = null)
+    public function __construct()
     {
-        $this->entity = $entity;
         $this->teamsFile   = Yii::getPathOfAlias('accordance') . '/teams.php';
         $this->playersFile = Yii::getPathOfAlias('accordance') . '/players.php';
     }
@@ -73,12 +164,36 @@ class ContractsConverter implements IConverter
      */
     public function convert()
     {
-        if (!$this->entity || 'players' == $this->entity) {
-            $this->convertPlayers();
-        }
+        $criteria = new CDbCriteria(
+            [
+                'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
+                'with'   => ['playerTeam', 'playerPlayer'],
+                'order'  => 't.player'
+            ]
+        );
+        $src_contracts = new PlayersContracts();
 
-        if (!$this->entity || 'persons' == $this->entity) {
-            $this->convertPersons();
+        foreach ($src_contracts->findAll($criteria) as $c) {
+            $person = $this->savePerson(
+                $c->playerPlayer,
+                isset(self::$ampluas[$c->playerPlayer->amplua]) ? self::$ampluas[$c->playerPlayer->amplua] : null
+            );
+            $team = $this->saveTeam($c->playerTeam, $c->staff ? FcTeams::JUNIOR : FcTeams::MAIN);
+
+            $contract = new FcContracts();
+            $contract->team_id   = $team->id;
+            $contract->person_id = $person->id;
+            $contract->fromtime  = $c->date_from;
+            $contract->untiltime = $c->date_to;
+            $contract->number    = $c->number;
+
+            if (!$contract->save()) {
+                throw new CException(
+                    'Player\'s contract not created.' . "\n" .
+                    var_export($contract->getErrors(), true) . "\n" .
+                    $c . "\n"
+                );
+            }
         }
 
         file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
@@ -96,47 +211,6 @@ class ContractsConverter implements IConverter
     }
 
     /**
-     * Перенос контрактов игроков.
-     */
-    private function convertPlayers()
-    {
-        $criteria = new CDbCriteria(
-            [
-                'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
-                'with'   => ['playerTeam', 'playerPlayer'],
-                'order'  => 't.player'
-            ]
-        );
-        $src_contracts = new PlayersContracts();
-
-        foreach ($src_contracts->findAll($criteria) as $c) {
-            $person = $this->savePerson(
-                $c->playerPlayer,
-                PersonsConverter::PROFILE_PLAYER,
-                isset(PersonsConverter::$ampluas[$c->playerPlayer->amplua])
-                    ? PersonsConverter::$ampluas[$c->playerPlayer->amplua]
-                    : null
-            );
-            $team = $this->saveTeam($c->playerTeam, $c->staff ? TeamsConverter::JUNIOR : TeamsConverter::MAIN);
-
-            $contract = new FcContracts();
-            $contract->team_id   = $team->id;
-            $contract->person_id = $person->id;
-            $contract->fromtime  = $c->date_from;
-            $contract->untiltime = $c->date_to;
-            $contract->number    = $c->number;
-
-            if (!$contract->save()) {
-                throw new CException(
-                    'Player\'s contract not created.' . "\n" .
-                    var_export($contract->getErrors(), true) . "\n" .
-                    $c . "\n"
-                );
-            }
-        }
-    }
-
-    /**
      * Перенос контрактов персон.
      */
     private function convertPersons()
@@ -151,7 +225,6 @@ class ContractsConverter implements IConverter
         $src_contracts = new PersonsContracts();
 
         foreach ($src_contracts->findAll($criteria) as $c) {
-            // @todo проставить правильные профили
             $person = $this->savePerson(
                 $c->personPerson,
                 isset(PersonsConverter::$profiles[$c->personPerson->path])
@@ -183,16 +256,14 @@ class ContractsConverter implements IConverter
      * Сохранение персоны.
      *
      * @param Players|Persons $p
-     * @param string          $profile
      * @param string          $amplua
      *
      * @return FcPerson $person
      *
      * @throws CException
      */
-    private function savePerson($p, $profile, $amplua)
+    private function savePerson($p, $amplua)
     {
-        $is_player = PersonsConverter::PROFILE_PLAYER == $profile;
         $person = FcPerson::model()->findByAttributes(
             [
                 'firstname'  => $p->first_name,
@@ -210,23 +281,18 @@ class ContractsConverter implements IConverter
             $person->birthday    = $p->borned;
             $person->citizenship = $p->citizenship;
             $person->biograpy    = $p->bio;
-            $person->profile     = $profile;
+            $person->profile     = self::PROFILE_PLAYER;
             $person->progress    = $p->achivements;
-
-            if ($p instanceof Players) {
-                $person->resident   = $p->resident;
-                $person->nickname   = $p->nickname;
-                $person->height     = $p->height;
-                $person->weight     = $p->weight;
-                $person->amplua     = $amplua;
-            } else {
-                $person->post = $p->post;
-            }
+            $person->resident    = $p->resident;
+            $person->nickname    = $p->nickname;
+            $person->height      = $p->height;
+            $person->weight      = $p->weight;
+            $person->amplua      = $amplua;
         }
 
         $person->writeFiles = $this->writeFiles;
-        $person->filesUrl = $is_player ? Players::PHOTO_URL : Persons::PHOTO_URL;
-        $person->setFileParams($p->id, $profile == $is_player ? FcPerson::FILE_PLAYER : FcPerson::FILE_PERSON);
+        $person->filesUrl = Players::PHOTO_URL;// : Persons::PHOTO_URL;
+        $person->setFileParams($p->id, FcPerson::FILE_PLAYER);// : FcPerson::FILE_PERSON);
 
         if (!$person->save()) {
             throw new CException(
@@ -236,9 +302,7 @@ class ContractsConverter implements IConverter
             );
         }
 
-        if ($is_player) {
-            $this->players[$p->id] = (int) $person->id;
-        }
+        $this->players[$p->id] = (int) $person->id;
 
         return $person;
     }

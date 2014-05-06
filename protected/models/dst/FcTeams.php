@@ -45,6 +45,20 @@ class FcTeams extends DestinationModel
     const FILE_FIELD = 'team_file';
 
     /**
+     * Основной состав.
+     *
+     * @var string
+     */
+    const MAIN = 'basic';
+
+    /**
+     * Молодёжный состав.
+     *
+     * @var string
+     */
+    const JUNIOR = 'youth';
+
+    /**
      * Список персон команды.
      *
      * @var FcPerson[]
