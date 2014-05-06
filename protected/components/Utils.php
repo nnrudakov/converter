@@ -81,4 +81,19 @@ class Utils
 
         return $string;
     }
+
+    /**
+     * Очистка текста от лишних тегов.
+     *
+     * @param string $string
+     *
+     * @return string
+     */
+    public static function clearText($string)
+    {
+        $string = strip_tags($string, '<p><a>');
+        $string = preg_replace('/<p\s.+?>/', '<p>', $string);
+
+        return $string;
+    }
 }

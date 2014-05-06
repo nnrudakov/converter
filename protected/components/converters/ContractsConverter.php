@@ -280,9 +280,9 @@ class ContractsConverter implements IConverter
             $person->middlename  = $p->patronymic;
             $person->birthday    = $p->borned;
             $person->citizenship = $p->citizenship;
-            $person->biograpy    = $p->bio;
+            $person->biograpy    = Utils::clearText($p->bio);
             $person->profile     = self::PROFILE_PLAYER;
-            $person->progress    = $p->achivements;
+            $person->progress    = Utils::clearText($p->achivements);
             $person->resident    = $p->resident;
             $person->nickname    = $p->nickname;
             $person->height      = $p->height;
