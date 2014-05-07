@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Модель таблицы "fc__news__categories".
+ * Модель таблицы "fc__persons__categories".
  *
- * Доступные поля таблицы "fc__news__categories":
+ * Доступные поля таблицы "fc__persons__categories":
  *
  * @property string  $category_id      Идентификатор категории.
  * @property string  $parent_id        Идентификатор родительской категории.
@@ -19,56 +19,67 @@
  * @property string  $meta_keywords    SEO ключевые слова.
  *
  * Доступные отношения:
- * @property NewsCategoryObjects[] $links Связка с объектами.
+ * @property PersonsCategoryObjects[] $links Связка с объектами.
  *
  * @package    converter
- * @subpackage newscategories
+ * @subpackage personscategories
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class NewsCategories extends KitCategories
+class PersonsCategories extends KitCategories
 {
     /**
      * Модуль.
      *
      * @var string
      */
-    const MODULE = 'news';
+    const MODULE = 'persons';
 
     /**
-     * Категория "чужих" новостей.
-     *
-     * @var integer
+     * Категории клуба.
      */
-    const CAT_NEWS_CAT = 2;
+    const CLUB_LEADS    = 6;
+    const CLUB_SPORT    = 7;
+    const CLUB_LAW      = 8;
+    const CLUB_SECURITY = 9;
+    const CLUB_MARKET   = 10;
+    const CLUB_TECH     = 11;
+    const CLUB_MEDIC    = 19;
 
     /**
-     * Категория новостей.
-     *
-     * @var integer
+     * Категории основного состава команды.
      */
-    const CAT_NEWS = 3;
+    const FC_COACHES = 12;
+    const FC_ADMIN   = 13;
+    const FC_MEDIC   = 14;
+    const FC_PRESS   = 15;
+    const FC_SELECT  = 16;
 
     /**
-     * Категория фоторепортажей.
-     *
-     * @var integer
+     * Категории молодежного состава.
      */
-    const CAT_PHOTO = 4;
+    const FCM_COACHES = 17;
+    const FCM_PERSONS = 18;
 
     /**
-     * Категория видеорепортажей.
-     *
-     * @var integer
+     * Категории второй команды.
      */
-    const CAT_VIDEO = 5;
+    const FC2_COACHES = 20;
+    const FC2_PERSONS = 21;
+
+    /**
+     * Категории команды академии.
+     */
+    const A_LEADS   = 22;
+    const A_COACHES = 23;
+    const A_PERSONS = 24;
 
     /**
      * @return string Таблица модели
      */
     public function tableName()
     {
-        return '{{news__categories}}';
+        return '{{persons__categories}}';
     }
 
     /**
@@ -77,7 +88,7 @@ class NewsCategories extends KitCategories
     public function relations()
     {
         return [
-            'links' => [self::HAS_MANY, 'NewsCategoryObjects', 'category_id']
+            'links' => [self::HAS_MANY, 'PersonsCategoryObjects', 'category_id']
         ];
     }
 }

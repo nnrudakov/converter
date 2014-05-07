@@ -43,20 +43,6 @@ class FcPerson extends DestinationModel
     const FILE_PLAYER = 'images/players.orig.%d.png';
 
     /**
-     * Имя файла оригинала персоны.
-     *
-     * @var string
-     */
-    const FILE_PERSON = 'images/person.orig.%d.jpg';
-
-    /**
-     * Имя поля связки файла.
-     *
-     * @param string
-     */
-    const FILE_FIELD = 'person_file';
-
-    /**
      * @return string Таблица модели
      */
     public function tableName()

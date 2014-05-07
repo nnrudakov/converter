@@ -11,254 +11,73 @@
 class PersonsConverter implements IConverter
 {
     /**
-     * Профиль руководства.
+     * Сохранить файлы на диск.
      *
-     * @var string
+     * @var bool
      */
-    const PROFILE_HEAD = 'head';
+    public $writeFiles = false;
 
     /**
-     * Профиль тренеров.
-     *
-     * @var string
-     */
-    const PROFILE_COACH = 'couch';
-
-    /**
-     * Профиль игроков.
-     *
-     * @var string
-     */
-    const PROFILE_PLAYER = 'player';
-
-    /**
-     * Профиль администраторов.
-     *
-     * @var string
-     */
-    const PROFILE_ADMINS = 'admin';
-
-    /**
-     * Профиль медиков.
-     *
-     * @var string
-     */
-    const PROFILE_MEDIC = 'medic';
-
-    /**
-     * Профиль прессы.
-     *
-     * @var string
-     */
-    const PROFILE_PRESS = 'press';
-
-    /**
-     * Профиль селекционеров.
-     *
-     * @var string
-     */
-    const PROFILE_SELECT = 'selection';
-
-    /**
-     * Текущее амплуа нападающего.
-     *
-     * @var string
-     */
-    const AMPLUA_CUR_FORWARD = 1;
-
-    /**
-     * Текущее амплуа защитника.
-     *
-     * @var string
-     */
-    const AMPLUA_CUR_BACK = 2;
-
-    /**
-     * Текущее амплуа вратаря.
-     *
-     * @var string
-     */
-    const AMPLUA_CUR_GOALKEEPER = 3;
-
-    /**
-     * Текущее амплуа полузащитника.
-     *
-     * @var string
-     */
-    const AMPLUA_CUR_HALFBACK = 4;
-
-    /**
-     * Текущее амплуа пз/нп.
-     *
-     * @var string
-     */
-    const AMPLUA_CUR_PZNP = 5;
-
-    /**
-     * Текущее амплуа полевого игрока.
-     *
-     * @var string
-     */
-    const AMPLUA_CUR_FIELD = 7;
-
-    /**
-     * Новое амплуа нападающего.
-     *
-     * @var string
-     */
-    const AMPLUA_NEW_FORWARD = 'striker';
-
-    /**
-     * Новое амплуа защитника.
-     *
-     * @var string
-     */
-    const AMPLUA_NEW_BACK = 'defender';
-
-    /**
-     * Новое амплуа вратаря.
-     *
-     * @var string
-     */
-    const AMPLUA_NEW_GOALKEEPER = 'goalkeeper';
-
-    /**
-     * Новое амплуа полузащитника.
-     *
-     * @var string
-     */
-    const AMPLUA_NEW_HALFBACK = 'midfielder';
-
-    /**
-     * Новое амплуа пз/нп.
-     *
-     * @var string
-     */
-    const AMPLUA_NEW_PZNP = 'mf/str';
-
-    /**
-     * Новое амплуа полевого игрока.
-     *
-     * @var string
-     */
-    const AMPLUA_NEW_FIELD = 'fielder';
-
-    /**
-     * Соответствие между текущими и новыми амплуа.
+     * Соответствие между категориями.
      *
      * @var array
      */
-    public static $ampluas = [
-        self::AMPLUA_CUR_FORWARD    => self::AMPLUA_NEW_FORWARD,
-        self::AMPLUA_CUR_BACK       => self::AMPLUA_NEW_BACK,
-        self::AMPLUA_CUR_GOALKEEPER => self::AMPLUA_NEW_GOALKEEPER,
-        self::AMPLUA_CUR_HALFBACK   => self::AMPLUA_NEW_HALFBACK,
-        self::AMPLUA_CUR_PZNP       => self::AMPLUA_NEW_PZNP,
-        self::AMPLUA_CUR_FIELD      => self::AMPLUA_NEW_FIELD
+    public static $categories = [
+        '634003665154257148'  => PersonsCategories::CLUB_LEADS,
+        '634327702653514462'  => PersonsCategories::CLUB_SPORT,
+        '634327702802704462'  => PersonsCategories::CLUB_LAW,
+        '634327702966294462'  => PersonsCategories::CLUB_SECURITY,
+        '634327703093084462'  => PersonsCategories::CLUB_MARKET,
+        '634327703204764462'  => PersonsCategories::CLUB_TECH,
+        '634327703371394462'  => PersonsCategories::CLUB_MEDIC,
+        '634327703968554462'  => PersonsCategories::FC_COACHES,
+        '634327704292614462'  => PersonsCategories::FC_ADMIN,
+        '634460819371416698'  => PersonsCategories::FC_MEDIC,
+        '634460819777869946'  => PersonsCategories::FC_PRESS,
+        '634460820642589405'  => PersonsCategories::FC_SELECT,
+        '634080561412439670'  => PersonsCategories::FC_SELECT,
+        '634378824976006501'  => PersonsCategories::FCM_COACHES,
+        '6340036650992571485' => PersonsCategories::FCM_PERSONS,
+        '635091372580586616'  => PersonsCategories::FC2_COACHES,
+        '635091373206982443'  => PersonsCategories::FC2_PERSONS,
+        '634080560806044986'  => PersonsCategories::A_LEADS,
+        '634327711464684462'  => PersonsCategories::A_COACHES,
+        '634327711323574462'  => PersonsCategories::A_PERSONS
+
     ];
-
-    /**
-     * Соответствие между текущим и новым профилем.
-     *
-     * @var array
-     */
-    public static $profiles = [
-        '6340036650992571485' => self::PROFILE_COACH,
-        '634003665154257148'  => null, //self::PROFILE_HEAD,
-        '634080560806044986'  => null, //self::PROFILE_HEAD,
-        '634080561412439670'  => self::PROFILE_SELECT,
-        '634327703371394462'  => self::PROFILE_MEDIC,
-        '634327703968554462'  => self::PROFILE_COACH,
-        '634327704292614462'  => self::PROFILE_ADMINS,
-        '634327711323574462'  => null, // сотрудники
-        '634327711464684462'  => self::PROFILE_COACH,
-        '634378824976006501'  => self::PROFILE_COACH,
-        '634460819371416698'  => self::PROFILE_MEDIC,
-        '634460819777869946'  => self::PROFILE_PRESS,
-        '634460820642589405'  => self::PROFILE_SELECT,
-        '635091372580586616'  => self::PROFILE_COACH,
-        '635091373206982443'  => null // персонал
-    ];
-
-    /**
-     * Переносимые персоны.
-     *
-     * @var array
-     */
-    private $persons = [];
-
-    /**
-     * Файл соответствий текущих идентификаторов игроков новым.
-     *
-     * @var string
-     */
-    private $playersFile = '';
-
-    /**
-     * Файл соответствий текущих идентификаторов персон новым.
-     *
-     * @var string
-     */
-    private $personsFile = '';
-
-    /**
-     * Инициализация.
-     *
-     * @param string $persons Персоны (если не указано, то все):
-     *                        <ul>
-     *                          <li>players;</li>
-     *                          <li>coaches;</li>
-     *                          <li>admins;</li>
-     *                          <li>medics;</li>
-     *                          <li>press;</li>
-     *                          <li>select.</li>
-     *                        </ul>
-     */
-    public function __construct($persons = null)
-    {
-        $this->playersFile = __DIR__ . '/players.php';
-        $this->personsFile = __DIR__ . '/persons.php';
-
-        if (is_null($persons)) {
-            $this->persons = array_merge([self::PROFILE_PLAYER], array_keys(self::$profiles));
-        } else {
-            switch ($persons) {
-                case 'players':
-                    $this->persons = [self::PROFILE_PLAYER];
-                    break;
-                case 'coaches':
-                    $this->persons = [self::COACHES_MAIN, self::COACHES_JUNIOR];
-                    break;
-                case 'admins':
-                    $this->persons = [self::ADMINS_MAIN, self::ADMINS_JUNIOR];
-                    break;
-                case 'medics':
-                    $this->persons = [self::MEDICS_MAIN];
-                    break;
-                case 'press':
-                    $this->persons = [self::PRESS_MAIN];
-                    break;
-                case 'select':
-                    $this->persons = [self::SELECT_MAIN];
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
 
     /**
      * Запуск преобразований.
      */
     public function convert()
     {
-        if (self::PROFILE_PLAYER == reset($this->persons)) {
-            array_shift($this->persons);
-            $this->convertPlayers();
-        }
+        $criteria = new CDbCriteria();
+        $criteria->select = [
+            'id', 'citizenship', 'surname', 'first_name', 'patronymic', 'bio', 'borned', 'post', 'path', 'achivements'
+        ];
+        $criteria->condition = 'surname!=\'\' AND first_name!=\'\' AND patronymic!=\'\'';
+        $criteria->order = 'id';
+        $src_persons = new Persons();
 
-        if (!empty($this->persons)) {
-            $this->convertPersons();
+        foreach ($src_persons->findAll($criteria) as $p) {
+            $person = new FcPerson();
+            $person->firstname  = $p->first_name;
+            $person->lastname   = $p->surname;
+            $person->middlename = $p->patronymic;
+            $person->birthday   = $p->borned;
+            $person->country    = $p->citizenship;
+            $person->biograpy   = Utils::clearText($p->bio);
+            $person->profile    = isset(self::$profiles[$p->path]) ? self::$profiles[$p->path] : null;
+            $person->progress   = Utils::clearText($p->achivements);
+            $person->post       = $p->post;
+
+            if (!$person->save()) {
+                throw new CException(
+                    'Person not created.' . "\n" .
+                    var_export($person->getErrors(), true) . "\n" .
+                    $p . "\n"
+                );
+            }
         }
     }
 
@@ -310,62 +129,6 @@ class PersonsConverter implements IConverter
             }
 
             $players[$player->id] = $person->id;
-        }
-
-        return true;
-    }
-
-    /**
-     * Перенос остальных персон.
-     *
-     * @return bool
-     *
-     * @throws CException
-     */
-    private function convertPersons()
-    {
-        $path = array_map(
-            function ($p) {
-                return 'CAST(' . $p .' AS VARCHAR)';
-            },
-            $this->persons
-        );
-        $criteria = new CDbCriteria([
-            'select'    => [
-                'id', 'citizenship', 'surname', 'first_name', 'patronymic', 'bio', 'borned', 'post', 'path',
-                'achivements'
-            ],
-            'condition' => 'path IN (' . implode(', ', $path) . ')',
-            'order'     => 'id'
-        ]);
-        $src_persons = new Persons();
-        $persons = [];
-
-        foreach ($src_persons->findAll($criteria) as $p) {
-            if (empty($p->first_name) && empty($p->surname) && empty($p->patronymic)) {
-                continue;
-            }
-
-            $person = new FcPerson();
-            $person->firstname  = $p->first_name;
-            $person->lastname   = $p->surname;
-            $person->middlename = $p->patronymic;
-            $person->birthday   = $p->borned;
-            $person->country    = $p->citizenship;
-            $person->biograpy   = $p->bio;
-            $person->profile    = isset(self::$profiles[$p->path]) ? self::$profiles[$p->path] : null;
-            $person->progress   = $p->achivements;
-            $person->post       = $p->post;
-
-            if (!$person->save()) {
-                throw new CException(
-                    'Person not created.' . "\n" .
-                    var_export($person->getErrors(), true) . "\n" .
-                    $p . "\n"
-                );
-            }
-
-            $persons[$p->id] = $person->id;
         }
 
         return true;
