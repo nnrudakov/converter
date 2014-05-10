@@ -26,7 +26,7 @@
  * @property integer $sort             Порядок в категории.
  *
  * Доступные отношения:
- * @property NewsCategoryObjects[] $links Связка с объектами.
+ * @property NewsCategoryObjects[] $links Связка с категориями.
  *
  * @package    converter
  * @subpackage newsobjects
@@ -91,7 +91,7 @@ class NewsObjects extends KitObjects
     public function relations()
     {
         return [
-            'links' => [self::HAS_ONE, 'NewsCategoryObjects', 'object_id']
+            'links' => [self::HAS_MANY, 'NewsCategoryObjects', 'object_id']
         ];
     }
 }

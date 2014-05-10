@@ -26,7 +26,9 @@
  * @property integer $sort             Порядок в категории.
  *
  * Доступные отношения:
- * @property PersonsCategoryObjects[] $links Связка с объектами.
+ * @property PersonsCategoryObjects[] $links Связка с категориями.
+ * @property PersonsObjectSets        $set   Набор свойств.
+ * @property PersonsObjectData[]      $data  Данные.
  *
  * @package    converter
  * @subpackage newsobjects
@@ -70,7 +72,9 @@ class PersonsObjects extends KitObjects
     public function relations()
     {
         return [
-            'links' => [self::HAS_ONE, 'PersonsCategoryObjects', 'object_id']
+            'links' => [self::HAS_ONE,  'PersonsCategoryObjects', 'object_id'],
+            'set'   => [self::HAS_ONE,  'PersonsObjectSets',      'object_id'],
+            'data'  => [self::HAS_MANY, 'PersonsObjectData',      'object_id']
         ];
     }
 }

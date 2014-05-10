@@ -5,7 +5,10 @@
  *
  * Доступные поля таблицы "{{persons__object_data_text}}":
  * @property string $data_id Идентификатор данных.
- * @property string $data Данные.
+ * @property string $data    Данные.
+ *
+ * Доступные отношения:
+ * @property PersonsObjectData $object_data
  *
  * @package    converter
  * @subpackage personsobjectdatatext
@@ -27,6 +30,6 @@ class PersonsObjectDataText extends KitObjectDataText
      */
     public function relations()
     {
-        return [];
+        return ['object_data' => [self::BELONGS_TO, 'PersonsObjectData', 'data_id']];
     }
 }
