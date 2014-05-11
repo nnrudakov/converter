@@ -53,6 +53,28 @@ class ChampsConverter implements IConverter
     private $stagesFile = '';
 
     /**
+     * Строка для прогресс-бара.
+     *
+     * @var string
+     */
+    private $progressFormat = "\rSeasons: %d. Championships: %d. Stages: %d.";
+
+    /**
+     * @var integer
+     */
+    private $doneSeasons = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneChamps = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneStages = 0;
+
+    /**
      * Инициализация.
      *
      * @throws CException
@@ -69,6 +91,7 @@ class ChampsConverter implements IConverter
      */
     public function convert()
     {
+        $this->progress();
         $this->convertSeasons();
         $this->convertChamps();
 
@@ -102,6 +125,9 @@ class ChampsConverter implements IConverter
                 );
             }
 
+            $this->doneSeasons++;
+            $this->progress();
+
             $this->seasons[$s->id] = (int) $season->id;
         }
     }
@@ -130,6 +156,8 @@ class ChampsConverter implements IConverter
                 );
             }
 
+            $this->doneChamps++;
+            $this->progress();
             $this->champs[$t->id] = $champ->id;
 
             /* @var Stages $s */
@@ -149,8 +177,15 @@ class ChampsConverter implements IConverter
                     );
                 }
 
+                $this->doneStages++;
+                $this->progress();
                 $this->stages[$s->id] = $stage->id;
             }
         }
+    }
+
+    private function progress()
+    {
+        printf($this->progressFormat, $this->doneSeasons, $this->doneChamps, $this->doneStages);
     }
 }

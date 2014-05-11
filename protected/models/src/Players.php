@@ -21,6 +21,9 @@
  * @property string $profile .
  * @property string $zenit .
  *
+ * Доступные отношения:
+ * @property Playerstats $stat
+ *
  * @package    converter
  * @subpackage players
  * @author     rudnik <nnrudakov@gmail.com>
@@ -65,7 +68,9 @@ class Players extends SourceModel
      */
     public function relations()
     {
-        return [];
+        return [
+            'stat' => [self::HAS_MANY, 'Playerstats', 'player']
+        ];
     }
 
     /**
