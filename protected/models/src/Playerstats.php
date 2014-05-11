@@ -23,6 +23,7 @@
  * Доступные отношения:
  * @property Seasons     $statSeason
  * @property Tournaments $statTour
+ * @property Teams       $statTeam
  * @property Players     $statPlayer
  *
  * @package    converter
@@ -59,6 +60,7 @@ class Playerstats extends SourceModel
         return [
             'statSeason' => [self::BELONGS_TO, 'Seasons', 'season', 'joinType' => 'INNER JOIN'],
             'statTour'   => [self::BELONGS_TO, 'Tournaments', 'tournament', 'joinType' => 'INNER JOIN'],
+            'statTeam'   => [self::BELONGS_TO, 'Teams', 'team', 'joinType' => 'INNER JOIN'],
             'statPlayer' => [self::BELONGS_TO, 'Players', 'player', 'joinType' => 'INNER JOIN']
         ];
     }

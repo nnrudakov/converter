@@ -137,6 +137,20 @@ class PlayersConverter implements IConverter
     private $players = [];
 
     /**
+     * Сезоны для статистики.
+     *
+     * @var array
+     */
+    private $seasons = [];
+
+    /**
+     * Чемпионаты для статистики.
+     *
+     * @var array
+     */
+    private $champs = [];
+
+    /**
      * Файл соответствий текущих идентификаторов игроков новым.
      *
      * @var string
@@ -184,6 +198,10 @@ class PlayersConverter implements IConverter
     {
         $this->teamsFile   = Yii::getPathOfAlias('accordance') . '/teams.php';
         $this->playersFile = Yii::getPathOfAlias('accordance') . '/players.php';
+
+        $cc = new ChampsConverter();
+        $this->seasons = $cc->getSeasons();
+        $this->champs  = $cc->getChamps();
     }
 
     /**
@@ -227,8 +245,12 @@ class PlayersConverter implements IConverter
             $this->progress();
         }
 
+        ksort($this->players);
+        ksort($this->teams);
         file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
         file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
+
+        $this->saveStat();
     }
 
     public function getTeams()
@@ -294,7 +316,6 @@ class PlayersConverter implements IConverter
 
         $this->donePlayers++;
         $this->progress();
-        $this->saveStat($p, $player);
 
         $this->players[$p->id] = (int) $player->id;
 
@@ -353,14 +374,64 @@ class PlayersConverter implements IConverter
     /**
      * Сохранение статистики игрока.
      *
-     * @param Players  $p
-     * @param FcPerson $player
-     *
      * @throws CException
      */
-    private function saveStat(Players $p, FcPerson $player)
+    private function saveStat()
     {
+        foreach ($this->players as $p_id => $player_id) {
+            $p = Players::model()->findByPk($p_id);
 
+            foreach ($p->stat as $s) {
+                if (empty($this->seasons[$s->season])    ||
+                    empty($this->champs[$s->tournament]) ||
+                    empty($this->teams[$s->team])) {
+                    continue;
+                }
+
+                $stat = FcPersonstat::model()->exists(
+                    new CDbCriteria([
+                        'condition' => 'person_id=:player_id AND team_id=:team_id AND season_id=:season_id AND ' .
+                            'championship_id=:champ_id',
+                        'params' => [
+                            ':player_id' => $player_id,
+                            ':team_id'   => $this->teams[$s->team],
+                            ':season_id' => $this->seasons[$s->season],
+                            ':champ_id'  => $this->champs[$s->tournament]
+                        ]
+                    ])
+                );
+
+                if ($stat) {
+                    continue;
+                }
+
+                $stat = new FcPersonstat();
+                $stat->person_id        = $player_id;
+                $stat->team_id          = $this->teams[$s->team];
+                $stat->season_id        = $this->seasons[$s->season];
+                $stat->championship_id  = $this->champs[$s->tournament];
+                $stat->gamecount        = $s->played;
+                $stat->startcount       = $s->begined;
+                $stat->benchcount       = $s->wentin;
+                $stat->replacementcount = $s->wentout;
+                $stat->goalcount        = $s->goals;
+                $stat->assistcount      = $s->helps;
+                $stat->yellowcount      = $s->warnings;
+                $stat->redcount         = $s->removed;
+                $stat->playtime         = $s->timeplayed;
+
+                if (!$stat->save()) {
+                    throw new CException(
+                        'Statistic not created.' . "\n" .
+                        var_export($stat->getErrors(), true) . "\n" .
+                        $s . "\n"
+                    );
+                }
+
+                $this->doneStats++;
+                $this->progress();
+            }
+        }
     }
 
     private function progress()

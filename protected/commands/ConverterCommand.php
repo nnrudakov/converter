@@ -92,7 +92,6 @@ EOD;
         $start = microtime(true);
         $this->actionNews($writeFiles);
         $this->showTime($start);
-        print "\n\n";
     }
 
     /**

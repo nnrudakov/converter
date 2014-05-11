@@ -95,6 +95,9 @@ class ChampsConverter implements IConverter
         $this->convertSeasons();
         $this->convertChamps();
 
+        ksort($this->seasons);
+        ksort($this->champs);
+        ksort($this->stages);
         file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
         file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
         file_put_contents($this->stagesFile, sprintf(self::FILE_ACCORDANCE, var_export($this->stages, true)));
@@ -182,6 +185,16 @@ class ChampsConverter implements IConverter
                 $this->stages[$s->id] = $stage->id;
             }
         }
+    }
+
+    public function getSeasons()
+    {
+        return file_exists($this->seasonsFile) ? include $this->seasonsFile : [];
+    }
+
+    public function getChamps()
+    {
+        return file_exists($this->champsFile) ? include $this->champsFile : [];
     }
 
     private function progress()
