@@ -14,6 +14,9 @@
  * @property string $profile .
  * @property string $web .
  *
+ * Доступные отношения:
+ * @property Teamstats[] $stat
+ *
  * @package    converter
  * @subpackage teams
  * @author     rudnik <nnrudakov@gmail.com>
@@ -55,7 +58,32 @@ class Teams extends SourceModel
      */
     public function relations()
     {
-        return [];
+        return [
+            'stat' => [self::HAS_MANY, 'Teamstats', 'team',
+                'condition' =>
+                    'season IN (' . implode(', ', array_map(
+                        function ($season) {
+                            /* @var Seasons $season */
+                            return $season->id;
+                        },
+                        Seasons::model()->findAll(new CDbCriteria(['select' => 'id']))
+                    )). ') AND ' .
+                    'tournament IN (' . implode(', ', array_map(
+                        function ($tour) {
+                            /* @var Tournaments $season */
+                            return $tour->id;
+                        },
+                        Tournaments::model()->findAll(new CDbCriteria(['select' => 'id']))
+                    )) . ') AND '.
+                    'stage IN (' . implode(', ', array_map(
+                        function ($stage) {
+                            /* @var Stages $season */
+                            return $stage->id;
+                        },
+                        Stages::model()->findAll(new CDbCriteria(['select' => 'id']))
+                    )) . ')'
+            ]
+        ];
     }
 
     /**

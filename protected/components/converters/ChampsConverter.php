@@ -161,14 +161,14 @@ class ChampsConverter implements IConverter
 
             $this->doneChamps++;
             $this->progress();
-            $this->champs[$t->id] = $champ->id;
+            $this->champs[$t->id] = (int) $champ->id;
 
             /* @var Stages $s */
             foreach ($t->stages as $s) {
                 $stage = new FcStage();
                 $stage->championship_id = $champ->id;
                 $stage->title = $s->short;
-                $stage->fullTitle = $s->title;
+                $stage->fullTitle = $s->title ?: $t->title;
                 $stage->style = $s->isCap() ? FcStage::STYLE_CAP : FcStage::STYLE_ROUND;
                 $stage->reglament = $s->reglamentar;
 
@@ -182,7 +182,7 @@ class ChampsConverter implements IConverter
 
                 $this->doneStages++;
                 $this->progress();
-                $this->stages[$s->id] = $stage->id;
+                $this->stages[$s->id] = (int) $stage->id;
             }
         }
     }
@@ -195,6 +195,11 @@ class ChampsConverter implements IConverter
     public function getChamps()
     {
         return file_exists($this->champsFile) ? include $this->champsFile : [];
+    }
+
+    public function getStages()
+    {
+        return file_exists($this->stagesFile) ? include $this->stagesFile : [];
     }
 
     private function progress()

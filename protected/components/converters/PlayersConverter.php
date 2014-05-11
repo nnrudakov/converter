@@ -151,6 +151,13 @@ class PlayersConverter implements IConverter
     private $champs = [];
 
     /**
+     * Этапы для статистики.
+     *
+     * @var array
+     */
+    private $stages = [];
+
+    /**
      * Файл соответствий текущих идентификаторов игроков новым.
      *
      * @var string
@@ -169,7 +176,7 @@ class PlayersConverter implements IConverter
      *
      * @var string
      */
-    private $progressFormat = "\rTeams: %d. Players: %d. Contracts: %d. Players statistics: %d";
+    private $progressFormat = "\rTeams: %d. Players: %d. Contracts: %d. Players statistics: %d. Teams statistics: %d.";
 
     /**
      * @var integer
@@ -189,7 +196,12 @@ class PlayersConverter implements IConverter
     /**
      * @var integer
      */
-    private $doneStats = 0;
+    private $donePlayerStats = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneTeamStats = 0;
 
     /**
      * Инициализация.
@@ -203,6 +215,7 @@ class PlayersConverter implements IConverter
         $cc = new ChampsConverter();
         $this->seasons = $cc->getSeasons();
         $this->champs  = $cc->getChamps();
+        $this->stages  = $cc->getStages();
     }
 
     /**
@@ -251,7 +264,8 @@ class PlayersConverter implements IConverter
         file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
         file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
 
-        $this->saveStat();
+        $this->savePlayerStat();
+        $this->saveTeamStat();
     }
 
     public function getTeams()
@@ -377,7 +391,7 @@ class PlayersConverter implements IConverter
      *
      * @throws CException
      */
-    private function saveStat()
+    private function savePlayerStat()
     {
         foreach ($this->players as $p_id => $player_id) {
             $p = Players::model()->findByPk($p_id);
@@ -425,13 +439,73 @@ class PlayersConverter implements IConverter
 
                 if (!$stat->save()) {
                     throw new CException(
-                        'Statistic not created.' . "\n" .
+                        'Player statistic not created.' . "\n" .
                         var_export($stat->getErrors(), true) . "\n" .
                         $s . "\n"
                     );
                 }
 
-                $this->doneStats++;
+                $this->donePlayerStats++;
+                $this->progress();
+            }
+        }
+    }
+
+    /**
+     * Cохранение статистики команды.
+     *
+     * @throws CException
+     */
+    private function saveTeamStat()
+    {
+        foreach ($this->teams as $t_id => $team_id) {
+            $t = Teams::model()->findByPk($t_id);
+
+            foreach ($t->stat as $s) {
+                // пропускаем отсуствующие сезоны
+                if (empty($this->seasons[$s->season])    ||
+                    empty($this->champs[$s->tournament]) ||
+                    empty($this->stages[$s->stage])) {
+                    continue;
+                }
+
+                // пропускаем левую статистику
+                $stat = FcTeamstat::model()->exists(
+                    new CDbCriteria([
+                        'condition' => 'team_id=:team_id AND season_id=:season_id AND stage_id=:stage_id',
+                        'params' => [
+                            ':team_id'   => $team_id,
+                            ':season_id' => $this->seasons[$s->season],
+                            ':stage_id'  => $this->stages[$s->stage],
+                        ]
+                    ])
+                );
+
+                if ($stat) {
+                    continue;
+                }
+
+                $stat = new FcTeamstat();
+                $stat->team_id       = $team_id;
+                $stat->season_id     = $this->seasons[$s->season];
+                $stat->stage_id      = $this->stages[$s->stage];
+                $stat->gamecount     = $s->played;
+                $stat->wincount      = $s->won;
+                $stat->drawcount     = $s->drawn;
+                $stat->losscount     = $s->lost;
+                $stat->goalsconceded = $s->goalsfor;
+                $stat->goals         = $s->goalsagainst;
+                $stat->score         = $s->points;
+
+                if (!$stat->save()) {
+                    throw new CException(
+                        'Team statistic not created.' . "\n" .
+                        var_export($stat->getErrors(), true) . "\n" .
+                        $s . "\n"
+                    );
+                }
+
+                $this->doneTeamStats++;
                 $this->progress();
             }
         }
@@ -439,6 +513,13 @@ class PlayersConverter implements IConverter
 
     private function progress()
     {
-        printf($this->progressFormat, $this->doneTeams, $this->donePlayers, $this->doneContracts, $this->doneStats);
+        printf(
+            $this->progressFormat,
+            $this->doneTeams,
+            $this->donePlayers,
+            $this->doneContracts,
+            $this->donePlayerStats,
+            $this->doneTeamStats
+        );
     }
 }
