@@ -199,6 +199,7 @@ class PlayersConverter implements IConverter
         $this->teamsFile   = Yii::getPathOfAlias('accordance') . '/teams.php';
         $this->playersFile = Yii::getPathOfAlias('accordance') . '/players.php';
 
+        // сезоны и чемпионаты уже должны быть пересены
         $cc = new ChampsConverter();
         $this->seasons = $cc->getSeasons();
         $this->champs  = $cc->getChamps();
@@ -382,12 +383,14 @@ class PlayersConverter implements IConverter
             $p = Players::model()->findByPk($p_id);
 
             foreach ($p->stat as $s) {
+                // пропускаем отсуствующие сезоны
                 if (empty($this->seasons[$s->season])    ||
                     empty($this->champs[$s->tournament]) ||
                     empty($this->teams[$s->team])) {
                     continue;
                 }
 
+                // пропускаем левую статистику
                 $stat = FcPersonstat::model()->exists(
                     new CDbCriteria([
                         'condition' => 'person_id=:player_id AND team_id=:team_id AND season_id=:season_id AND ' .
