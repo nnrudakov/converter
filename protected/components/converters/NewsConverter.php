@@ -32,6 +32,23 @@ class NewsConverter implements IConverter
     private $savedNews = [];
 
     /**
+     * Строка для прогресс-бара.
+     *
+     * @var string
+     */
+    private $progressFormat = "\rCategories: %d. News: %d.";
+
+    /**
+     * @var integer
+     */
+    private $doneCats = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneNews = 0;
+
+    /**
      * Инициализация.
      */
     public function __construct()
@@ -48,6 +65,7 @@ class NewsConverter implements IConverter
      */
     public function convert()
     {
+        $this->progress();
         // категории и связанные с ними объекты
         $this->saveCategories(0, NewsCategories::CAT_NEWS_CAT);
         // объекты без категорий
@@ -100,6 +118,9 @@ class NewsConverter implements IConverter
                 if (!$category->save()) {
                     throw new CException($category->getErrorMsg('Category not created.', $cat));
                 }
+
+                $this->doneCats++;
+                $this->progress();
             }
 
             $this->saveObjects($cat, $category);
@@ -187,6 +208,9 @@ class NewsConverter implements IConverter
             throw new CException($object->getErrorMsg('Object is not created.', $oldObject));
         }
 
+        $this->doneNews++;
+        $this->progress();
+
         $fh = fopen($this->newsFile, 'a');
         fwrite($fh, $oldObject->id . "\n");
         fclose($fh);
@@ -239,5 +263,10 @@ class NewsConverter implements IConverter
                 }
             }
         }
+    }
+
+    private function progress()
+    {
+        printf($this->progressFormat, $this->doneCats, $this->doneNews);
     }
 }

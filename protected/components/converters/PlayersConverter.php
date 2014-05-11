@@ -8,7 +8,7 @@
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class ContractsConverter implements IConverter
+class PlayersConverter implements IConverter
 {
     /**
      * Профиль игроков.
@@ -137,6 +137,20 @@ class ContractsConverter implements IConverter
     private $players = [];
 
     /**
+     * Сезоны для статистики.
+     *
+     * @var array
+     */
+    private $seasons = [];
+
+    /**
+     * Чемпионаты для статистики.
+     *
+     * @var array
+     */
+    private $champs = [];
+
+    /**
      * Файл соответствий текущих идентификаторов игроков новым.
      *
      * @var string
@@ -151,12 +165,44 @@ class ContractsConverter implements IConverter
     private $teamsFile = '';
 
     /**
+     * Строка для прогресс-бара.
+     *
+     * @var string
+     */
+    private $progressFormat = "\rTeams: %d. Players: %d. Contracts: %d. Players statistics: %d";
+
+    /**
+     * @var integer
+     */
+    private $doneTeams = 0;
+
+    /**
+     * @var integer
+     */
+    private $donePlayers = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneContracts = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneStats = 0;
+
+    /**
      * Инициализация.
      */
     public function __construct()
     {
         $this->teamsFile   = Yii::getPathOfAlias('accordance') . '/teams.php';
         $this->playersFile = Yii::getPathOfAlias('accordance') . '/players.php';
+
+        // сезоны и чемпионаты уже должны быть пересены
+        $cc = new ChampsConverter();
+        $this->seasons = $cc->getSeasons();
+        $this->champs  = $cc->getChamps();
     }
 
     /**
@@ -164,6 +210,7 @@ class ContractsConverter implements IConverter
      */
     public function convert()
     {
+        $this->progress();
         $criteria = new CDbCriteria(
             [
                 'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
@@ -174,7 +221,7 @@ class ContractsConverter implements IConverter
         $src_contracts = new PlayersContracts();
 
         foreach ($src_contracts->findAll($criteria) as $c) {
-            $person = $this->savePerson(
+            $player = $this->savePlayer(
                 $c->playerPlayer,
                 isset(self::$ampluas[$c->playerPlayer->amplua]) ? self::$ampluas[$c->playerPlayer->amplua] : null
             );
@@ -182,7 +229,7 @@ class ContractsConverter implements IConverter
 
             $contract = new FcContracts();
             $contract->team_id   = $team->id;
-            $contract->person_id = $person->id;
+            $contract->person_id = $player->id;
             $contract->fromtime  = $c->date_from;
             $contract->untiltime = $c->date_to;
             $contract->number    = $c->number;
@@ -194,10 +241,17 @@ class ContractsConverter implements IConverter
                     $c . "\n"
                 );
             }
+
+            $this->doneContracts++;
+            $this->progress();
         }
 
+        ksort($this->players);
+        ksort($this->teams);
         file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
         file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
+
+        $this->saveStat();
     }
 
     public function getTeams()
@@ -213,16 +267,16 @@ class ContractsConverter implements IConverter
     /**
      * Сохранение персоны.
      *
-     * @param Players|Persons $p
-     * @param string          $amplua
+     * @param Players $p
+     * @param string  $amplua
      *
-     * @return FcPerson $person
+     * @return FcPerson $player
      *
      * @throws CException
      */
-    private function savePerson($p, $amplua)
+    private function savePlayer($p, $amplua)
     {
-        $person = FcPerson::model()->findByAttributes(
+        $player = FcPerson::model()->findByAttributes(
             [
                 'firstname'  => $p->first_name,
                 'lastname'   => $p->surname,
@@ -231,38 +285,42 @@ class ContractsConverter implements IConverter
             ]
         );
 
-        if (is_null($person)) {
-            $person = new FcPerson();
-            $person->firstname   = $p->first_name;
-            $person->lastname    = $p->surname;
-            $person->middlename  = $p->patronymic;
-            $person->birthday    = $p->borned;
-            $person->citizenship = $p->citizenship;
-            $person->biograpy    = Utils::clearText($p->bio);
-            $person->profile     = self::PROFILE_PLAYER;
-            $person->progress    = Utils::clearText($p->achivements);
-            $person->resident    = $p->resident;
-            $person->nickname    = $p->nickname;
-            $person->height      = $p->height;
-            $person->weight      = $p->weight;
-            $person->amplua      = $amplua;
+        if (!is_null($player)) {
+            return $player;
         }
 
-        $person->writeFiles = $this->writeFiles;
-        $person->filesUrl = Players::PHOTO_URL;
-        $person->setFileParams($p->id, FcPerson::FILE);
+        $player = new FcPerson();
+        $player->writeFiles = $this->writeFiles;
+        $player->filesUrl = Players::PHOTO_URL;
+        $player->setFileParams($p->id, FcPerson::FILE);
+        $player->firstname   = $p->first_name;
+        $player->lastname    = $p->surname;
+        $player->middlename  = $p->patronymic;
+        $player->birthday    = $p->borned;
+        $player->citizenship = $p->citizenship;
+        $player->biograpy    = Utils::clearText($p->bio);
+        $player->profile     = self::PROFILE_PLAYER;
+        $player->progress    = Utils::clearText($p->achivements);
+        $player->resident    = $p->resident;
+        $player->nickname    = $p->nickname;
+        $player->height      = $p->height;
+        $player->weight      = $p->weight;
+        $player->amplua      = $amplua;
 
-        if (!$person->save()) {
+        if (!$player->save()) {
             throw new CException(
                 'Player not created.' . "\n" .
-                var_export($person->getErrors(), true) . "\n" .
+                var_export($player->getErrors(), true) . "\n" .
                 $p . "\n"
             );
         }
 
-        $this->players[$p->id] = (int) $person->id;
+        $this->donePlayers++;
+        $this->progress();
 
-        return $person;
+        $this->players[$p->id] = (int) $player->id;
+
+        return $player;
     }
 
     /**
@@ -285,18 +343,19 @@ class ContractsConverter implements IConverter
             ]
         );
 
-        if (is_null($team)) {
-            $team = new FcTeams();
-            $team->title   = $t->title;
-            $team->info    = $t->info;
-            $team->city    = $t->region;
-            $team->staff   = $staff;
-            $team->country = $t->country;
+        if (!is_null($team)) {
+            return $team;
         }
 
+        $team = new FcTeams();
         $team->writeFiles = $this->writeFiles;
         $team->filesUrl = Teams::PHOTO_URL;
         $team->setFileParams($t->id);
+        $team->title   = $t->title;
+        $team->info    = $t->info;
+        $team->city    = $t->region;
+        $team->staff   = $staff;
+        $team->country = $t->country;
 
         if (!$team->save()) {
             throw new CException(
@@ -306,8 +365,80 @@ class ContractsConverter implements IConverter
             );
         }
 
+        $this->doneTeams++;
+        $this->progress();
         $this->teams[$t->id] = (int) $team->id;
 
         return $team;
+    }
+
+    /**
+     * Сохранение статистики игрока.
+     *
+     * @throws CException
+     */
+    private function saveStat()
+    {
+        foreach ($this->players as $p_id => $player_id) {
+            $p = Players::model()->findByPk($p_id);
+
+            foreach ($p->stat as $s) {
+                // пропускаем отсуствующие сезоны
+                if (empty($this->seasons[$s->season])    ||
+                    empty($this->champs[$s->tournament]) ||
+                    empty($this->teams[$s->team])) {
+                    continue;
+                }
+
+                // пропускаем левую статистику
+                $stat = FcPersonstat::model()->exists(
+                    new CDbCriteria([
+                        'condition' => 'person_id=:player_id AND team_id=:team_id AND season_id=:season_id AND ' .
+                            'championship_id=:champ_id',
+                        'params' => [
+                            ':player_id' => $player_id,
+                            ':team_id'   => $this->teams[$s->team],
+                            ':season_id' => $this->seasons[$s->season],
+                            ':champ_id'  => $this->champs[$s->tournament]
+                        ]
+                    ])
+                );
+
+                if ($stat) {
+                    continue;
+                }
+
+                $stat = new FcPersonstat();
+                $stat->person_id        = $player_id;
+                $stat->team_id          = $this->teams[$s->team];
+                $stat->season_id        = $this->seasons[$s->season];
+                $stat->championship_id  = $this->champs[$s->tournament];
+                $stat->gamecount        = $s->played;
+                $stat->startcount       = $s->begined;
+                $stat->benchcount       = $s->wentin;
+                $stat->replacementcount = $s->wentout;
+                $stat->goalcount        = $s->goals;
+                $stat->assistcount      = $s->helps;
+                $stat->yellowcount      = $s->warnings;
+                $stat->redcount         = $s->removed;
+                $stat->playtime         = $s->timeplayed;
+
+                if (!$stat->save()) {
+                    throw new CException(
+                        'Statistic not created.' . "\n" .
+                        var_export($stat->getErrors(), true) . "\n" .
+                        $s . "\n"
+                    );
+                }
+
+                $this->doneStats++;
+                $this->progress();
+            }
+        }
+    }
+
+    private function progress()
+    {
+        printf($this->progressFormat, $this->doneTeams, $this->donePlayers, $this->doneContracts, $this->doneStats);
     }
 }
