@@ -21,6 +21,9 @@
  * @property string $profile .
  * @property string $zenit .
  *
+ * Доступные отношения:
+ * @property Playerstats[] $stat
+ *
  * @package    converter
  * @subpackage players
  * @author     rudnik <nnrudakov@gmail.com>
@@ -65,7 +68,32 @@ class Players extends SourceModel
      */
     public function relations()
     {
-        return [];
+        return [
+            'stat' => [self::HAS_MANY, 'Playerstats', 'player',
+                'condition' =>
+                    'season IN (' . implode(', ', array_map(
+                        function ($season) {
+                            /* @var Seasons $season */
+                            return $season->id;
+                        },
+                        Seasons::model()->findAll(new CDbCriteria(['select' => 'id']))
+                    )). ') AND ' .
+                    'tournament IN (' . implode(', ', array_map(
+                        function ($tour) {
+                            /* @var Tournaments $season */
+                            return $tour->id;
+                        },
+                        Tournaments::model()->findAll(new CDbCriteria(['select' => 'id']))
+                    )) . ') AND '.
+                    'team IN (' . implode(', ', array_map(
+                        function ($team) {
+                            /* @var Teams $season */
+                            return $team->id;
+                        },
+                        Teams::model()->findAll(new CDbCriteria(['select' => 'id']))
+                    )) . ')'
+            ]
+        ];
     }
 
     /**
