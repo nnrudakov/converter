@@ -80,10 +80,11 @@ class NewsConverter implements IConverter
             $criteria->addCondition('parentid IS NULL');
         }
         $src_cats = new NewsCategs();
+        $nc = new NewsCategories();
 
         foreach ($src_cats->findAll($criteria) as $i => $cat) {
             $name = Utils::nameString($cat->name);
-            $category = NewsCategories::model()->findByAttributes(['parent_id' => $newParent, 'name' => $name]);
+            $category = $nc->findByAttributes(['parent_id' => $newParent, 'name' => $name]);
 
             if (is_null($category)) {
                 $category = new NewsCategories();
