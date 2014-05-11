@@ -20,11 +20,18 @@
 class PersonsSets extends KitSets
 {
     /**
+     * Необходимый набор свойств.
+     *
+     * @var integer
+     */
+    const SET = 1;
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()
     {
-        return '{{kit__sets}}';
+        return '{{persons__sets}}';
     }
 
     /**

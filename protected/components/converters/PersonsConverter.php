@@ -58,79 +58,113 @@ class PersonsConverter implements IConverter
         $criteria->condition = 'surname!=\'\' AND first_name!=\'\' AND patronymic!=\'\'';
         $criteria->order = 'id';
         $src_persons = new Persons();
+        $sort = 1;
 
         foreach ($src_persons->findAll($criteria) as $p) {
-            $person = new FcPerson();
-            $person->firstname  = $p->first_name;
-            $person->lastname   = $p->surname;
-            $person->middlename = $p->patronymic;
-            $person->birthday   = $p->borned;
-            $person->country    = $p->citizenship;
-            $person->biograpy   = Utils::clearText($p->bio);
-            $person->profile    = isset(self::$profiles[$p->path]) ? self::$profiles[$p->path] : null;
-            $person->progress   = Utils::clearText($p->achivements);
-            $person->post       = $p->post;
-
-            if (!$person->save()) {
-                throw new CException(
-                    'Person not created.' . "\n" .
-                    var_export($person->getErrors(), true) . "\n" .
-                    $p . "\n"
-                );
-            }
+            $person = $this->savePerson($p, $sort);
+            $this->saveData($p, $person->getId());
+            $sort++;
         }
     }
 
     /**
-     * Перенос игроков.
+     * Сохранение объекта.
      *
-     * @return bool
+     * @param Persons $p
+     * @param integer $sort
+     *
+     * @return PersonsObjects
      *
      * @throws CException
      */
-    private function convertPlayers()
+    private function savePerson(Persons $p, $sort)
     {
-        $criteria = new CDbCriteria([
-            'select' => [
-                'id', 'amplua', 'citizenship', 'resident', 'bio', 'surname', 'first_name', 'patronymic', 'nickname',
-                'borned', 'height', 'weight', 'achivements'
-            ],
-            'order'  => 'id'
-        ]);
-        $src_players = new Players();
-        $players = [];
+        $person = new PersonsObjects();
+        $person->writeFiles = $this->writeFiles;
+        $person->filesUrl = Persons::PHOTO_URL;
+        $person->setFileParams($p->id, PersonsObjects::FILE);
+        $person->title = $p->first_name . ' ' . $p->patronymic . ' ' . $p->surname;
+        $person->name = Utils::nameString($person->title);
+        $person->main_category_id = isset(self::$categories[$p->path])
+            ? self::$categories[$p->path]
+            : PersonsCategories::NO_CAT;
+        $person->lang_id = PersonsObjects::LANG;
+        $person->content = Utils::clearText($p->bio);
+        $person->publish = 1;
+        $person->publish_date_on = date('Y-m-d H:i:s');
+        $person->created = $person->publish_date_on;
+        $person->sort = $sort;
 
-        foreach ($src_players->findAll($criteria) as $player) {
-            if (empty($player->first_name) && empty($player->surname) && empty($player->patronymic)) {
-                continue;
-            }
-
-            $person = new FcPerson();
-            $person->firstname  = $player->first_name;
-            $person->lastname   = $player->surname;
-            $person->middlename = $player->patronymic;
-            $person->birthday   = $player->borned;
-            $person->country    = $player->citizenship;
-            $person->resident   = $player->resident;
-            $person->biograpy   = $player->bio;
-            $person->profile    = self::PROFILE_PLAYER;
-            $person->progress   = $player->achivements;
-            $person->nickname   = $player->nickname;
-            $person->height     = $player->height;
-            $person->weight     = $player->weight;
-            $person->amplua     = isset(self::$ampluas[$player->amplua]) ? self::$ampluas[$player->amplua] : null;
-
-            if (!$person->save()) {
-                throw new CException(
-                    'Player not created.' . "\n" .
-                    var_export($person->getErrors(), true) . "\n" .
-                    $player . "\n"
-                );
-            }
-
-            $players[$player->id] = $person->id;
+        if (!$person->save()) {
+            throw new CException(
+                'Person not created.' . "\n" .
+                var_export($person->getErrors(), true) . "\n" .
+                $p . "\n"
+            );
         }
 
-        return true;
+        return $person;
+    }
+
+    /**
+     * Сохранение свойств.
+     *
+     * @param Persons $p
+     * @param integer $personId
+     *
+     * @throws CException
+     */
+    private function saveData(Persons $p, $personId)
+    {
+        $set = new PersonsSets();
+        $set = $set->findByPk(PersonsSets::SET);
+        $object_set = new PersonsObjectSets();
+        $object_set->object_id = $personId;
+        $object_set->set_id = $set->getId();
+        $object_set->save();
+
+        foreach ($set->properties as $prop) {
+            switch ($prop->name) {
+                case 'city':
+                    $value = $p->citizenship;
+                    break;
+                case 'birthday':
+                    $value = $p->borned;
+                    break;
+                case 'post':
+                    $value = $p->post;
+                    break;
+                case 'progress':
+                    $value = Utils::clearText($p->achivements);
+                    break;
+                default:
+                    $value = '';
+                    break;
+            }
+
+            if ($value) {
+                $object_data = new PersonsObjectData();
+                $object_data->object_id = $personId;
+                $object_data->property_id = $prop->getId();
+
+                if (!$object_data->save()) {
+                    throw new CException(
+                        'Person\'s data not created.' . "\n" .
+                        var_export($object_data->getErrors(), true) . "\n"
+                    );
+                }
+
+                $object_value = new PersonsObjectDataText();
+                $object_value->data_id = $object_data->getId();
+                $object_value->data = $value;
+
+                if (!$object_value->save()) {
+                    throw new CException(
+                        'Person\'s value not created.' . "\n" .
+                        var_export($object_value->getErrors(), true) . "\n"
+                    );
+                }
+            }
+        }
     }
 }

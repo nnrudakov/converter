@@ -165,8 +165,13 @@ class KitObjects extends DestinationModel
         }
 
         $link_class = ucfirst($this->module->name) . 'CategoryObjects';
+        $categories = [$this->main_category_id];
 
-        foreach ([$this->main_category_id, $this->minorCategoryId] as $category_id) {
+        if ($this->minorCategoryId != $this->main_category_id) {
+            $categories[] = $this->minorCategoryId;
+        }
+
+        foreach ($categories as $category_id) {
             /* @var KitCategoryObjects $link */
             $link = new $link_class();
             $link->category_id = $category_id;

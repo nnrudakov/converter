@@ -46,4 +46,14 @@ class KitSets extends DestinationModel
     {
         return parent::model($className);
     }
+
+    /**
+     * Получение идентификатора.
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->set_id;
+    }
 }

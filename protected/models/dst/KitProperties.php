@@ -59,4 +59,14 @@ class KitProperties extends DestinationModel
     {
         return parent::model($className);
     }
+
+    /**
+     * Получение идентификатора.
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->property_id;
+    }
 }

@@ -35,8 +35,11 @@ class NewsCategories extends KitCategories
      */
     const MODULE = 'news';
 
+    // Cвои категории в "types" - "Типы категорий", id = 1.
+
     /**
      * Категория "чужих" новостей.
+     * "Категории новостей" - news.
      *
      * @var integer
      */
@@ -44,6 +47,7 @@ class NewsCategories extends KitCategories
 
     /**
      * Категория новостей.
+     * "Новости" - news.
      *
      * @var integer
      */
@@ -51,6 +55,7 @@ class NewsCategories extends KitCategories
 
     /**
      * Категория фоторепортажей.
+     * "Фоторепортаж" - photo.
      *
      * @var integer
      */
@@ -58,6 +63,7 @@ class NewsCategories extends KitCategories
 
     /**
      * Категория видеорепортажей.
+     * "Видеорепортаж" - video.
      *
      * @var integer
      */

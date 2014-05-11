@@ -211,48 +211,6 @@ class ContractsConverter implements IConverter
     }
 
     /**
-     * Перенос контрактов персон.
-     */
-    private function convertPersons()
-    {
-        $criteria = new CDbCriteria(
-            [
-                'select' => ['id', 'team', 'person', 'datefrom', 'dateto', 'position'],
-                'with'   => ['personTeam', 'personPerson'],
-                'order'  => 't.person'
-            ]
-        );
-        $src_contracts = new PersonsContracts();
-
-        foreach ($src_contracts->findAll($criteria) as $c) {
-            $person = $this->savePerson(
-                $c->personPerson,
-                isset(PersonsConverter::$profiles[$c->personPerson->path])
-                    ? PersonsConverter::$profiles[$c->personPerson->path]
-                    : null,
-                null
-            );
-            $team = $this->saveTeam($c->personTeam, null);
-
-            $contract = new FcContracts();
-            $contract->team_id   = $team->id;
-            $contract->person_id = $person->id;
-            $contract->fromtime  = $c->datefrom;
-            $contract->untiltime = $c->dateto;
-            $contract->number    = 0;
-            $contract->position  = $c->position;
-
-            if (!$contract->save()) {
-                throw new CException(
-                    'Person\'s contract not created.' . "\n" .
-                    var_export($contract->getErrors(), true) . "\n" .
-                    $c . "\n"
-                );
-            }
-        }
-    }
-
-    /**
      * Сохранение персоны.
      *
      * @param Players|Persons $p
@@ -291,8 +249,8 @@ class ContractsConverter implements IConverter
         }
 
         $person->writeFiles = $this->writeFiles;
-        $person->filesUrl = Players::PHOTO_URL;// : Persons::PHOTO_URL;
-        $person->setFileParams($p->id, FcPerson::FILE_PLAYER);// : FcPerson::FILE_PERSON);
+        $person->filesUrl = Players::PHOTO_URL;
+        $person->setFileParams($p->id, FcPerson::FILE);
 
         if (!$person->save()) {
             throw new CException(

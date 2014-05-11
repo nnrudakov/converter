@@ -48,4 +48,14 @@ class KitObjectData extends DestinationModel
     {
         return parent::model($className);
     }
+
+    /**
+     * Получение идентификатора.
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->data_id;
+    }
 }
