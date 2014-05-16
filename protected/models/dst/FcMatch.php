@@ -26,10 +26,6 @@
  * @property integer $home_score          Счет хозяев.
  * @property integer $guest_score         Счет гостей.
  *
- * Доступные отношения:
- * @property FcEvent[]     $events
- * @property FcPlacement[] $places
- *
  * @package    converter
  * @subpackage fcmatch
  * @author     rudnik <nnrudakov@gmail.com>
@@ -51,7 +47,7 @@ class FcMatch extends DestinationModel
     public function rules()
     {
         return [
-            ['season_id, stage_id, tour, home_team_id, guest_team_id, country, city, stadium, referee_main', 'required'],
+            ['season_id, stage_id, home_team_id, guest_team_id', 'required'],
             ['season_id, stage_id, home_team_id, guest_team_id, viewers, held, home_score, guest_score', 'numerical', 'integerOnly'=>true],
             ['tour, country, city, stadium, referee_main, referee_line_1, referee_line_2, referee_main_helper, delegate, inspector, weather', 'length', 'max'=>128],
             ['matchtime', 'safe'],
@@ -64,10 +60,7 @@ class FcMatch extends DestinationModel
      */
     public function relations()
     {
-        return [
-            'events' => [self::HAS_MANY, 'FcEvent', 'match_id'],
-            'places' => [self::HAS_MANY. 'FcPacement', 'match_id']
-        ];
+        return [];
     }
 
     /**

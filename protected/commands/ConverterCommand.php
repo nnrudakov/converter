@@ -60,6 +60,9 @@ EXAMPLES
     * yiic convert champs
         Convert seasons, championships and stages.
 
+    * yiic convert matches
+        Convert matches (inc. events, placments).
+
 EOD;
     }
 
@@ -85,6 +88,12 @@ EOD;
         print "Action 'players'\n";
         $start = microtime(true);
         $this->actionPlayers($writeFiles);
+        $this->showTime($start);
+        print "\n";
+
+        print "Action 'matches'.\n";
+        $start = microtime(true);
+        $this->actionMatches();
         $this->showTime($start);
         print "\n";
 
@@ -150,6 +159,15 @@ EOD;
     {
         $c = new ChampsConverter();
         $c->convert();
+    }
+
+    /**
+     * Конвертация матчей, их событий и расстановки.
+     */
+    public function actionMatches()
+    {
+        $m = new MatchesConverter();
+        $m->convert();
     }
 
     protected function beforeAction($action, $params)
