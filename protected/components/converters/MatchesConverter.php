@@ -165,6 +165,7 @@ class MatchesConverter implements IConverter
             $this->progress();
 
             $this->saveMatchEvents($m, $match);
+            $this->saveMatchPlaces($m, $match);
         }
     }
 
@@ -190,9 +191,9 @@ class MatchesConverter implements IConverter
                 $event->person_id = $this->players[$e->player];
             }
 
-            $event->gametime = $e->firetime;
+            $event->gametime     = $e->firetime;
             $event->gametimeplus = $e->injurytime;
-            $event->comment = $e->comment;
+            $event->comment      = $e->comment;
 
             foreach ($e->getAttributes() as $n => $v) {
                 if (!(bool) $v) {
@@ -266,10 +267,36 @@ class MatchesConverter implements IConverter
      *
      * @param Matches $m
      * @param FcMatch $match
+     *
+     * @throws CException
      */
     private function saveMatchPlaces(Matches $m, FcMatch $match)
     {
-        // @todo
+        foreach ($m->players as $p) {
+            if (!isset($this->teams[$p->team]) || !isset($this->players[$p->player])) {
+                continue;
+            }
+
+            $placement = new FcPlacement();
+            $placement->match_id  = $match->id;
+            $placement->team_id   = $this->teams[$p->team];
+            $placement->person_id = $this->players[$p->player];
+            $placement->captain   = (int) $p->captain;
+            $placement->xpos      = (int) $p->schemaleft;
+            $placement->ypos      = (int) $p->schematop;
+            $placement->staff     = $p->isMain() ? FcPlacement::STAFF_MAIN : FcPlacement::STAFF_SPARE;
+
+            if (!$placement->save()) {
+                throw new CException(
+                    'Match plac ement not created.' . "\n" .
+                    var_export($placement->getErrors(), true) . "\n" .
+                    $p . "\n"
+                );
+            }
+
+            $this->donePlacements++;
+            $this->progress();
+        }
     }
 
     private function progress()

@@ -21,6 +21,20 @@
 class FcPlacement extends DestinationModel
 {
     /**
+     * Основной состав.
+     *
+     * @var string
+     */
+    const STAFF_MAIN = 'main';
+
+    /**
+     * Запасной состав.
+     *
+     * @var string
+     */
+    const STAFF_SPARE = 'spare';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

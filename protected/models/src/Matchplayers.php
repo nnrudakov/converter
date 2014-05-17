@@ -87,4 +87,14 @@ class Matchplayers extends SourceModel
     {
         return parent::model($className);
     }
+
+    /**
+     * Основной состав.
+     *
+     * @return bool
+     */
+    public function isMain()
+    {
+        return (bool) !$this->staff;
+    }
 }
