@@ -21,6 +21,76 @@
 class FcEvent extends DestinationModel
 {
     /**
+     * @var string
+     */
+    const TYPE_COMMENT = 'comment';
+
+    /**
+     * @var string
+     */
+    const TYPE_GOAL = 'goal';
+
+    /**
+     * @var string
+     */
+    const TYPE_AUTOGOAL = 'autogoal';
+
+    /**
+     * @var string
+     */
+    const TYPE_GOALPENALTY = 'goal-penalty';
+
+    /**
+     * @var string
+     */
+    const TYPE_GOALCORNER = 'goal-corner';
+
+    /**
+     * @var string
+     */
+    const TYPE_GOALSHTRAFNOY = 'goal-shtrafnoy';
+
+    /**
+     * @var string
+     */
+    const TYPE_TIMEOUT = 'timeout';
+
+    /**
+     * @var string
+     */
+    const TYPE_REDCARD = 'red-card';
+
+    /**
+     * @var string
+     */
+    const TYPE_YELLOWCARD = 'yellow-card';
+
+    /**
+     * @var string
+     */
+    const TYPE_SECONDYELLOWCARD = 'second-yellow-card';
+
+    /**
+     * @var string
+     */
+    const TYPE_LEFTONBENCH = 'left-on-bench';
+
+    /**
+     * @var string
+     */
+    const TYPE_CAMEOFFBANCH = 'came-off-the-bench';
+
+    /**
+     * @var string
+     */
+    const TYPE_MISSEDPENALTY = 'missed-penalty';
+
+    /**
+     * @var string
+     */
+    const TYPE_ASSISTS = 'assists';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

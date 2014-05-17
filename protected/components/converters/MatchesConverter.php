@@ -90,7 +90,16 @@ class MatchesConverter implements IConverter
     public function convert()
     {
         $this->progress();
+        $this->saveMatches();
+    }
 
+    /**
+     * Сохранение матчей.
+     *
+     * @throws CException
+     */
+    private function saveMatches()
+    {
         $criteria = new CDbCriteria();
         $criteria->alias = 'sch';
         $criteria->select = [
@@ -154,7 +163,113 @@ class MatchesConverter implements IConverter
 
             $this->doneMatches++;
             $this->progress();
+
+            $this->saveMatchEvents($m, $match);
         }
+    }
+
+    /**
+     * Сохранение событий матча.
+     *
+     * @param Matches $m
+     * @param FcMatch $match
+     *
+     * @throws CException
+     */
+    private function saveMatchEvents(Matches $m, FcMatch $match)
+    {
+        foreach ($m->events as $e) {
+            $event = new FcEvent();
+            $event->match_id = $match->id;
+
+            if (isset($this->teams[$e->team])) {
+                $event->team_id = $this->teams[$e->team];
+            }
+
+            if (isset($this->players[$e->player])) {
+                $event->person_id = $this->players[$e->player];
+            }
+
+            $event->gametime = $e->firetime;
+            $event->gametimeplus = $e->injurytime;
+            $event->comment = $e->comment;
+
+            foreach ($e->getAttributes() as $n => $v) {
+                if (!(bool) $v) {
+                    continue;
+                }
+
+                switch ($n) {
+                    case 'timeout':
+                        $event->type = FcEvent::TYPE_TIMEOUT;
+                        break;
+                    case 'goal':
+                        $event->type = FcEvent::TYPE_GOAL;
+                        break;
+                    case 'autogoal':
+                        $event->type = FcEvent::TYPE_AUTOGOAL;
+                        break;
+                    case 'goalfrompenalty':
+                        $event->type = FcEvent::TYPE_GOALPENALTY;
+                        break;
+                    case 'pin':
+                        $event->type = FcEvent::TYPE_CAMEOFFBANCH;
+                        break;
+                    case 'yc':
+                        $event->type = FcEvent::TYPE_YELLOWCARD;
+                        break;
+                    case 'ycyc':
+                        $event->type = FcEvent::TYPE_SECONDYELLOWCARD;
+                        break;
+                    case 'rc':
+                        $event->type = FcEvent::TYPE_REDCARD;
+                        break;
+                    case 'unrealizedpenalty':
+                        $event->type = FcEvent::TYPE_MISSEDPENALTY;
+                        break;
+                    case 'pout':
+                        $event->type = FcEvent::TYPE_LEFTONBENCH;
+                        break;
+                    case 'cornergoal':
+                        $event->type = FcEvent::TYPE_GOALCORNER;
+                        break;
+                    case 'finegoal':
+                        $event->type = FcEvent::TYPE_TIMEOUT;
+                        break;
+                    case 'help':
+                        $event->type = FcEvent::TYPE_GOALSHTRAFNOY;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            if (!$event->type) {
+                $event->type = FcEvent::TYPE_COMMENT;
+            }
+
+            if (!$event->save()) {
+                throw new CException(
+                    'Match event not created.' . "\n" .
+                    var_export($event->getErrors(), true) . "\n" .
+                    $e . "\n"
+                );
+            }
+
+            $this->doneEvents++;
+            $this->progress();
+        }
+    }
+
+    /**
+     * Сохранение расстановки матча.
+     *
+     * @param Matches $m
+     * @param FcMatch $match
+     */
+    private function saveMatchPlaces(Matches $m, FcMatch $match)
+    {
+        // @todo
     }
 
     private function progress()
