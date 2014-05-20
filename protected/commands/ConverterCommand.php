@@ -32,31 +32,75 @@ DESCRIPTION
     Converter console launcher.
 
 EXAMPLES
+    * yiic converter all
+        Convert all entities.
+
+        Parameters:
+            - writeFiles
+
     * yiic converter news
         Convert news.
 
         Parameters:
-
-        - writeFiles
+            - writeFiles
 
     * yiic converter persons
         Convert persons.
 
-        Parameters:
-
-        - persons: players, coaches, admins, medics, press, select.
-
     * yiic converter teams
-        Convert teams.
+        Parameters:
+            - writeFiles
 
-    * yiic convert contracts
-        Convert contracts.
+    * yiic convert players
+        Convert players, teams, contracts, stats.
 
+        Parameters:
+            - writeFiles
 
-        - persons: players, persons;
-        - writeFiles
+    * yiic convert champs
+        Convert seasons, championships and stages.
+
+    * yiic convert matches
+        Convert matches (inc. events, placments).
 
 EOD;
+    }
+
+    /**
+     * Конвертация всего.
+     *
+     * @param bool $writeFiles Сохранить файлы на диск.
+     */
+    public function actionAll($writeFiles = false)
+    {
+        print "Action 'champs'.\n";
+        $start = microtime(true);
+        $this->actionChamps();
+        $this->showTime($start);
+        print "\n";
+
+        print "Action 'persons'.\n";
+        $start = microtime(true);
+        $this->actionPersons($writeFiles);
+        $this->showTime($start);
+        print "\n";
+
+        print "Action 'players'\n";
+        $start = microtime(true);
+        $this->actionPlayers($writeFiles);
+        $this->showTime($start);
+        print "\n";
+
+        print "Action 'matches'.\n";
+        $start = microtime(true);
+        $this->actionMatches();
+        $this->showTime($start);
+        print "\n";
+
+        print "Action 'news'.\n";
+        $start = microtime(true);
+        $this->actionNews($writeFiles);
+        $this->showTime($start);
     }
 
     /**
@@ -74,25 +118,12 @@ EOD;
     /**
      * Конвертация персон.
      *
-     * @param string $persons Персоны:
-     *                        <ul>
-     *                          <li>players;</li>
-     *                          <li>coaches;</li>
-     *                          <li>admins;</li>
-     *                          <li>medics;</li>
-     *                          <li>press;</li>
-     *                          <li>select.</li>
-     *                        </ul>
-     *
-     * @throws CException
+     * @param bool $writeFiles Сохранить файлы на диск.
      */
-    public function actionPersons ($persons = null)
+    public function actionPersons ($writeFiles = false)
     {
-        if (!is_null($persons) && !in_array($persons, ['players', 'coaches', 'admins', 'medics', 'press', 'select'])) {
-            throw new CException('Wrong "persons".' . "\n");
-        }
-
-        $p = new PersonsConverter($persons);
+        $p = new PersonsConverter();
+        $p->writeFiles = $writeFiles;
         $p->convert();
     }
 
@@ -106,30 +137,42 @@ EOD;
     }
 
     /**
-     * Конвертация контрактов.
+     * Конвертация контрактов, игроков и команд.
      *
-     * @param string $persons Персоны:
-     *                        <ul>
-     *                          <li>players;</li>
-     *                          <li>persons.</li>
-     *                        </ul>
      * @param bool $writeFiles Сохранить файлы на диск.
      *
      * @throws CException
      */
-    public function actionContracts ($persons = null, $writeFiles = false)
+    public function actionPlayers ($writeFiles = false)
     {
-        if (!is_null($persons) && !in_array($persons, ['players', 'persons'])) {
-            throw new CException('Wrong "persons".' . "\n");
-        }
-
-        $c = new ContractsConverter($persons);
+        $c = new PlayersConverter();
         $c->writeFiles = $writeFiles;
         $c->convert();
     }
 
+    /**
+     * Конвертация сезонов, чемпионатов и этапов.
+     *
+     * @throws CException
+     */
+    public function actionChamps()
+    {
+        $c = new ChampsConverter();
+        $c->convert();
+    }
+
+    /**
+     * Конвертация матчей, их событий и расстановки.
+     */
+    public function actionMatches()
+    {
+        $m = new MatchesConverter();
+        $m->convert();
+    }
+
     protected function beforeAction($action, $params)
     {
+        $this->ensureDirectory(Yii::getPathOfAlias('accordance'));
         $this->startTime = microtime(true);
 
         return parent::beforeAction($action, $params);
@@ -137,8 +180,14 @@ EOD;
 
     protected function afterAction($action, $params, $exitCode = 0)
     {
-        print 'Done in ' . sprintf('%f', microtime(true) - $this->startTime) . ".\n";
+        $this->showTime();
 
         return parent::afterAction($action, $params, $exitCode);
+    }
+
+    private function showTime($start = 0)
+    {
+        $start = $start ?: $this->startTime;
+        print "\n" . 'Done in ' . sprintf('%f', microtime(true) - $start) . ".\n";
     }
 }

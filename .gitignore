@@ -5,3 +5,8 @@ themes/classic/views/
 players.php
 persons.php
 teams.php
+matches.php
+champs.php
+stages.php
+seasons.php
+news.txt

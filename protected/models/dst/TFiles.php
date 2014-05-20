@@ -31,7 +31,6 @@ trait TFiles {
             $remote_file = $this->getFile($name);
 
             if (false === $remote_file) {
-                //echo 'File "' . $name . '" not found.' . "\n";
                 continue;
             }
 
@@ -83,13 +82,21 @@ trait TFiles {
      */
     protected function getFile($filename)
     {
+        $url = $this->filesUrl . $filename;
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->filesUrl . $filename);
+        curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        if (!$this->writeFiles) {
+            curl_setopt($ch, CURLOPT_HEADER, true);
+            curl_setopt($ch, CURLOPT_NOBODY, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        }
+
         $file = curl_exec($ch);
 
         if (curl_errno($ch)) {
-            throw new CException('Curl error: ' . curl_error($ch));
+            throw new CException('Curl error: ' . curl_error($ch) . '. File: ' . $url);
         }
 
         $info = curl_getinfo($ch);
@@ -99,7 +106,7 @@ trait TFiles {
             return false;
         }
 
-        return [$info['size_download'], $file];
+        return [$info['download_content_length'], $file];
     }
 
     /**

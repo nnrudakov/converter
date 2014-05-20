@@ -4,22 +4,23 @@
  * Модель таблицы "fc__fc__person".
  *
  * Доступные поля таблицы "fc__fc__person":
- * @property integer $id Идентификатор.
- * @property string $firstname Имя.
- * @property string $lastname Фамилия.
- * @property string $middlename Отчество.
- * @property string $birthday Дата рождения.
- * @property string $country Страна (гражданство).
- * @property integer $resident Резидент.
- * @property string $city Город.
- * @property string $biograpy Биография.
- * @property string $profile Профиль.
- * @property string $progress Достижения.
- * @property string $nickname Прозвище.
- * @property integer $height Рост.
- * @property integer $weight Вес.
- * @property string $amplua Амплуа.
- * @property string $post Должность.
+ *
+ * @property integer $id          Идентификатор.
+ * @property string  $firstname   Имя.
+ * @property string  $lastname    Фамилия.
+ * @property string  $middlename  Отчество.
+ * @property string  $birthday    Дата рождения.
+ * @property string  $citizenship Страна (гражданство).
+ * @property integer $resident    Резидент.
+ * @property string  $city        Город.
+ * @property string  $biograpy    Биография.
+ * @property string  $profile     Профиль.
+ * @property string  $progress    Достижения.
+ * @property string  $nickname    Прозвище.
+ * @property integer $height      Рост.
+ * @property integer $weight      Вес.
+ * @property string  $amplua      Амплуа.
+ * @property string  $post        Должность.
  *
  * @package    converter
  * @subpackage fcperson
@@ -40,21 +41,14 @@ class FcPerson extends DestinationModel
      *
      * @var string
      */
-    const FILE_PLAYER = 'images/players.orig.%d.png';
-
-    /**
-     * Имя файла оригинала персоны.
-     *
-     * @var string
-     */
-    const FILE_PERSON = 'images/person.orig.%d.jpg';
+    const FILE = 'images/players.orig.%d.png';
 
     /**
      * Имя поля связки файла.
      *
      * @param string
      */
-    const FILE_FIELD = 'person_file';
+    const FILE_FIELD = 'file';
 
     /**
      * @return string Таблица модели
@@ -70,12 +64,16 @@ class FcPerson extends DestinationModel
     public function rules()
     {
         return [
-            ['resident, height, weight', 'numerical', 'integerOnly'=>true],
-            ['firstname, lastname, middlename, country, city, nickname, post', 'length', 'max'=>128],
-            ['profile', 'length', 'max'=>45],
-            ['amplua', 'length', 'max'=>25],
+            ['resident, height, weight', 'numerical', 'integerOnly' => true],
+            ['firstname, lastname, middlename, citizenship, city, nickname, post', 'length', 'max' => 128],
+            ['profile', 'length', 'max' => 45],
+            ['amplua', 'length', 'max' => 25],
             ['birthday, biograpy, progress', 'safe'],
-            ['id, firstname, lastname, middlename, birthday, country, resident, city, biograpy, profile, progress, nickname, height, weight, amplua, post', 'safe', 'on'=>'search'],
+            [
+                'id, firstname, lastname, middlename, birthday, citizenship, resident, city, biograpy, profile, progress, nickname, height, weight, amplua, post',
+                'safe',
+                'on' => 'search'
+            ],
         ];
     }
 
@@ -93,22 +91,22 @@ class FcPerson extends DestinationModel
     public function attributeLabels()
     {
         return [
-            'id' => 'Идентификатор',
-            'firstname' => 'Имя',
-            'lastname' => 'Фамилия',
-            'middlename' => 'Отчество',
-            'birthday' => 'Дата рождения',
-            'country' => 'Страна (гражданство)',
-            'resident' => 'Резидент',
-            'city' => 'Город',
-            'biograpy' => 'Биография',
-            'profile' => 'Профиль',
-            'progress' => 'Достижения',
-            'nickname' => 'Прозвище',
-            'height' => 'Рост',
-            'weight' => 'Вес',
-            'amplua' => 'Амплуа',
-            'post' => 'Должность',
+            'id'          => 'Идентификатор',
+            'firstname'   => 'Имя',
+            'lastname'    => 'Фамилия',
+            'middlename'  => 'Отчество',
+            'birthday'    => 'Дата рождения',
+            'citizenship' => 'Страна (гражданство)',
+            'resident'    => 'Резидент',
+            'city'        => 'Город',
+            'biograpy'    => 'Биография',
+            'profile'     => 'Профиль',
+            'progress'    => 'Достижения',
+            'nickname'    => 'Прозвище',
+            'height'      => 'Рост',
+            'weight'      => 'Вес',
+            'amplua'      => 'Амплуа',
+            'post'        => 'Должность',
         ];
     }
 
@@ -116,6 +114,7 @@ class FcPerson extends DestinationModel
      * Статический метод возвращения модели.
      *
      * @param string $className Имя класса.
+     *
      * @return FcPerson Модель.
      */
     public static function model($className = __CLASS__)

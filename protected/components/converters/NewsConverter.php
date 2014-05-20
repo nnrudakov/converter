@@ -18,14 +18,61 @@ class NewsConverter implements IConverter
     public $writeFiles = false;
 
     /**
+     * Файл сохраненных новостей.
+     *
+     * @var string
+     */
+    private $newsFile = '';
+
+    /**
+     * Сохраненные новости если было прерывание.
+     *
+     * @var array
+     */
+    private $savedNews = [];
+
+    /**
+     * Строка для прогресс-бара.
+     *
+     * @var string
+     */
+    private $progressFormat = "\rCategories: %d. News: %d.";
+
+    /**
+     * @var integer
+     */
+    private $doneCats = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneNews = 0;
+
+    /**
+     * Инициализация.
+     */
+    public function __construct()
+    {
+        $this->newsFile = Yii::getPathOfAlias('accordance') . '/news.txt';
+
+        if (file_exists($this->newsFile)) {
+            $this->savedNews = file($this->newsFile);
+        }
+    }
+
+    /**
      * Запуск преобразований.
      */
     public function convert()
     {
+        $this->progress();
         // категории и связанные с ними объекты
         $this->saveCategories(0, NewsCategories::CAT_NEWS_CAT);
         // объекты без категорий
         $this->saveObjects();
+
+        // все прошло успешно, удаляем кеш сохраненных
+        unlink($this->newsFile);
     }
 
     /**
@@ -51,20 +98,29 @@ class NewsConverter implements IConverter
             $criteria->addCondition('parentid IS NULL');
         }
         $src_cats = new NewsCategs();
+        $nc = new NewsCategories();
 
         foreach ($src_cats->findAll($criteria) as $i => $cat) {
-            $category = new NewsCategories();
-            $category->parent_id  = $newParent;
-            $category->lang_id    = NewsCategories::LANG;
-            $category->name       = Utils::nameString($cat->name);
-            $category->title      = $cat->name;
-            $category->content    = $cat->description ?: '';
-            $category->publish    = 1;
-            $category->sort       = $i + 1;
-            $category->meta_title = $cat->name;
+            $name = Utils::nameString($cat->name);
+            $category = $nc->findByAttributes(['parent_id' => $newParent, 'name' => $name]);
 
-            if (!$category->save()) {
-                throw new CException($category->getErrorMsg('Category not created.', $cat));
+            if (is_null($category)) {
+                $category = new NewsCategories();
+                $category->parent_id  = $newParent;
+                $category->lang_id    = NewsCategories::LANG;
+                $category->name       = $name;
+                $category->title      = $cat->name;
+                $category->content    = $cat->description ?: '';
+                $category->publish    = 1;
+                $category->sort       = $i + 1;
+                $category->meta_title = $cat->name;
+
+                if (!$category->save()) {
+                    throw new CException($category->getErrorMsg('Category not created.', $cat));
+                }
+
+                $this->doneCats++;
+                $this->progress();
             }
 
             $this->saveObjects($cat, $category);
@@ -122,6 +178,10 @@ class NewsConverter implements IConverter
      */
     private function saveObject(News $oldObject, $categoryId, $sort)
     {
+        if (in_array($oldObject->id, $this->savedNews)) {
+            return true;
+        }
+
         $object = new NewsObjects();
         $object->writeFiles = $this->writeFiles;
         $this->setFilesParams($oldObject, $object);
@@ -147,6 +207,13 @@ class NewsConverter implements IConverter
         if (!$object->save()) {
             throw new CException($object->getErrorMsg('Object is not created.', $oldObject));
         }
+
+        $this->doneNews++;
+        $this->progress();
+
+        $fh = fopen($this->newsFile, 'a');
+        fwrite($fh, $oldObject->id . "\n");
+        fclose($fh);
 
         return true;
     }
@@ -196,5 +263,10 @@ class NewsConverter implements IConverter
                 }
             }
         }
+    }
+
+    private function progress()
+    {
+        printf($this->progressFormat, $this->doneCats, $this->doneNews);
     }
 }

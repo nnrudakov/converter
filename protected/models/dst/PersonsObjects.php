@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Модель таблицы "fc__news__objects".
+ * Модель таблицы "fc__persons__objects".
  *
- * Доступные поля таблицы "fc__news__objects":
+ * Доступные поля таблицы "fc__persons__objects":
  *
  * @property string  $object_id        Идентификатор объекта.
  * @property string  $main_category_id Идентификатор главной категории.
@@ -26,28 +26,30 @@
  * @property integer $sort             Порядок в категории.
  *
  * Доступные отношения:
- * @property NewsCategoryObjects[] $links Связка с категориями.
+ * @property PersonsCategoryObjects[] $links Связка с категориями.
+ * @property PersonsObjectSets        $set   Набор свойств.
+ * @property PersonsObjectData[]      $data  Данные.
  *
  * @package    converter
  * @subpackage newsobjects
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class NewsObjects extends KitObjects
+class PersonsObjects extends KitObjects
 {
     /**
      * Модуль.
      *
      * @var string
      */
-    const MODULE = 'news';
+    const MODULE = 'persons';
 
     /**
-     * Имя файла оригинала обычной новости.
+     * Имя файла оригинала персоны.
      *
      * @var string
      */
-    const FILE = 'images/news.orig.%d.jpg';
+    const FILE = 'images/person.orig.%d.jpg';
 
     /**
      * Имя поля связки файла.
@@ -57,32 +59,11 @@ class NewsObjects extends KitObjects
     const FILE_FIELD = 'file';
 
     /**
-     * Имя файла оригинала фоторепортажа.
-     *
-     * @var string
-     */
-    const FILE_PHOTO = '{path}image.orig.%d.jpg';
-
-    /**
-     * Имя файла оригинала видеорепортажа.
-     *
-     * @var string
-     */
-    const FILE_VIDEO = '{path}image.orig.%d.mp4';
-
-    /**
-     * Имя файла превью видеорепортажа.
-     *
-     * @var string
-     */
-    const FILE_VIDEO_THUMB = '{path}image.%d.611x360.jpg';
-
-    /**
      * @return string Таблица модели
      */
     public function tableName()
     {
-        return '{{news__objects}}';
+        return '{{persons__objects}}';
     }
 
     /**
@@ -91,7 +72,9 @@ class NewsObjects extends KitObjects
     public function relations()
     {
         return [
-            'links' => [self::HAS_MANY, 'NewsCategoryObjects', 'object_id']
+            'links' => [self::HAS_ONE,  'PersonsCategoryObjects', 'object_id'],
+            'set'   => [self::HAS_ONE,  'PersonsObjectSets',      'object_id'],
+            'data'  => [self::HAS_MANY, 'PersonsObjectData',      'object_id']
         ];
     }
 }
