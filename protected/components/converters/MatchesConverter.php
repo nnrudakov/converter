@@ -141,7 +141,7 @@ class MatchesConverter implements IConverter
             $match->delegate            = $m->delegate;
             $match->inspector           = $m->inspector;
             $match->weather             = $m->weather;
-            $match->held                = $m->state;
+            $match->held                = $m->state > 1 ? 1 : $m->state;
             $match->matchtime           = $m->date;
             preg_match_all('/>(\d+)/', $m->summary, $score);
 
