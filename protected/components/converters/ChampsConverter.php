@@ -169,7 +169,7 @@ class ChampsConverter implements IConverter
                 $stage->championship_id = $champ->id;
                 $stage->title = $s->short;
                 $stage->fullTitle = $s->title ?: $t->title;
-                $stage->style = $s->isCap() ? FcStage::STYLE_CAP : FcStage::STYLE_ROUND;
+                $stage->style = $s->isCap() ? FcStage::STYLE_CUP : FcStage::STYLE_ROUND;
                 $stage->reglament = $s->reglamentar;
 
                 if (!$stage->save()) {
