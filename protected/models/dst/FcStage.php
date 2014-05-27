@@ -41,14 +41,14 @@ class FcStage extends DestinationModel
      *
      * @var string
      */
-    const STYLE_ROUND = 'круговой';
+    const STYLE_ROUND = 'circular';
 
     /**
      * Кубковый этап.
      *
      * @var string
      */
-    const STYLE_CAP = 'круговой';
+    const STYLE_CUP = 'cup';
 
     /**
      * @return string Таблица модели
