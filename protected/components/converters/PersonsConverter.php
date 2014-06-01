@@ -47,10 +47,23 @@ class PersonsConverter implements IConverter
     ];
 
     /**
+     * Строка для прогресс-бара.
+     *
+     * @var string
+     */
+    private $progressFormat = "\rPersons: %d.";
+
+    /**
+     * @var integer
+     */
+    private $donePersons = 0;
+
+    /**
      * Запуск преобразований.
      */
     public function convert()
     {
+        $this->progress();
         $criteria = new CDbCriteria();
         $criteria->select = [
             'id', 'citizenship', 'surname', 'first_name', 'patronymic', 'bio', 'borned', 'post', 'path', 'achivements'
@@ -63,6 +76,8 @@ class PersonsConverter implements IConverter
         foreach ($src_persons->findAll($criteria) as $p) {
             $person = $this->savePerson($p, $sort);
             $this->saveData($p, $person->getId());
+            $this->donePersons++;
+            $this->progress();
             $sort++;
         }
     }
@@ -166,5 +181,10 @@ class PersonsConverter implements IConverter
                 }
             }
         }
+    }
+
+    private function progress()
+    {
+        printf($this->progressFormat, $this->donePersons);
     }
 }

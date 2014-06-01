@@ -32,6 +32,12 @@ DESCRIPTION
     Converter console launcher.
 
 EXAMPLES
+    * yiic converter all
+        Convert all entities.
+
+        Parameters:
+            - writeFiles
+
     * yiic converter news
         Convert news.
 
@@ -45,8 +51,8 @@ EXAMPLES
         Parameters:
             - writeFiles
 
-    * yiic convert contracts
-        Convert contracts.
+    * yiic convert players
+        Convert players, teams, contracts, stats.
 
         Parameters:
             - writeFiles
@@ -54,7 +60,47 @@ EXAMPLES
     * yiic convert champs
         Convert seasons, championships and stages.
 
+    * yiic convert matches
+        Convert matches (inc. events, placments).
+
 EOD;
+    }
+
+    /**
+     * Конвертация всего.
+     *
+     * @param bool $writeFiles Сохранить файлы на диск.
+     */
+    public function actionAll($writeFiles = false)
+    {
+        print "Action 'champs'.\n";
+        $start = microtime(true);
+        $this->actionChamps();
+        $this->showTime($start);
+        print "\n";
+
+        print "Action 'persons'.\n";
+        $start = microtime(true);
+        $this->actionPersons($writeFiles);
+        $this->showTime($start);
+        print "\n";
+
+        print "Action 'players'\n";
+        $start = microtime(true);
+        $this->actionPlayers($writeFiles);
+        $this->showTime($start);
+        print "\n";
+
+        print "Action 'matches'.\n";
+        $start = microtime(true);
+        $this->actionMatches();
+        $this->showTime($start);
+        print "\n";
+
+        print "Action 'news'.\n";
+        $start = microtime(true);
+        $this->actionNews($writeFiles);
+        $this->showTime($start);
     }
 
     /**
@@ -97,9 +143,9 @@ EOD;
      *
      * @throws CException
      */
-    public function actionContracts ($writeFiles = false)
+    public function actionPlayers ($writeFiles = false)
     {
-        $c = new ContractsConverter();
+        $c = new PlayersConverter();
         $c->writeFiles = $writeFiles;
         $c->convert();
     }
@@ -115,6 +161,15 @@ EOD;
         $c->convert();
     }
 
+    /**
+     * Конвертация матчей, их событий и расстановки.
+     */
+    public function actionMatches()
+    {
+        $m = new MatchesConverter();
+        $m->convert();
+    }
+
     protected function beforeAction($action, $params)
     {
         $this->ensureDirectory(Yii::getPathOfAlias('accordance'));
@@ -125,8 +180,14 @@ EOD;
 
     protected function afterAction($action, $params, $exitCode = 0)
     {
-        print 'Done in ' . sprintf('%f', microtime(true) - $this->startTime) . ".\n";
+        $this->showTime();
 
         return parent::afterAction($action, $params, $exitCode);
+    }
+
+    private function showTime($start = 0)
+    {
+        $start = $start ?: $this->startTime;
+        print "\n" . 'Done in ' . sprintf('%f', microtime(true) - $start) . ".\n";
     }
 }

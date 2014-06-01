@@ -53,6 +53,28 @@ class ChampsConverter implements IConverter
     private $stagesFile = '';
 
     /**
+     * Строка для прогресс-бара.
+     *
+     * @var string
+     */
+    private $progressFormat = "\rSeasons: %d. Championships: %d. Stages: %d.";
+
+    /**
+     * @var integer
+     */
+    private $doneSeasons = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneChamps = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneStages = 0;
+
+    /**
      * Инициализация.
      *
      * @throws CException
@@ -69,9 +91,13 @@ class ChampsConverter implements IConverter
      */
     public function convert()
     {
+        $this->progress();
         $this->convertSeasons();
         $this->convertChamps();
 
+        ksort($this->seasons);
+        ksort($this->champs);
+        ksort($this->stages);
         file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
         file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
         file_put_contents($this->stagesFile, sprintf(self::FILE_ACCORDANCE, var_export($this->stages, true)));
@@ -102,6 +128,9 @@ class ChampsConverter implements IConverter
                 );
             }
 
+            $this->doneSeasons++;
+            $this->progress();
+
             $this->seasons[$s->id] = (int) $season->id;
         }
     }
@@ -130,15 +159,17 @@ class ChampsConverter implements IConverter
                 );
             }
 
-            $this->champs[$t->id] = $champ->id;
+            $this->doneChamps++;
+            $this->progress();
+            $this->champs[$t->id] = (int) $champ->id;
 
             /* @var Stages $s */
             foreach ($t->stages as $s) {
                 $stage = new FcStage();
                 $stage->championship_id = $champ->id;
                 $stage->title = $s->short;
-                $stage->fullTitle = $s->title;
-                $stage->style = $s->isCap() ? FcStage::STYLE_CAP : FcStage::STYLE_ROUND;
+                $stage->fullTitle = $s->title ?: $t->title;
+                $stage->style = $s->isCap() ? FcStage::STYLE_CUP : FcStage::STYLE_ROUND;
                 $stage->reglament = $s->reglamentar;
 
                 if (!$stage->save()) {
@@ -149,8 +180,30 @@ class ChampsConverter implements IConverter
                     );
                 }
 
-                $this->stages[$s->id] = $stage->id;
+                $this->doneStages++;
+                $this->progress();
+                $this->stages[$s->id] = (int) $stage->id;
             }
         }
+    }
+
+    public function getSeasons()
+    {
+        return file_exists($this->seasonsFile) ? include $this->seasonsFile : [];
+    }
+
+    public function getChamps()
+    {
+        return file_exists($this->champsFile) ? include $this->champsFile : [];
+    }
+
+    public function getStages()
+    {
+        return file_exists($this->stagesFile) ? include $this->stagesFile : [];
+    }
+
+    private function progress()
+    {
+        printf($this->progressFormat, $this->doneSeasons, $this->doneChamps, $this->doneStages);
     }
 }
