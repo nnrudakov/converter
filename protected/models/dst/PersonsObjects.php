@@ -45,18 +45,32 @@ class PersonsObjects extends KitObjects
     const MODULE = 'persons';
 
     /**
-     * Имя файла оригинала персоны.
+     * Имя файла персоны на его странице.
      *
      * @var string
      */
-    const FILE = 'images/person.orig.%d.jpg';
+    const FILE = 'images/persons.%d.653x291.jpg';
 
     /**
-     * Имя поля связки файла.
+     * Имя файла персоны в списке.
+     *
+     * @var string
+     */
+    const FILE_LIST = 'images/persons.%d.168x168.jpg';
+
+    /**
+     * Имя поля связки файла на странице.
      *
      * @param string
      */
-    const FILE_FIELD = 'file';
+    const FILE_FIELD = 'person_file';
+
+    /**
+     * Имя поля связки файла в списке.
+     *
+     * @param string
+     */
+    const FILE_FIELD_LIST = 'person_list';
 
     /**
      * @return string Таблица модели

@@ -97,7 +97,8 @@ class PersonsConverter implements IConverter
         $person = new PersonsObjects();
         $person->writeFiles = $this->writeFiles;
         $person->filesUrl = Persons::PHOTO_URL;
-        $person->setFileParams($p->id, PersonsObjects::FILE);
+        $person->setFileParams($p->id);
+        $person->setFileParams($p->id, PersonsObjects::FILE_LIST, 0, PersonsObjects::FILE_FIELD_LIST);
         $person->title = $p->first_name . ' ' . $p->patronymic . ' ' . $p->surname;
         $person->name = Utils::nameString($person->title);
         $person->main_category_id = isset(self::$categories[$p->path])
