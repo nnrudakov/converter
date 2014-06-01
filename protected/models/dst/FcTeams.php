@@ -35,14 +35,42 @@ class FcTeams extends DestinationModel
      *
      * @var string
      */
-    const FILE = 'images/teams.image.orig.%d.jpg';
+    const FILE = 'images/teams.image.%d.900x598.jpg';
 
     /**
-     * Имя поля связки файла.
+     * Имя файла маленького логотипа.
+     *
+     * @var string
+     */
+    const FILE_LOGO_SMALL = 'images/teams.logo.%d.45x45.png';
+
+    /**
+     * Имя файла большого логотипа.
+     *
+     * @var string
+     */
+    const FILE_LOGO_BIG = 'images/teams.logo.%d.162x162.png';
+
+    /**
+     * Имя поля связки основного файла.
      *
      * @param string
      */
     const FILE_FIELD = 'team_file';
+
+    /**
+     * Имя поля связки маленького логтипа.
+     *
+     * @param string
+     */
+    const FILE_FIELD_LOGO_SMALL = 'team_logo_small';
+
+    /**
+     * Имя поля связки большого логотипа.
+     *
+     * @param string
+     */
+    const FILE_FIELD_LOGO_BIG = 'team_logo_big';
 
     /**
      * Основной состав.

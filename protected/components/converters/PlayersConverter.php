@@ -306,7 +306,9 @@ class PlayersConverter implements IConverter
         $player = new FcPerson();
         $player->writeFiles = $this->writeFiles;
         $player->filesUrl = Players::PHOTO_URL;
-        $player->setFileParams($p->id, FcPerson::FILE);
+        $player->setFileParams($p->id);
+        $player->setFileParams($p->id, FcPerson::FILE_LIST, 0, FcPerson::FILE_FIELD_LIST);
+        $player->setFileParams($p->id, FcPerson::FILE_INFORMER, 0, FcPerson::FILE_FIELD_INFORMER);
         $player->firstname   = $p->first_name;
         $player->lastname    = $p->surname;
         $player->middlename  = $p->patronymic;
@@ -365,6 +367,8 @@ class PlayersConverter implements IConverter
         $team->writeFiles = $this->writeFiles;
         $team->filesUrl = Teams::PHOTO_URL;
         $team->setFileParams($t->id);
+        $team->setFileParams($t->id, FcTeams::FILE_LOGO_SMALL, 0, FcTeams::FILE_FIELD_LOGO_SMALL);
+        $team->setFileParams($t->id, FcTeams::FILE_LOGO_BIG, 0, FcTeams::FILE_FIELD_LOGO_BIG);
         $team->title   = $t->title;
         $team->info    = $t->info;
         $team->city    = $t->region;

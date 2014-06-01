@@ -37,18 +37,46 @@ class FcPerson extends DestinationModel
     const MODULE = 'fc';
 
     /**
-     * Имя файла оригинала игрока.
+     * Имя файла игрока на его странице.
      *
      * @var string
      */
-    const FILE = 'images/players.orig.%d.png';
+    const FILE = 'images/players.%d.189x319.png';
 
     /**
-     * Имя поля связки файла.
+     * Имя файла игрока в списке.
+     *
+     * @var string
+     */
+    const FILE_LIST = 'images/players.%d.130x189.png';
+
+    /**
+     * Имя файла игрока в информере.
+     *
+     * @var string
+     */
+    const FILE_INFORMER = 'images/players.%d.61x71.png';
+
+    /**
+     * Имя поля связки основного файла.
      *
      * @param string
      */
-    const FILE_FIELD = 'file';
+    const FILE_FIELD = 'player_file';
+
+    /**
+     * Имя поля связки файла со списка.
+     *
+     * @param string
+     */
+    const FILE_FIELD_LIST = 'player_file_list';
+
+    /**
+     * Имя поля связки файла информера.
+     *
+     * @param string
+     */
+    const FILE_FIELD_INFORMER = 'player_file_informer';
 
     /**
      * @return string Таблица модели

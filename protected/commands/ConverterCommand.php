@@ -36,7 +36,7 @@ EXAMPLES
         Convert all entities.
 
         Parameters:
-            - writeFiles
+            - writeFiles [*|news,persons,players]
 
     * yiic converter news
         Convert news.
@@ -73,6 +73,12 @@ EOD;
      */
     public function actionAll($writeFiles = false)
     {
+        if ('*' == $writeFiles || 1 == $writeFiles) {
+            $writeFiles = true;
+        } else {
+            $writeFiles = explode(',', $writeFiles);
+        }
+
         print "Action 'champs'.\n";
         $start = microtime(true);
         $this->actionChamps();
@@ -81,12 +87,14 @@ EOD;
 
         print "Action 'persons'.\n";
         $start = microtime(true);
+        $writeFiles = is_bool($writeFiles) ? $writeFiles : in_array('persons', $writeFiles);
         $this->actionPersons($writeFiles);
         $this->showTime($start);
         print "\n";
 
         print "Action 'players'\n";
         $start = microtime(true);
+        $writeFiles = is_bool($writeFiles) ? $writeFiles : in_array('players', $writeFiles);
         $this->actionPlayers($writeFiles);
         $this->showTime($start);
         print "\n";
@@ -99,6 +107,7 @@ EOD;
 
         print "Action 'news'.\n";
         $start = microtime(true);
+        $writeFiles = is_bool($writeFiles) ? $writeFiles : in_array('news', $writeFiles);
         $this->actionNews($writeFiles);
         $this->showTime($start);
     }
