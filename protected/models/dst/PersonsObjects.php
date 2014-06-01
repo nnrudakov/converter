@@ -52,11 +52,25 @@ class PersonsObjects extends KitObjects
     const FILE = 'images/persons.%d.653x291.jpg';
 
     /**
+     * Имя файла персоны hуководства на его странице.
+     *
+     * @var string
+     */
+    const FILE_LEADER = 'images/persons.%d.653x291.png';
+
+    /**
      * Имя файла персоны в списке.
      *
      * @var string
      */
     const FILE_LIST = 'images/persons.%d.168x168.jpg';
+
+    /**
+     * Имя файла персоны руководства в списке.
+     *
+     * @var string
+     */
+    const FILE_LEADER_LIST = 'images/persons.%d.118x118.png';
 
     /**
      * Имя поля связки файла на странице.
