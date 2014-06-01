@@ -63,7 +63,7 @@ class PersonsObjects extends KitObjects
      *
      * @param string
      */
-    const FILE_FIELD = 'person_file';
+    const FILE_FIELD = 'file';
 
     /**
      * Имя поля связки файла в списке.
