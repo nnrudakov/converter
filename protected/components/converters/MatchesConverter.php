@@ -103,7 +103,7 @@ class MatchesConverter implements IConverter
         $criteria = new CDbCriteria();
         $criteria->alias = 'sch';
         $criteria->select = [
-            'id', 'season', 'tournament', 'stage', 'circle', 'team1', 'team2', 'date', 'region', 'stadium',
+            'id', 'season', 'tournament', 'stage', 'circle', 'team1', 'team2', 'region', 'stadium',
             'country'
         ];
         $criteria->addInCondition($criteria->alias . '.season', array_keys($this->seasons));
@@ -115,7 +115,7 @@ class MatchesConverter implements IConverter
             'match' => [
                 'select' => [
                     'audience', 'mainreferee', 'linereferee1', 'linereferee2', 'sparereferee', 'delegate', 'inspector',
-                    'summary', 'weather', 'state'
+                    'summary', 'weather', 'state', 'date'
                 ]
             ]
         ];
