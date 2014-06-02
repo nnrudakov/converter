@@ -146,11 +146,8 @@ class MatchesConverter implements IConverter
             preg_match_all('/>(\d+)/', $m->summary, $score);
 
             if (isset($score[1])) {
-                $match->home_score = (int) $score[1];
-            }
-
-            if (isset($score[2])) {
-                $match->guest_score = (int) $score[1];
+                $match->home_score = (int) $score[1][0];
+                $match->guest_score = (int) $score[1][1];
             }
 
             if (!$match->save()) {
