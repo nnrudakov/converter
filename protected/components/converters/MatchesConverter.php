@@ -46,6 +46,13 @@ class MatchesConverter implements IConverter
     private $stages = [];
 
     /**
+     * Соотвествие матчей и чемпионатов для верного определения команды событий и расстановки.
+     *
+     * @var array
+     */
+    private $matches = [];
+
+    /**
      * Инициализация.
      */
     public function __construct()
@@ -129,8 +136,8 @@ class MatchesConverter implements IConverter
             $match->season_id           = $this->seasons[$s->season];
             $match->stage_id            = $this->stages[$s->stage];
             $match->tour                = $s->circle;
-            $match->home_team_id        = $this->teams[$s->team1];
-            $match->guest_team_id       = $this->teams[$s->team2];
+            $match->home_team_id        = $this->getTrueTeam($s->team1, $s->tournament);
+            $match->guest_team_id       = $this->getTrueTeam($s->team2, $s->tournament);
             $match->city                = $s->region;
             $match->stadium             = $s->stadium;
             $match->viewers             = $m->audience;
@@ -158,6 +165,8 @@ class MatchesConverter implements IConverter
                 );
             }
 
+            $this->matches[$match->id] = $s->tournament;
+
             $this->doneMatches++;
             $this->progress();
 
@@ -181,7 +190,7 @@ class MatchesConverter implements IConverter
             $event->match_id = $match->id;
 
             if (isset($this->teams[$e->team])) {
-                $event->team_id = $this->teams[$e->team];
+                $event->team_id = $this->getTrueTeam($e->team, $this->matches[$match->id]);
             }
 
             if (isset($this->players[$e->player])) {
@@ -276,7 +285,7 @@ class MatchesConverter implements IConverter
 
             $placement = new FcPlacement();
             $placement->match_id  = $match->id;
-            $placement->team_id   = $this->teams[$p->team];
+            $placement->team_id   = $this->getTrueTeam($p->team, $this->matches[$match->id]);
             $placement->person_id = $this->players[$p->player];
             $placement->captain   = (int) $p->captain;
             $placement->xpos      = (int) $p->schemaleft;
@@ -285,7 +294,7 @@ class MatchesConverter implements IConverter
 
             if (!$placement->save()) {
                 throw new CException(
-                    'Match plac ement not created.' . "\n" .
+                    'Match placement not created.' . "\n" .
                     var_export($placement->getErrors(), true) . "\n" .
                     $p . "\n"
                 );
@@ -294,6 +303,23 @@ class MatchesConverter implements IConverter
             $this->donePlacements++;
             $this->progress();
         }
+    }
+
+    /**
+     * @param integer $teamId
+     * @param integer $champId
+     *
+     * @return integer
+     */
+    private function getTrueTeam ($teamId, $champId)
+    {
+        if (!is_array($this->teams[$teamId])) {
+            return $this->teams[$teamId];
+        }
+
+        return Tournaments::isJunior($champId)
+            ? $this->teams[$teamId][FcTeams::JUNIOR]
+            : $this->teams[$teamId][FcTeams::MAIN];
     }
 
     private function progress()
