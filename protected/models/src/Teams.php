@@ -32,6 +32,13 @@ class Teams extends SourceModel
     const PHOTO_URL = 'http://fckrasnodar.ru/app/mods/tsi/res/';
 
     /**
+     * Идентификатор основной команды.
+     *
+     * @var integer
+     */
+    const MAIN_TEAM = 537;
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

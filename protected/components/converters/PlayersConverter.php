@@ -385,7 +385,21 @@ class PlayersConverter implements IConverter
 
         $this->doneTeams++;
         $this->progress();
-        $this->teams[$t->id] = (int) $team->id;
+
+        // в основной команде 2 состава. записываем их как массив
+        if (isset($this->teams[$t->id])) {
+            $teams = [FcTeams::MAIN => 0, FcTeams::JUNIOR => 0];
+            if ($team->staff == FcTeams::MAIN) {
+                $teams[FcTeams::MAIN] = (int) $team->id;
+                $teams[FcTeams::JUNIOR] = $this->teams[$t->id];
+            } else {
+                $teams[FcTeams::MAIN] = $this->teams[$t->id];
+                $teams[FcTeams::JUNIOR] = (int) $team->id;
+            }
+            $this->teams[$t->id] = $teams;
+        } else {
+            $this->teams[$t->id] = (int) $team->id;
+        }
 
         return $team;
     }
@@ -399,6 +413,16 @@ class PlayersConverter implements IConverter
     {
         foreach ($this->players as $p_id => $player_id) {
             $p = Players::model()->findByPk($p_id);
+            $teams = $this->teams;
+            $get_true_team = function ($teamId, $champId) use ($teams) {
+                if (!is_array($teams[$teamId])) {
+                    return $teams[$teamId];
+                }
+
+                return Tournaments::isJunior($champId)
+                    ? $teams[$teamId][FcTeams::JUNIOR]
+                    : $teams[$teamId][FcTeams::MAIN];
+            };
 
             foreach ($p->stat as $s) {
                 // пропускаем отсуствующие сезоны
@@ -408,6 +432,8 @@ class PlayersConverter implements IConverter
                     continue;
                 }
 
+                $team_id = $get_true_team($s->team, $s->tournament);
+
                 // пропускаем левую статистику
                 $stat = FcPersonstat::model()->exists(
                     new CDbCriteria([
@@ -415,7 +441,7 @@ class PlayersConverter implements IConverter
                             'championship_id=:champ_id',
                         'params' => [
                             ':player_id' => $player_id,
-                            ':team_id'   => $this->teams[$s->team],
+                            ':team_id'   => $team_id,
                             ':season_id' => $this->seasons[$s->season],
                             ':champ_id'  => $this->champs[$s->tournament]
                         ]
@@ -428,7 +454,7 @@ class PlayersConverter implements IConverter
 
                 $stat = new FcPersonstat();
                 $stat->person_id        = $player_id;
-                $stat->team_id          = $this->teams[$s->team];
+                $stat->team_id          = $team_id;
                 $stat->season_id        = $this->seasons[$s->season];
                 $stat->championship_id  = $this->champs[$s->tournament];
                 $stat->gamecount        = $s->played;
@@ -473,44 +499,56 @@ class PlayersConverter implements IConverter
                     continue;
                 }
 
-                // пропускаем левую статистику
-                $stat = FcTeamstat::model()->exists(
-                    new CDbCriteria([
-                        'condition' => 'team_id=:team_id AND season_id=:season_id AND stage_id=:stage_id',
-                        'params' => [
-                            ':team_id'   => $team_id,
-                            ':season_id' => $this->seasons[$s->season],
-                            ':stage_id'  => $this->stages[$s->stage],
-                        ]
-                    ])
-                );
+                $that = $this;
 
-                if ($stat) {
-                    continue;
-                }
-
-                $stat = new FcTeamstat();
-                $stat->team_id       = $team_id;
-                $stat->season_id     = $this->seasons[$s->season];
-                $stat->stage_id      = $this->stages[$s->stage];
-                $stat->gamecount     = $s->played;
-                $stat->wincount      = $s->won;
-                $stat->drawcount     = $s->drawn;
-                $stat->losscount     = $s->lost;
-                $stat->goalsconceded = $s->goalsfor;
-                $stat->goals         = $s->goalsagainst;
-                $stat->score         = $s->points;
-
-                if (!$stat->save()) {
-                    throw new CException(
-                        'Team statistic not created.' . "\n" .
-                        var_export($stat->getErrors(), true) . "\n" .
-                        $s . "\n"
+                // функция сохранения
+                $save = function ($teamId) use ($that, $s) {
+                    // пропускаем левую статистику
+                    $stat = FcTeamstat::model()->exists(
+                        new CDbCriteria([
+                            'condition' => 'team_id=:team_id AND season_id=:season_id AND stage_id=:stage_id',
+                            'params' => [
+                                ':team_id'   => $teamId,
+                                ':season_id' => $that->seasons[$s->season],
+                                ':stage_id'  => $that->stages[$s->stage],
+                            ]
+                        ])
                     );
-                }
 
-                $this->doneTeamStats++;
-                $this->progress();
+                    if ($stat) {
+                        return false;
+                    }
+
+                    $stat = new FcTeamstat();
+                    $stat->team_id       = $teamId;
+                    $stat->season_id     = $that->seasons[$s->season];
+                    $stat->stage_id      = $that->stages[$s->stage];
+                    $stat->gamecount     = $s->played;
+                    $stat->wincount      = $s->won;
+                    $stat->drawcount     = $s->drawn;
+                    $stat->losscount     = $s->lost;
+                    $stat->goalsconceded = $s->goalsfor;
+                    $stat->goals         = $s->goalsagainst;
+                    $stat->score         = $s->points;
+
+                    if (!$stat->save()) {
+                        throw new CException(
+                            'Team statistic not created.' . "\n" .
+                            var_export($stat->getErrors(), true) . "\n" .
+                            $s . "\n"
+                        );
+                    }
+
+                    $that->doneTeamStats++;
+                    $that->progress();
+
+                    return true;
+                };
+
+                $teams = !is_array($team_id) ? (array) $team_id : $team_id;
+                foreach ($teams as $team_id) {
+                    $save($team_id);
+                }
             }
         }
     }

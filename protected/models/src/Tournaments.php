@@ -21,6 +21,13 @@
 class Tournaments extends SourceModel
 {
     /**
+     * Список чемпионатов молодежных составов.
+     *
+     * @var array
+     */
+    public static $junior = [6, 8, 50];
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()
@@ -77,5 +84,17 @@ class Tournaments extends SourceModel
     public static function model($className = __CLASS__)
     {
         return parent::model($className);
+    }
+
+    /**
+     * Чемпионат молодежных составов.
+     *
+     * @param integer $champId
+     *
+     * @return bool
+     */
+    public static function isJunior($champId)
+    {
+        return in_array($champId, self::$junior);
     }
 }
