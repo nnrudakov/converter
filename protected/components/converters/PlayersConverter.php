@@ -216,6 +216,7 @@ class PlayersConverter implements IConverter
         $this->seasons = $cc->getSeasons();
         $this->champs  = $cc->getChamps();
         $this->stages  = $cc->getStages();
+        $this->teams = $this->getTeams();
     }
 
     /**
@@ -259,13 +260,14 @@ class PlayersConverter implements IConverter
             $this->progress();
         }
 
+        $this->savePlayerStat();
+        $this->saveTeamStat();
+        $this->saveTeams();
+
         ksort($this->players);
         ksort($this->teams);
         file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
         file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
-
-        $this->savePlayerStat();
-        $this->saveTeamStat();
     }
 
     public function getTeams()
@@ -402,6 +404,27 @@ class PlayersConverter implements IConverter
         }
 
         return $team;
+    }
+
+    /**
+     * Сохранение команд, для которых нет игроков.
+     *
+     * @return bool
+     */
+    private function saveTeams()
+    {
+        $criteria = new CDbCriteria([
+            'select'    => ['id', 'title', 'info', 'region', 'country'],
+            'condition' => 'title!=\'\' AND id NOT IN(' . implode(',', array_keys($this->teams)) . ')',
+            'order'     => 'id'
+        ]);
+        $src_teams = new Teams();
+
+        foreach ($src_teams->findAll($criteria) as $t) {
+            $this->saveTeam($t, FcTeams::MAIN);
+        }
+
+        return true;
     }
 
     /**
