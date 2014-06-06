@@ -5,6 +5,7 @@
  *
  * Доступные поля таблицы "{{fc__match}}":
  * @property integer $id                  Идентификатор.
+ * @property integer $championship_id     Идентификатор чемпионата.
  * @property integer $season_id           Идентификатор сезона.
  * @property integer $stage_id            Идентификатор стадии чемпионата.
  * @property string  $tour                Номер тура.
@@ -47,11 +48,11 @@ class FcMatch extends DestinationModel
     public function rules()
     {
         return [
-            ['season_id, stage_id, home_team_id, guest_team_id', 'required'],
-            ['season_id, stage_id, home_team_id, guest_team_id, viewers, held, home_score, guest_score', 'numerical', 'integerOnly'=>true],
+            ['season_id, home_team_id, guest_team_id', 'required'],
+            ['championship_id, season_id, stage_id, home_team_id, guest_team_id, viewers, held, home_score, guest_score', 'numerical', 'integerOnly'=>true],
             ['tour, country, city, stadium, referee_main, referee_line_1, referee_line_2, referee_main_helper, delegate, inspector, weather', 'length', 'max'=>128],
             ['matchtime', 'safe'],
-            ['id, season_id, stage_id, tour, home_team_id, guest_team_id, country, city, stadium, viewers, referee_main, referee_line_1, referee_line_2, referee_main_helper, delegate, inspector, weather, held, matchtime, home_score, guest_score', 'safe', 'on'=>'search'],
+            ['id, championship_id, season_id, stage_id, tour, home_team_id, guest_team_id, country, city, stadium, viewers, referee_main, referee_line_1, referee_line_2, referee_main_helper, delegate, inspector, weather, held, matchtime, home_score, guest_score', 'safe', 'on'=>'search'],
         ];
     }
 
@@ -70,6 +71,7 @@ class FcMatch extends DestinationModel
     {
         return [
             'id' => 'Идентификатор',
+            'championship_id' => 'Идентфикатор чемпионата',
             'season_id' => 'Идентификатор сезона',
             'stage_id' => 'Идентификатор стадии чемпионата',
             'tour' => 'Номер тура',

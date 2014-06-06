@@ -107,17 +107,21 @@ class MatchesConverter implements IConverter
      */
     private function saveMatches()
     {
+        $teams = implode(',', array_keys($this->teams));
+        $this->stages[0] = 0;
         $criteria = new CDbCriteria();
         $criteria->alias = 'sch';
         $criteria->select = [
             'id', 'season', 'tournament', 'stage', 'circle', 'team1', 'team2', 'region', 'stadium',
             'country'
         ];
+        $criteria->addCondition(
+            [$criteria->alias . '.team1 IN(' . $teams . ')', $criteria->alias . '.team2 IN(' . $teams . ')'],
+            'OR'
+        );
         $criteria->addInCondition($criteria->alias . '.season', array_keys($this->seasons));
         $criteria->addInCondition($criteria->alias . '.tournament', array_keys($this->champs));
         $criteria->addInCondition($criteria->alias . '.stage', array_keys($this->stages));
-        $criteria->addInCondition($criteria->alias . '.team1', array_keys($this->teams));
-        $criteria->addInCondition($criteria->alias . '.team2', array_keys($this->teams));
         $criteria->with = [
             'match' => [
                 'select' => [
@@ -133,6 +137,7 @@ class MatchesConverter implements IConverter
             /* @var Matches $m */
             $m = $s->match;
             $match = new FcMatch();
+            $match->championship_id     = $this->champs[$s->tournament];
             $match->season_id           = $this->seasons[$s->season];
             $match->stage_id            = $this->stages[$s->stage];
             $match->tour                = $s->circle;
@@ -152,8 +157,8 @@ class MatchesConverter implements IConverter
             $match->matchtime           = $m->date;
             preg_match_all('/>(\d+)/', $m->summary, $score);
 
-            if (isset($score[1])) {
-                $match->home_score = (int) $score[1][0];
+            if (isset($score[1]) && isset($score[1][0]) && isset($score[1][1])) {
+                $match->home_score  = (int) $score[1][0];
                 $match->guest_score = (int) $score[1][1];
             }
 
