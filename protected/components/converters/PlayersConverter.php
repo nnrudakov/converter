@@ -211,12 +211,11 @@ class PlayersConverter implements IConverter
         $this->teamsFile   = Yii::getPathOfAlias('accordance') . '/teams.php';
         $this->playersFile = Yii::getPathOfAlias('accordance') . '/players.php';
 
-        // сезоны и чемпионаты уже должны быть пересены
+        // сезоны и чемпионаты уже должны быть перенесены
         $cc = new ChampsConverter();
         $this->seasons = $cc->getSeasons();
         $this->champs  = $cc->getChamps();
         $this->stages  = $cc->getStages();
-        $this->teams = $this->getTeams();
     }
 
     /**
@@ -261,8 +260,8 @@ class PlayersConverter implements IConverter
         }
 
         $this->savePlayerStat();
-        $this->saveTeamStat();
         $this->saveTeams();
+        $this->saveTeamStat();
 
         ksort($this->players);
         ksort($this->teams);
@@ -541,6 +540,7 @@ class PlayersConverter implements IConverter
                 $stat->goalsconceded = $s->goalsfor;
                 $stat->goals         = $s->goalsagainst;
                 $stat->score         = $s->points;
+                $stat->place         = (int) $s->ord;
 
                 if (!$stat->save()) {
                     throw new CException(
