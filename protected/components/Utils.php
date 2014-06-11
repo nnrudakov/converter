@@ -91,8 +91,8 @@ class Utils
      */
     public static function clearText($string)
     {
-        $string = strip_tags($string, '<p><a><table><th><tbody><tr><td>');
-        $string = preg_replace('/<p\s.+?>/', '<p>', $string);
+        $string = strip_tags($string, '<p><a><table><tbody><tr><th><td>');
+        $string = preg_replace('/<(p|table|th|tbody|tr|td)\s.+?>/', '<$1>', $string);
 
         return $string;
     }
