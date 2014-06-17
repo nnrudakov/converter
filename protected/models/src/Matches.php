@@ -68,7 +68,7 @@ class Matches extends SourceModel
     public function relations()
     {
         return [
-            'sch'     => [self::HAS_ONE,  'Schedule', 'schedule'],
+            'sch'     => [self::BELONGS_TO,  'Schedule', 'schedule'],
             'events'  => [self::HAS_MANY, 'Matchevents', 'match'],
             'players' => [self::HAS_MANY, 'Matchplayers', 'match', 'condition' => 'player>0']
         ];

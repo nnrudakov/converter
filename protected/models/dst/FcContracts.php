@@ -44,9 +44,10 @@ class FcContracts extends DestinationModel
     public function rules()
     {
         return [
-            ['fromtime, untiltime, team_id, person_id', 'required'],
+            ['team_id, person_id', 'required'],
             ['number, team_id, person_id', 'numerical', 'integerOnly'=>true],
             ['position', 'length', 'max'=>128],
+            ['fromtime, untiltime', 'safe'],
             ['id, position, fromtime, untiltime, number, team_id, person_id', 'safe', 'on'=>'search'],
         ];
     }

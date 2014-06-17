@@ -19,7 +19,8 @@
  * @property integer $match_id   .
  *
  * Доступные отношения:
- * @property Matches $match
+ * @property Matches    $match
+ * @property Tournaments $champ
  *
  * @package    converter
  * @subpackage schedule
@@ -54,7 +55,10 @@ class Schedule extends SourceModel
      */
     public function relations()
     {
-        return ['match' => [self::HAS_ONE, 'Matches', 'schedule', 'joinType' => 'INNER JOIN']];
+        return [
+            'match' => [self::HAS_ONE, 'Matches', 'schedule', 'joinType' => 'INNER JOIN'],
+            'champ' => [self::BELONGS_TO, 'Tournaments', 'tournament']
+        ];
     }
 
     /**

@@ -102,6 +102,34 @@ class PlayersConverter implements IConverter
     const AMPLUA_NEW_FIELD = 'fielder';
 
     /**
+     * Вратарь на матч.
+     *
+     * @var integer
+     */
+    const POSITION_GOALKEEPER = 1;
+
+    /**
+     * Нападающий на матч.
+     *
+     * @var integer
+     */
+    const POSITION_FORWARD = 4;
+
+    /**
+     * Защитник на матч.
+     *
+     * @var integer
+     */
+    const POSITION_BACK = 2;
+
+    /**
+     * Полузащитник на матч.
+     *
+     * @var integer
+     */
+    const POSITION_HALFBACK = 3;
+
+    /**
      * Соответствие между текущими и новыми амплуа.
      *
      * @var array
@@ -112,7 +140,11 @@ class PlayersConverter implements IConverter
         self::AMPLUA_CUR_GOALKEEPER => self::AMPLUA_NEW_GOALKEEPER,
         self::AMPLUA_CUR_HALFBACK   => self::AMPLUA_NEW_HALFBACK,
         self::AMPLUA_CUR_PZNP       => self::AMPLUA_NEW_PZNP,
-        self::AMPLUA_CUR_FIELD      => self::AMPLUA_NEW_FIELD
+        self::AMPLUA_CUR_FIELD      => self::AMPLUA_NEW_FIELD,
+        self::POSITION_GOALKEEPER   => self::AMPLUA_NEW_GOALKEEPER,
+        self::POSITION_FORWARD      => self::AMPLUA_NEW_FORWARD,
+        self::POSITION_BACK         => self::AMPLUA_NEW_BACK,
+        self::POSITION_HALFBACK     => self::AMPLUA_NEW_HALFBACK
     ];
 
     /**
@@ -216,6 +248,8 @@ class PlayersConverter implements IConverter
         $this->seasons = $cc->getSeasons();
         $this->champs  = $cc->getChamps();
         $this->stages  = $cc->getStages();
+        //$this->teams = $this->getTeams();
+        //$this->players = $this->getPlayers();
     }
 
     /**
@@ -233,6 +267,7 @@ class PlayersConverter implements IConverter
         );
         $src_contracts = new PlayersContracts();
 
+        // игроки, у которых есть контракты
         foreach ($src_contracts->findAll($criteria) as $c) {
             $player = $this->savePlayer(
                 $c->playerPlayer,
@@ -259,9 +294,13 @@ class PlayersConverter implements IConverter
             $this->progress();
         }
 
-        $this->savePlayerStat();
+        // оставшиеся команды без связок с игроками
         $this->saveTeams();
         $this->saveTeamStat();
+
+        // игроки, для которых нет контрактов, но они участвовали в матчах
+        $this->saveMatchPlayers();
+        $this->savePlayerStat();
 
         ksort($this->players);
         ksort($this->teams);
@@ -280,6 +319,58 @@ class PlayersConverter implements IConverter
     }
 
     /**
+     * @param
+     */
+    /**
+     * Игроки, для которых нет контрактов, но они участвовали в матчах.
+     */
+    private function saveMatchPlayers()
+    {                          //echo implode(',', array_keys($this->players)); die;
+        $criteria = new CDbCriteria();
+        $criteria->select = ['match', 'team', 'player', 'number', 'position'];
+        $criteria->condition = 'match!=0 AND player NOT IN (' . implode(',', array_keys($this->players)) . ')';
+        $criteria->addInCondition('team', array_keys($this->teams));
+        $criteria->order = 'player';
+        $src_players = new Matchplayers();
+        $prev = '';
+
+        foreach ($src_players->findAll($criteria) as $mp) {
+            $p = Players::model()->findByPk($mp->player);
+            if ($p && $prev != $mp->player.$mp->team.$mp->number) {
+                //echo $mp->player.'=='.$mp->match.'='.$mp->team.'='.$mp->number."\n";
+                $player = $this->savePlayer($p, $mp->position);
+                /* @var Matches $m */
+                $match = $mp->playerMatch;
+                /* @var Schedule $sch */
+                if ($sch = $match->sch) {
+                    /* @var Tournaments $champ */
+                    $champ = $sch->champ;
+                    $contract = new FcContracts();
+                    $contract->team_id   = $this->getTrueTeam($mp->team, $champ->id);
+                    $contract->person_id = $player->id;
+                    $contract->untiltime = new CDbException('DATE_ADD(NOW(), INTERVAL 10 YEAR)');
+                    $contract->number    = $mp->number;
+
+                    if (!$contract->save()) {
+                        throw new CException(
+                            'Player\'s contract not created.' . "\n" .
+                            var_export($contract->getErrors(), true) . "\n" .
+                            $mp . "\n"
+                        );
+                    }
+
+                    $this->doneContracts++;
+                    $this->progress();
+                }
+
+                $prev = $mp->player.$mp->team.$mp->number;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Сохранение персоны.
      *
      * @param Players $p
@@ -289,7 +380,7 @@ class PlayersConverter implements IConverter
      *
      * @throws CException
      */
-    private function savePlayer($p, $amplua)
+    private function savePlayer($p, $amplua = null)
     {
         $player = FcPerson::model()->findByAttributes(
             [
