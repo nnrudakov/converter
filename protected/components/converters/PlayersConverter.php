@@ -140,11 +140,19 @@ class PlayersConverter implements IConverter
         self::AMPLUA_CUR_GOALKEEPER => self::AMPLUA_NEW_GOALKEEPER,
         self::AMPLUA_CUR_HALFBACK   => self::AMPLUA_NEW_HALFBACK,
         self::AMPLUA_CUR_PZNP       => self::AMPLUA_NEW_PZNP,
-        self::AMPLUA_CUR_FIELD      => self::AMPLUA_NEW_FIELD,
-        self::POSITION_GOALKEEPER   => self::AMPLUA_NEW_GOALKEEPER,
-        self::POSITION_FORWARD      => self::AMPLUA_NEW_FORWARD,
-        self::POSITION_BACK         => self::AMPLUA_NEW_BACK,
-        self::POSITION_HALFBACK     => self::AMPLUA_NEW_HALFBACK
+        self::AMPLUA_CUR_FIELD      => self::AMPLUA_NEW_FIELD
+    ];
+
+    /**
+     * Соответствия позизиям на матче амплуа.
+     *
+     * @var array
+     */
+    public static $positions = [
+        self::POSITION_GOALKEEPER => self::AMPLUA_NEW_GOALKEEPER,
+        self::POSITION_FORWARD    => self::AMPLUA_NEW_FORWARD,
+        self::POSITION_BACK       => self::AMPLUA_NEW_BACK,
+        self::POSITION_HALFBACK   => self::AMPLUA_NEW_HALFBACK
     ];
 
     /**
@@ -325,7 +333,7 @@ class PlayersConverter implements IConverter
      * Игроки, для которых нет контрактов, но они участвовали в матчах.
      */
     private function saveMatchPlayers()
-    {                          //echo implode(',', array_keys($this->players)); die;
+    {
         $criteria = new CDbCriteria();
         $criteria->select = ['match', 'team', 'player', 'number', 'position'];
         $criteria->condition = 'match!=0 AND player NOT IN (' . implode(',', array_keys($this->players)) . ')';
@@ -337,8 +345,10 @@ class PlayersConverter implements IConverter
         foreach ($src_players->findAll($criteria) as $mp) {
             $p = Players::model()->findByPk($mp->player);
             if ($p && $prev != $mp->player.$mp->team.$mp->number) {
-                //echo $mp->player.'=='.$mp->match.'='.$mp->team.'='.$mp->number."\n";
-                $player = $this->savePlayer($p, $mp->position);
+                $player = $this->savePlayer(
+                    $p,
+                    isset(self::$positions[$mp->position]) ? self::$positions[$mp->position] : null
+                );
                 /* @var Matches $m */
                 $match = $mp->playerMatch;
                 /* @var Schedule $sch */
