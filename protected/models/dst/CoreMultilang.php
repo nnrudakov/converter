@@ -8,6 +8,7 @@
  * @property string  $id        Идентификатор.
  * @property integer $module_id Идентификатор модуля.
  * @property string  $entity    Имя сущности.
+ * @property integer $import_id Идентификатор импорта.
  *
  * Доступные отношения:
  * @property CoreModules       $module
@@ -34,9 +35,9 @@ class CoreMultilang extends DestinationModel
     public function rules()
     {
         return [
-            ['module_id', 'numerical', 'integerOnly'=>true],
+            ['module_id, import_id', 'numerical', 'integerOnly'=>true],
             ['entity', 'length', 'max'=>20],
-            ['id, module_id, entity', 'safe', 'on'=>'search'],
+            ['id, module_id, entity, import_id', 'safe', 'on'=>'search'],
         ];
     }
 
@@ -60,6 +61,7 @@ class CoreMultilang extends DestinationModel
             'id' => 'Идентификатор',
             'module_id' => 'Идентификатор модуля',
             'entity' => 'Имя сущности',
+            'import_id' => 'Идентификатор импорта'
         ];
     }
 

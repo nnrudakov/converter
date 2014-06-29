@@ -30,6 +30,13 @@
 class FcPerson extends DestinationModel
 {
     /**
+     * Имя сущности для многоязычности.
+     *
+     * @var string
+     */
+    const ENTITY = 'person';
+
+    /**
      * Модуль.
      *
      * @var string

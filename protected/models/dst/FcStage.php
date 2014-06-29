@@ -37,6 +37,20 @@
 class FcStage extends DestinationModel
 {
     /**
+     * Имя сущности для многоязычности.
+     *
+     * @var string
+     */
+    const ENTITY = 'stage';
+
+    /**
+     * Модуль.
+     *
+     * @var string
+     */
+    const MODULE = 'fc';
+
+    /**
      * Круговой этап.
      *
      * @var string

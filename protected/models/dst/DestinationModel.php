@@ -51,6 +51,11 @@ class DestinationModel extends BaseFcModel
     public $writeFiles = false;
 
     /**
+     * @var integer
+     */
+    public $importId = 0;
+
+    /**
      * Параметры файла модели.
      *
      * @var array
@@ -119,6 +124,16 @@ class DestinationModel extends BaseFcModel
         }
 
         return self::$dbDst;
+    }
+
+    /**
+     * Получение идентификатора.
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->id;
     }
 
     /**

@@ -35,6 +35,20 @@
 class FcMatch extends DestinationModel
 {
     /**
+     * Имя сущности для многоязычности.
+     *
+     * @var string
+     */
+    const ENTITY = 'match';
+
+    /**
+     * Модуль.
+     *
+     * @var string
+     */
+    const MODULE = 'fc';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

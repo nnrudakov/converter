@@ -24,6 +24,13 @@
 class FcTeams extends DestinationModel
 {
     /**
+     * Имя сущности для многоязычности.
+     *
+     * @var string
+     */
+    const ENTITY = 'team';
+
+    /**
      * Модуль.
      *
      * @var string

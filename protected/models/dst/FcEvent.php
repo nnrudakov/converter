@@ -21,6 +21,20 @@
 class FcEvent extends DestinationModel
 {
     /**
+     * Имя сущности для многоязычности.
+     *
+     * @var string
+     */
+    const ENTITY = 'event';
+
+    /**
+     * Модуль.
+     *
+     * @var string
+     */
+    const MODULE = 'fc';
+
+    /**
      * @var string
      */
     const TYPE_COMMENT = 'comment';

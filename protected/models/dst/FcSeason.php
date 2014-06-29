@@ -18,6 +18,20 @@
 class FcSeason extends DestinationModel
 {
     /**
+     * Имя сущности для многоязычности.
+     *
+     * @var string
+     */
+    const ENTITY = 'season';
+
+    /**
+     * Модуль.
+     *
+     * @var string
+     */
+    const MODULE = 'fc';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

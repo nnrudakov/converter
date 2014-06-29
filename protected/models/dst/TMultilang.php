@@ -24,6 +24,7 @@ trait TMultilang {
         $multilang = new CoreMultilang();
         $multilang->module_id = $this->module->module_id;
         $multilang->entity    = constant($const_entity);
+        $multilang->import_id = $this->importId;
         $multilang->save();
 
         $multilang_link = new CoreMultilangLink();

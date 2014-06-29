@@ -20,6 +20,20 @@
 class FcChampionship extends DestinationModel
 {
     /**
+     * Сущность.
+     *
+     * @var string
+     */
+    const ENTITY = 'championship';
+
+    /**
+     * Модуль.
+     *
+     * @var string
+     */
+    const MODULE = 'fc';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

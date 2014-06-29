@@ -115,9 +115,10 @@ class ChampsConverter implements IConverter
 
         foreach ($src_seasons->findAll($criteria) as $s) {
             $season = new FcSeason();
-            $season->title   = $s->title;
+            $season->importId = $s->id;
+            $season->title = $s->title;
             $season->description = $s->description;
-            $season->fromtime  = $s->dts;
+            $season->fromtime = $s->dts;
             $season->untiltime = $s->dte;
 
             if (!$season->save()) {
@@ -147,6 +148,7 @@ class ChampsConverter implements IConverter
 
         foreach ($src_champs->findAll($criteria) as $t) {
             $champ = new FcChampionship();
+            $champ->importId = $t->id;
             $champ->title = $t->short;
             $champ->fullTitle = $t->title;
             $champ->sponsor = $t->sponsor;
@@ -166,6 +168,7 @@ class ChampsConverter implements IConverter
             /* @var Stages $s */
             foreach ($t->stages as $s) {
                 $stage = new FcStage();
+                $stage->importId = $s->id;
                 $stage->championship_id = $champ->id;
                 $stage->title = $s->short;
                 $stage->fullTitle = $s->title ?: $t->title;
