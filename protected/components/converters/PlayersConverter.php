@@ -327,9 +327,6 @@ class PlayersConverter implements IConverter
     }
 
     /**
-     * @param
-     */
-    /**
      * Игроки, для которых нет контрактов, но они участвовали в матчах.
      */
     private function saveMatchPlayers()
@@ -358,7 +355,6 @@ class PlayersConverter implements IConverter
                     $contract = new FcContracts();
                     $contract->team_id   = $this->getTrueTeam($mp->team, $champ->id);
                     $contract->person_id = $player->id;
-                    $contract->untiltime = new CDbException('DATE_ADD(NOW(), INTERVAL 10 YEAR)');
                     $contract->number    = $mp->number;
 
                     if (!$contract->save()) {
@@ -406,6 +402,7 @@ class PlayersConverter implements IConverter
         }
 
         $player = new FcPerson();
+        $player->importId   = $p->id;
         $player->writeFiles = $this->writeFiles;
         $player->filesUrl = Players::PHOTO_URL;
         $player->setFileParams($p->id);
@@ -466,13 +463,14 @@ class PlayersConverter implements IConverter
         }
 
         $team = new FcTeams();
+        $team->importId   = $t->id;
         $team->writeFiles = $this->writeFiles;
         $team->filesUrl = Teams::PHOTO_URL;
         $team->setFileParams($t->id);
         $team->setFileParams($t->id, FcTeams::FILE_LOGO_SMALL, 0, FcTeams::FILE_FIELD_LOGO_SMALL);
         $team->setFileParams($t->id, FcTeams::FILE_LOGO_BIG, 0, FcTeams::FILE_FIELD_LOGO_BIG);
         $team->title   = $t->title;
-        $team->info    = $t->info;
+        $team->info    = Utils::clearText($t->info);
         $team->city    = $t->region;
         $team->staff   = $staff;
         $team->country = $t->country;
@@ -513,11 +511,13 @@ class PlayersConverter implements IConverter
      */
     private function saveTeams()
     {
-        $criteria = new CDbCriteria([
-            'select'    => ['id', 'title', 'info', 'region', 'country'],
-            'condition' => 'title!=\'\' AND id NOT IN(' . implode(',', array_keys($this->teams)) . ')',
-            'order'     => 'id'
-        ]);
+        $criteria = new CDbCriteria(
+            [
+                'select'    => ['id', 'title', 'info', 'region', 'country'],
+                'condition' => 'title!=\'\' AND id NOT IN(' . implode(',', array_keys($this->teams)) . ')',
+                'order'     => 'id'
+            ]
+        );
         $src_teams = new Teams();
 
         foreach ($src_teams->findAll($criteria) as $t) {

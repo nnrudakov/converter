@@ -69,7 +69,7 @@ class Matches extends SourceModel
     {
         return [
             'sch'     => [self::BELONGS_TO,  'Schedule', 'schedule'],
-            'events'  => [self::HAS_MANY, 'Matchevents', 'match'],
+            'events'  => [self::HAS_MANY, 'Matchevents', 'match', 'order' => 'id'],
             'players' => [self::HAS_MANY, 'Matchplayers', 'match', 'condition' => 'player>0']
         ];
     }

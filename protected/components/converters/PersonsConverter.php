@@ -95,6 +95,7 @@ class PersonsConverter implements IConverter
     private function savePerson(Persons $p, $sort)
     {
         $person = new PersonsObjects();
+        $person->importId   = $p->id;
         $person->writeFiles = $this->writeFiles;
         $person->filesUrl = Persons::PHOTO_URL;
         $person->main_category_id = isset(self::$categories[$p->path])

@@ -34,7 +34,7 @@ class FcPerson extends DestinationModel
      *
      * @var string
      */
-    const ENTITY = 'person';
+    const ENTITY = 'player';
 
     /**
      * Модуль.

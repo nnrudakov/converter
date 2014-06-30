@@ -87,10 +87,9 @@ class NewsConverter implements IConverter
      */
     private function saveCategories($oldParent, $newParent)
     {
-        $criteria = new CDbCriteria([
-            'select' => ['id', 'name', 'description'],
-            'order'  => 'id'
-        ]);
+        $criteria = new CDbCriteria();
+        $criteria->select = ['id', 'name', 'description'];
+        $criteria->order  = 'id';
         if ($oldParent) {
             $criteria->addCondition('parentid=:parent');
             $criteria->params = [':parent' => $oldParent];
@@ -106,6 +105,7 @@ class NewsConverter implements IConverter
 
             if (is_null($category)) {
                 $category = new NewsCategories();
+                $category->importId   = $cat->id;
                 $category->parent_id  = $newParent;
                 $category->lang_id    = NewsCategories::LANG;
                 $category->name       = $name;
@@ -148,6 +148,7 @@ class NewsConverter implements IConverter
             ];
             $criteria->condition = 'id NOT IN (SELECT news FROM ' . NewsLinks::model()->tableName() . ')';
             $criteria->addCondition('title!=\'\'');
+            $criteria->order = 'id';
             $objects = News::model()->findAll($criteria);
 
             foreach ($objects as $i => $obj) {
@@ -183,6 +184,7 @@ class NewsConverter implements IConverter
         }
 
         $object = new NewsObjects();
+        $object->importId   = $oldObject->id;
         $object->writeFiles = $this->writeFiles;
         $this->setFilesParams($oldObject, $object);
         $object->main_category_id = $oldObject->isText()
@@ -191,8 +193,8 @@ class NewsConverter implements IConverter
         $object->lang_id          = NewsObjects::LANG;
         $object->name             = Utils::nameString($oldObject->title);
         $object->title            = $oldObject->title;
-        $object->announce         = strip_tags($oldObject->message, '<p><a><b><strong>');
-        $object->content          = strip_tags($oldObject->details, '<p><a><b><strong>');
+        $object->announce         = Utils::clearText($oldObject->message);
+        $object->content          = Utils::clearText($oldObject->details);
         $object->important        = (int) $oldObject->priority;
         $object->publish          = 1;
         $object->publish_date_on  = $oldObject->date ?: null;

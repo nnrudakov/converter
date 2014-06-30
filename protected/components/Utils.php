@@ -93,6 +93,7 @@ class Utils
     {
         $string = strip_tags($string, '<p><a><table><tbody><tr><th><td>');
         $string = preg_replace('/<(p|table|th|tbody|tr|td)\s.+?>/', '<$1>', $string);
+        $string = str_replace(['<td><p>', '</p></td>'], ['<td>', '</td>'], $string);
 
         return $string;
     }

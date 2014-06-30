@@ -137,6 +137,7 @@ class MatchesConverter implements IConverter
             /* @var Matches $m */
             $m = $s->match;
             $match = new FcMatch();
+            $match->importId            = $m->id;
             $match->championship_id     = $this->champs[$s->tournament];
             $match->season_id           = $this->seasons[$s->season];
             $match->stage_id            = $this->stages[$s->stage];
@@ -192,6 +193,7 @@ class MatchesConverter implements IConverter
     {
         foreach ($m->events as $e) {
             $event = new FcEvent();
+            $event->importId = $e->id;
             $event->match_id = $match->id;
 
             if (isset($this->teams[$e->team])) {
