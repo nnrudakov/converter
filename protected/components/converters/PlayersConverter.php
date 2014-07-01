@@ -446,7 +446,7 @@ class PlayersConverter implements IConverter
      *
      * @return FcTeams $team
      *
-     * @throws CException
+     * @throws CException                                                                                 `
      */
     private function saveTeam($t, $staff)
     {
