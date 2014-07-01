@@ -341,7 +341,7 @@ class PlayersConverter implements IConverter
 
         foreach ($src_players->findAll($criteria) as $mp) {
             $p = Players::model()->findByPk($mp->player);
-            if ($p && $prev != $mp->player.$mp->team.$mp->number) {
+            if ($p && $prev != $mp->player . $mp->team . $mp->number) {
                 $player = $this->savePlayer(
                     $p,
                     isset(self::$positions[$mp->position]) ? self::$positions[$mp->position] : null
@@ -369,7 +369,7 @@ class PlayersConverter implements IConverter
                     $this->progress();
                 }
 
-                $prev = $mp->player.$mp->team.$mp->number;
+                $prev = $mp->player . $mp->team . $mp->number;
             }
         }
 
@@ -463,7 +463,9 @@ class PlayersConverter implements IConverter
         }
 
         $team = new FcTeams();
-        $team->importId   = $t->id;
+        if ($staff == FcTeams::MAIN) {
+            $team->importId = $t->id;
+        }
         $team->writeFiles = $this->writeFiles;
         $team->filesUrl = Teams::PHOTO_URL;
         $team->setFileParams($t->id);
