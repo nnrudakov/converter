@@ -93,7 +93,11 @@ class Utils
     {
         $string = strip_tags($string, '<p><a><table><tbody><tr><th><td>');
         $string = preg_replace('/<(p|table|th|tbody|tr|td)\s.+?>/', '<$1>', $string);
-        $string = str_replace(['<td><p>', '</p></td>'], ['<td>', '</td>'], $string);
+        $string = str_replace(
+            ['<td><p>', '</p></td>', '<(td)>-\s+(\d+)</\1>'],
+            ['<td>', '</td>', '<$1>-$2</$1>'],
+            $string
+        );
 
         return $string;
     }
