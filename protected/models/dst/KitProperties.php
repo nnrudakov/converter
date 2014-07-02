@@ -69,4 +69,16 @@ class KitProperties extends DestinationModel
     {
         return $this->property_id;
     }
+
+    /**
+     * Установка новой записи.
+     *
+     * @return bool
+     */
+    public function setNew()
+    {
+        $this->setIsNewRecord(true);
+        $this->property_id = null;
+        $this->lang = self::LANG_EN;
+    }
 }

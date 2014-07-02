@@ -58,4 +58,16 @@ class KitObjectData extends DestinationModel
     {
         return $this->data_id;
     }
+
+    /**
+     * Установка новой записи.
+     *
+     * @return bool
+     */
+    public function setNew()
+    {
+        $this->setIsNewRecord(true);
+        $this->data_id = null;
+        $this->lang = self::LANG_EN;
+    }
 }

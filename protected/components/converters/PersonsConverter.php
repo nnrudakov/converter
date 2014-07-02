@@ -51,7 +51,7 @@ class PersonsConverter implements IConverter
      *
      * @var string
      */
-    private $progressFormat = "\rPersons: %d.";
+    private $progressFormat = "\rPersons: %d (%d).";
 
     /**
      * @var integer
@@ -74,8 +74,8 @@ class PersonsConverter implements IConverter
         $sort = 1;
 
         foreach ($src_persons->findAll($criteria) as $p) {
-            $person = $this->savePerson($p, $sort);
-            $this->saveData($p, $person->getId());
+            $persons = $this->savePerson($p, $sort);
+            $this->saveData($p, $persons);
             $this->donePersons++;
             $this->progress();
             $sort++;
@@ -88,7 +88,7 @@ class PersonsConverter implements IConverter
      * @param Persons $p
      * @param integer $sort
      *
-     * @return PersonsObjects
+     * @return array
      *
      * @throws CException
      */
@@ -103,13 +103,13 @@ class PersonsConverter implements IConverter
             : PersonsCategories::NO_CAT;
         $person->setFileParams(
             $p->id,
-            in_array($person->main_category_id, array(PersonsCategories::CLUB_LEADS, PersonsCategories::A_LEADS))
+            in_array($person->main_category_id, [PersonsCategories::CLUB_LEADS, PersonsCategories::A_LEADS])
                 ? PersonsObjects::FILE_LEADER
                 : PersonsObjects::FILE
         );
         $person->setFileParams(
             $p->id,
-            in_array($person->main_category_id, array(PersonsCategories::CLUB_LEADS, PersonsCategories::A_LEADS))
+            in_array($person->main_category_id, [PersonsCategories::CLUB_LEADS, PersonsCategories::A_LEADS])
                 ? PersonsObjects::FILE_LEADER_LIST
                 : PersonsObjects::FILE_LIST,
             0,
@@ -117,12 +117,13 @@ class PersonsConverter implements IConverter
         );
         $person->title = $p->first_name . ' ' . $p->patronymic . ' ' . $p->surname;
         $person->name = Utils::nameString($person->title);
-        $person->lang_id = PersonsObjects::LANG;
+        $person->lang_id = BaseFcModel::LANG_RU;
         $person->content = Utils::clearText($p->bio);
         $person->publish = 1;
         $person->publish_date_on = date('Y-m-d H:i:s');
         $person->created = $person->publish_date_on;
         $person->sort = $sort;
+        $fileparams = $person->fileParams;
 
         if (!$person->save()) {
             throw new CException(
@@ -132,14 +133,20 @@ class PersonsConverter implements IConverter
             );
         }
 
-        return $person;
+        $ru_id = $person->getId();
+        $person->setNew();
+        $person->fileParams = $fileparams;
+        $person->save();
+        $en_id = $person->getId();
+
+        return [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id];
     }
 
     /**
      * Сохранение свойств.
      *
      * @param Persons $p
-     * @param integer $personId
+     * @param array $personId
      *
      * @throws CException
      */
@@ -148,8 +155,10 @@ class PersonsConverter implements IConverter
         $set = new PersonsSets();
         $set = $set->findByPk(PersonsSets::SET);
         $object_set = new PersonsObjectSets();
-        $object_set->object_id = $personId;
+        $object_set->object_id = $personId[BaseFcModel::LANG_RU];
         $object_set->set_id = $set->getId();
+        $object_set->save();
+        $object_set->object_id = $personId[BaseFcModel::LANG_EN];
         $object_set->save();
 
         foreach ($set->properties as $prop) {
@@ -173,7 +182,7 @@ class PersonsConverter implements IConverter
 
             if ($value) {
                 $object_data = new PersonsObjectData();
-                $object_data->object_id = $personId;
+                $object_data->object_id = $personId[BaseFcModel::LANG_RU];
                 $object_data->property_id = $prop->getId();
 
                 if (!$object_data->save()) {
@@ -193,12 +202,19 @@ class PersonsConverter implements IConverter
                         var_export($object_value->getErrors(), true) . "\n"
                     );
                 }
+
+                $object_data->object_id = $personId[BaseFcModel::LANG_EN];
+                $object_data->setNew();
+                $object_data->save();
+                $object_value = new PersonsObjectDataText();
+                $object_value->data_id = $object_data->getId();
+                $object_value->data = $value;
             }
         }
     }
 
     private function progress()
     {
-        printf($this->progressFormat, $this->donePersons);
+        printf($this->progressFormat, $this->donePersons, $this->donePersons * 2);
     }
 }

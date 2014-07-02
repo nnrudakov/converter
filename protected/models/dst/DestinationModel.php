@@ -63,7 +63,7 @@ class DestinationModel extends BaseFcModel
      *
      * @var array
      */
-    protected $fileParams = [];
+    public $fileParams = [];
 
     /**
      * Модуль модели.

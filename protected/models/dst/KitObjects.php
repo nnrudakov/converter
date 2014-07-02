@@ -151,6 +151,18 @@ class KitObjects extends DestinationModel
     }
 
     /**
+     * Установка новой записи.
+     *
+     * @return bool
+     */
+    public function setNew()
+    {
+        $this->setIsNewRecord(true);
+        $this->object_id = null;
+        $this->lang = $this->lang_id = self::LANG_EN;
+    }
+
+    /**
      * @throws CException
      */
     protected function afterSave()

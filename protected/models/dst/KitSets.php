@@ -56,4 +56,16 @@ class KitSets extends DestinationModel
     {
         return $this->set_id;
     }
+
+    /**
+     * Установка новой записи.
+     *
+     * @return bool
+     */
+    public function setNew()
+    {
+        $this->setIsNewRecord(true);
+        $this->set_id = null;
+        $this->lang = self::LANG_EN;
+    }
 }
