@@ -556,9 +556,9 @@ class PlayersConverter implements IConverter
         $that = $this;
         $save_stat = function ($s, $teamId, $playerId, $langId) use ($that) {
             // пропускаем отсуствующие сезоны
-            if (empty($this->seasons[$langId][$s->season])    ||
-                empty($this->champs[$langId][$s->tournament]) ||
-                empty($this->teams[$langId][$s->team])) {
+            if (empty($that->seasons[$s->season][$langId])    ||
+                empty($that->champs[$s->tournament][$langId]) ||
+                empty($that->teams[$s->team][$langId])) {
                 return false;
             }
 
@@ -571,8 +571,8 @@ class PlayersConverter implements IConverter
                         'params' => [
                             ':player_id' => $playerId,
                             ':team_id'   => $teamId,
-                            ':season_id' => $this->seasons[$langId][$s->season],
-                            ':champ_id'  => $this->champs[$langId][$s->tournament]
+                            ':season_id' => $that->seasons[$s->season][$langId],
+                            ':champ_id'  => $that->champs[$s->tournament][$langId]
                         ]
                     ]
                 )
@@ -585,8 +585,8 @@ class PlayersConverter implements IConverter
             $stat = new FcPersonstat();
             $stat->person_id        = $playerId;
             $stat->team_id          = $teamId;
-            $stat->season_id        = $this->seasons[$langId][$s->season];
-            $stat->championship_id  = $this->champs[$langId][$s->tournament];
+            $stat->season_id        = $this->seasons[$s->season][$langId];
+            $stat->championship_id  = $this->champs[$s->tournament][$langId];
             $stat->gamecount        = $s->played;
             $stat->startcount       = $s->begined;
             $stat->benchcount       = $s->wentin;
@@ -638,8 +638,8 @@ class PlayersConverter implements IConverter
                         'condition' => 'team_id=:team_id AND season_id=:season_id AND stage_id=:stage_id',
                         'params' => [
                             ':team_id'   => $teamId,
-                            ':season_id' => $this->seasons[$langId][$s->season],
-                            ':stage_id'  => $this->stages[$langId][$s->stage],
+                            ':season_id' => $that->seasons[$s->season][$langId],
+                            ':stage_id'  => $that->stages[$s->stage][$langId],
                         ]
                     ]
                 )
@@ -651,8 +651,8 @@ class PlayersConverter implements IConverter
 
             $stat = new FcTeamstat();
             $stat->team_id       = $teamId;
-            $stat->season_id     = $this->seasons[$langId][$s->season];
-            $stat->stage_id      = $this->stages[$langId][$s->stage];
+            $stat->season_id     = $this->seasons[$s->season][$langId];
+            $stat->stage_id      = $this->stages[$s->stage][$langId];
             $stat->gamecount     = $s->played;
             $stat->wincount      = $s->won;
             $stat->drawcount     = $s->drawn;

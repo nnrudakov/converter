@@ -74,7 +74,7 @@ class MatchesConverter implements IConverter
      *
      * @var string
      */
-    private $progressFormat = "\rMatches: %d. Events: %d. Placements: %d.";
+    private $progressFormat = "\rMatches: %d (%d). Events: %d (%d). Placements: %d (%d).";
 
     /**
      * @var integer
@@ -134,16 +134,18 @@ class MatchesConverter implements IConverter
         $src_matches = new Schedule();
 
         foreach ($src_matches->findAll($criteria) as $s) {
+            $home_team = $this->getTrueTeam($s->team1, $s->tournament);
+            $guest_team = $this->getTrueTeam($s->team2, $s->tournament);
             /* @var Matches $m */
             $m = $s->match;
             $match = new FcMatch();
             $match->importId            = $m->id;
-            $match->championship_id     = $this->champs[$s->tournament];
-            $match->season_id           = $this->seasons[$s->season];
-            $match->stage_id            = $this->stages[$s->stage];
+            $match->championship_id     = $this->champs[$s->tournament][BaseFcModel::LANG_RU];
+            $match->season_id           = $this->seasons[$s->season][BaseFcModel::LANG_RU];
+            $match->stage_id            = $this->stages[$s->stage][BaseFcModel::LANG_RU];
             $match->tour                = $s->circle;
-            $match->home_team_id        = $this->getTrueTeam($s->team1, $s->tournament);
-            $match->guest_team_id       = $this->getTrueTeam($s->team2, $s->tournament);
+            $match->home_team_id        = $home_team[BaseFcModel::LANG_RU];
+            $match->guest_team_id       = $guest_team[BaseFcModel::LANG_RU];
             $match->city                = $s->region;
             $match->stadium             = $s->stadium;
             $match->viewers             = $m->audience;
@@ -171,39 +173,48 @@ class MatchesConverter implements IConverter
                 );
             }
 
-            $this->matches[$match->id] = $s->tournament;
+            $matches[BaseFcModel::LANG_RU] = $match->id;
+            $match->setNew();
+            $match->championship_id     = $this->champs[$s->tournament][BaseFcModel::LANG_EN];
+            $match->season_id           = $this->seasons[$s->season][BaseFcModel::LANG_EN];
+            $match->stage_id            = $this->stages[$s->stage][BaseFcModel::LANG_EN];
+            $match->home_team_id        = $home_team[BaseFcModel::LANG_EN];
+            $match->guest_team_id       = $guest_team[BaseFcModel::LANG_EN];
+            $match->save();
+            $matches[BaseFcModel::LANG_EN] = $match->id;
 
             $this->doneMatches++;
             $this->progress();
 
-            $this->saveMatchEvents($m, $match);
-            $this->saveMatchPlaces($m, $match);
+            $this->saveMatchEvents($m->events, $matches, $s->tournament);
+            $this->saveMatchPlaces($m->players, $matches, $s->tournament);
         }
     }
 
     /**
      * Сохранение событий матча.
      *
-     * @param Matches $m
-     * @param FcMatch $match
+     * @param Matchevents[] $events
+     * @param array $matches
+     * @param integer $champId
      *
      * @throws CException
      */
-    private function saveMatchEvents(Matches $m, FcMatch $match)
+    private function saveMatchEvents($events, $matches, $champId)
     {
-        foreach ($m->events as $e) {
+        foreach ($events as $e) {
+            if (!isset($this->teams[$e->team]) || !isset($this->players[$e->player])) {
+                continue;
+            }
+
+            $teams = $this->getTrueTeam($e->team, $champId);
+            $players = $this->players[$e->player];
+
             $event = new FcEvent();
             $event->importId = $e->id;
-            $event->match_id = $match->id;
-
-            if (isset($this->teams[$e->team])) {
-                $event->team_id = $this->getTrueTeam($e->team, $this->matches[$match->id]);
-            }
-
-            if (isset($this->players[$e->player])) {
-                $event->person_id = $this->players[$e->player];
-            }
-
+            $event->match_id = $matches[BaseFcModel::LANG_RU];
+            $event->team_id = $teams[BaseFcModel::LANG_RU];
+            $event->person_id = $players[BaseFcModel::LANG_RU];
             $event->gametime     = $e->firetime;
             $event->gametimeplus = $e->injurytime;
             $event->comment      = $e->comment;
@@ -270,6 +281,12 @@ class MatchesConverter implements IConverter
                 );
             }
 
+            $event->setNew();
+            $event->match_id = $matches[BaseFcModel::LANG_EN];
+            $event->team_id = $teams[BaseFcModel::LANG_EN];
+            $event->person_id = $players[BaseFcModel::LANG_EN];
+            $event->save();
+
             $this->doneEvents++;
             $this->progress();
         }
@@ -278,22 +295,26 @@ class MatchesConverter implements IConverter
     /**
      * Сохранение расстановки матча.
      *
-     * @param Matches $m
-     * @param FcMatch $match
+     * @param Matchplayers[] $matchPlayers
+     * @param array $matches
+     * @param integer $champId
      *
      * @throws CException
      */
-    private function saveMatchPlaces(Matches $m, FcMatch $match)
+    private function saveMatchPlaces($matchPlayers, $matches, $champId)
     {
-        foreach ($m->players as $p) {
+        foreach ($matchPlayers as $p) {
             if (!isset($this->teams[$p->team]) || !isset($this->players[$p->player])) {
                 continue;
             }
 
+            $teams = $this->getTrueTeam($p->team, $champId);
+            $players = $this->players[$p->player];
+
             $placement = new FcPlacement();
-            $placement->match_id  = $match->id;
-            $placement->team_id   = $this->getTrueTeam($p->team, $this->matches[$match->id]);
-            $placement->person_id = $this->players[$p->player];
+            $placement->match_id  = $matches[BaseFcModel::LANG_RU];
+            $placement->team_id   = $teams[BaseFcModel::LANG_RU];
+            $placement->person_id = $players[BaseFcModel::LANG_RU];
             $placement->captain   = (int) $p->captain;
             $placement->xpos      = (int) $p->schemaleft;
             $placement->ypos      = (int) $p->schematop;
@@ -306,6 +327,12 @@ class MatchesConverter implements IConverter
                     $p . "\n"
                 );
             }
+
+            $placement->setNew();
+            $placement->match_id  = $matches[BaseFcModel::LANG_EN];
+            $placement->team_id   = $teams[BaseFcModel::LANG_EN];
+            $placement->person_id = $players[BaseFcModel::LANG_EN];
+            $placement->save();
 
             $this->donePlacements++;
             $this->progress();
@@ -320,10 +347,6 @@ class MatchesConverter implements IConverter
      */
     private function getTrueTeam ($teamId, $champId)
     {
-        if (!is_array($this->teams[$teamId])) {
-            return $this->teams[$teamId];
-        }
-
         return Tournaments::isJunior($champId)
             ? $this->teams[$teamId][FcTeams::JUNIOR]
             : $this->teams[$teamId][FcTeams::MAIN];
@@ -331,6 +354,14 @@ class MatchesConverter implements IConverter
 
     private function progress()
     {
-        printf($this->progressFormat, $this->doneMatches, $this->doneEvents, $this->donePlacements);
+        printf(
+            $this->progressFormat,
+            $this->doneMatches,
+            $this->doneMatches * 2,
+            $this->doneEvents,
+            $this->doneEvents * 2,
+            $this->donePlacements,
+            $this->donePlacements * 2
+        );
     }
 }
