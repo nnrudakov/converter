@@ -16,6 +16,7 @@ trait TFiles {
      */
     protected function saveFile()
     {
+        /* @var DestinationModel $this */
         if (!$this->fileParams) {
             return false;
         }
@@ -35,19 +36,25 @@ trait TFiles {
             }
 
             list($size, $content) = $remote_file;
-            $field_id = isset($params['field_id']) ? $params['field_id'] : constant($const_field);
+            $attributes = [
+                'ext'        => substr($name, -3),
+                'name'       => $name,
+                'size'       => $size,
+                'descr'      => $params['descr'],
+                'video_time' => $params['video_time']
+            ];
 
             $file = new Files();
-            $file->ext        = substr($name, -3);
-            $file->name       = $name;
-            $file->size       = $size;
-            $file->descr      = $params['descr'];
-            $file->video_time = $params['video_time'];
+            $file->setAttributes($attributes, false);
 
-            if (!$file->save()) {
+            // Если файл такой есть, берем айдишник и создаем только новую связку
+            if ($exist_file = Files::model()->findByAttributes($attributes)) {
+                $file->file_id = $exist_file->file_id;
+            } elseif (!$file->save()) {
                 throw new CException('Files not created.' . "\n" . var_export($file->getErrors(), true) . "\n");
             }
 
+            $field_id = isset($params['field_id']) ? $params['field_id'] : constant($const_field);
             $link = new FilesLink();
             $link->file_id     = $file->file_id;
             $link->module_id   = $this->module->module_id;
@@ -65,7 +72,9 @@ trait TFiles {
                 $main = 0;
             }
 
-            $this->setFile($dir . $name, $file->ext, $content);
+            if (!$exist_file) {
+                $this->setFile($dir . $name, $file->ext, $content);
+            }
         }
 
         $this->fileParams = [];

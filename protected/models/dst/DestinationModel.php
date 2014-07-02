@@ -16,13 +16,6 @@ class DestinationModel extends BaseFcModel
     use TFiles;
 
     /**
-     * Язык.
-     *
-     * @var integer
-     */
-    const LANG = 1;
-
-    /**
      * Идентификатор пользователя администратора.
      *
      * @var integer
@@ -49,6 +42,16 @@ class DestinationModel extends BaseFcModel
      * @var bool
      */
     public $writeFiles = false;
+
+    /**
+     * @var integer
+     */
+    public $lang = self::LANG_RU;
+
+    /**
+     * @var integer
+     */
+    public $multilangId = 0;
 
     /**
      * @var integer
@@ -158,6 +161,18 @@ class DestinationModel extends BaseFcModel
             'sort'        => $sort,
             'video_time'  => $videoTime
         ];
+    }
+
+    /**
+     * Установка новой записи.
+     *
+     * @return bool
+     */
+    public function setNew()
+    {
+        $this->setIsNewRecord(true);
+        $this->id = null;
+        $this->lang = self::LANG_EN;
     }
 
     protected function afterSave()

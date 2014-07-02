@@ -107,7 +107,7 @@ class NewsConverter implements IConverter
                 $category = new NewsCategories();
                 $category->importId   = $cat->id;
                 $category->parent_id  = $newParent;
-                $category->lang_id    = NewsCategories::LANG;
+                $category->lang_id    = ConverterCommand::$LANG;
                 $category->name       = $name;
                 $category->title      = $cat->name;
                 $category->content    = $cat->description ?: '';
@@ -190,7 +190,7 @@ class NewsConverter implements IConverter
         $object->main_category_id = $oldObject->isText()
             ? NewsCategories::CAT_NEWS
             : ($oldObject->isPhoto() ? NewsCategories::CAT_PHOTO : NewsCategories::CAT_VIDEO);
-        $object->lang_id          = NewsObjects::LANG;
+        $object->lang_id          = ConverterCommand::$LANG;
         $object->name             = Utils::nameString($oldObject->title);
         $object->title            = $oldObject->title;
         $object->announce         = Utils::clearText($oldObject->message);

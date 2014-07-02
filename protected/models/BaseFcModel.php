@@ -11,6 +11,20 @@
 class BaseFcModel extends CActiveRecord
 {
     /**
+     * Русский.
+     *
+     * @var integer
+     */
+    const LANG_RU = 1;
+
+    /**
+     * Английский.
+     *
+     * @var integer
+     */
+    const LANG_EN = 2;
+
+    /**
      * Представление объекта в виде строки.
      *
      * @return string

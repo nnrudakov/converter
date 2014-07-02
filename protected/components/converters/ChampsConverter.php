@@ -57,7 +57,7 @@ class ChampsConverter implements IConverter
      *
      * @var string
      */
-    private $progressFormat = "\rSeasons: %d. Championships: %d. Stages: %d.";
+    private $progressFormat = "\rSeasons: %d (%d). Championships: %d (%d). Stages: %d (%d).";
 
     /**
      * @var integer
@@ -129,10 +129,13 @@ class ChampsConverter implements IConverter
                 );
             }
 
+            $this->seasons[$s->id][$season->lang] = (int) $season->id;
+            $season->setNew(true);
+            $season->save();
+            $this->seasons[$s->id][$season->lang] = (int) $season->id;
+
             $this->doneSeasons++;
             $this->progress();
-
-            $this->seasons[$s->id] = (int) $season->id;
         }
     }
 
@@ -161,15 +164,19 @@ class ChampsConverter implements IConverter
                 );
             }
 
+            $this->champs[$t->id][$champ->lang] = $champ_ru = (int) $champ->id;
+            $champ->setNew(true);
+            $champ->save();
+            $this->champs[$t->id][$champ->lang] = $champ_en = (int) $champ->id;
+
             $this->doneChamps++;
             $this->progress();
-            $this->champs[$t->id] = (int) $champ->id;
 
             /* @var Stages $s */
             foreach ($t->stages as $s) {
                 $stage = new FcStage();
                 $stage->importId = $s->id;
-                $stage->championship_id = $champ->id;
+                $stage->championship_id = $champ_ru;
                 $stage->title = $s->short;
                 $stage->fullTitle = $s->title ?: $t->title;
                 $stage->style = $s->isCap() ? FcStage::STYLE_CUP : FcStage::STYLE_ROUND;
@@ -183,9 +190,13 @@ class ChampsConverter implements IConverter
                     );
                 }
 
+                $this->stages[$s->id][$stage->lang] = (int) $stage->id;
+                $stage->setNew(true);
+                $stage->save();
+                $this->stages[$s->id][$stage->lang] = (int) $stage->id;
+
                 $this->doneStages++;
                 $this->progress();
-                $this->stages[$s->id] = (int) $stage->id;
             }
         }
     }
@@ -207,6 +218,14 @@ class ChampsConverter implements IConverter
 
     private function progress()
     {
-        printf($this->progressFormat, $this->doneSeasons, $this->doneChamps, $this->doneStages);
+        printf(
+            $this->progressFormat,
+            $this->doneSeasons,
+            $this->doneSeasons * 2,
+            $this->doneChamps,
+            $this->doneChamps * 2,
+            $this->doneStages,
+            $this->doneStages * 2
+        );
     }
 }
