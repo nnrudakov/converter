@@ -516,14 +516,36 @@ class PlayersConverter implements IConverter
         $criteria = new CDbCriteria(
             [
                 'select'    => ['id', 'title', 'info', 'region', 'country'],
-                'condition' => 'title!=\'\' AND id NOT IN(' . implode(',', array_keys($this->teams)) . ')',
+                'condition' => 'title!=\'\'',
                 'order'     => 'id'
             ]
         );
         $src_teams = new Teams();
+        $conn = $src_teams->getDbConnection();
+        $champs = implode(',', Tournaments::$junior);
 
         foreach ($src_teams->findAll($criteria) as $t) {
-            $this->saveTeam($t, FcTeams::MAIN);
+            $count_matches = function ($teamId, $isMain) use ($conn, $champs) {
+                return $conn->createCommand(
+                    'SELECT
+                        COUNT(id)
+                    FROM
+                        tsi.schedule
+                    WHERE
+                        (team1=:team OR team2=:team)
+                        AND tournament ' . ($isMain ? 'NOT ' : '') . 'IN (' . $champs . ')'
+                )->queryScalar([':team' => $teamId]);
+            };
+
+            // если есть кол-во матчей в основных первенствах, пишем как основную команду
+            if ($count_matches($t->id, true)) {
+                $this->saveTeam($t, FcTeams::MAIN);
+            }
+
+            // если есть кол-во матчей молодежки, пишем как молодежку
+            if ($count_matches($t->id, false)) {
+                $this->saveTeam($t, FcTeams::JUNIOR);
+            }
         }
 
         return true;
