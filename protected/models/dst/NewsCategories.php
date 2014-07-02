@@ -35,15 +35,14 @@ class NewsCategories extends KitCategories
      */
     const MODULE = 'news';
 
-    // Cвои категории в "types" - "Типы категорий", id = 1.
-
     /**
      * Категория "чужих" новостей.
      * "Категории новостей" - news.
      *
      * @var integer
      */
-    const CAT_NEWS_CAT = 2;
+    const CAT_NEWS_CAT_RU = 2;
+    const CAT_NEWS_CAT_EN = 7;
 
     /**
      * Категория новостей.
@@ -51,7 +50,8 @@ class NewsCategories extends KitCategories
      *
      * @var integer
      */
-    const CAT_NEWS = 3;
+    const CAT_NEWS_RU = 3;
+    const CAT_NEWS_EN = 8;
 
     /**
      * Категория фоторепортажей.
@@ -59,7 +59,8 @@ class NewsCategories extends KitCategories
      *
      * @var integer
      */
-    const CAT_PHOTO = 4;
+    const CAT_PHOTO_RU = 4;
+    const CAT_PHOTO_EN = 9;
 
     /**
      * Категория видеорепортажей.
@@ -67,7 +68,8 @@ class NewsCategories extends KitCategories
      *
      * @var integer
      */
-    const CAT_VIDEO = 5;
+    const CAT_VIDEO_RU = 5;
+    const CAT_VIDEO_EN = 10;
 
     /**
      * @return string Таблица модели

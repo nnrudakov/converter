@@ -67,7 +67,7 @@ class NewsConverter implements IConverter
     {
         $this->progress();
         // категории и связанные с ними объекты
-        $this->saveCategories(0, NewsCategories::CAT_NEWS_CAT);
+        $this->saveCategories(0, NewsCategories::CAT_NEWS_CAT_RU, NewsCategories::CAT_NEWS_CAT_EN);
         // объекты без категорий
         $this->saveObjects();
 
@@ -78,14 +78,15 @@ class NewsConverter implements IConverter
     /**
      * Сохранение категорий.
      *
-     * @param integer $oldParent Идентификатор старого родителя.
-     * @param integer $newParent Идентификатор нового родителя.
+     * @param integer $oldParent   Идентификатор старого родителя.
+     * @param integer $newParentRu Идентификатор нового родителя.
+     * @param integer $newParentEn Идентификатор нового родителя.
      *
      * @return bool
      *
      * @throws CException
      */
-    private function saveCategories($oldParent, $newParent)
+    private function saveCategories($oldParent, $newParentRu, $newParentEn)
     {
         $criteria = new CDbCriteria();
         $criteria->select = ['id', 'name', 'description'];
@@ -98,16 +99,18 @@ class NewsConverter implements IConverter
         }
         $src_cats = new NewsCategs();
         $nc = new NewsCategories();
+        $that = $this;
 
         foreach ($src_cats->findAll($criteria) as $i => $cat) {
             $name = Utils::nameString($cat->name);
-            $category = $nc->findByAttributes(['parent_id' => $newParent, 'name' => $name]);
-
-            if (is_null($category)) {
+            $save_cat = function ($parentId, $langId, $multilangId = 0) use ($that, $cat, $name, $i) {
                 $category = new NewsCategories();
+                if ($multilangId) {
+                    $category->multilangId = $multilangId;
+                }
                 $category->importId   = $cat->id;
-                $category->parent_id  = $newParent;
-                $category->lang_id    = ConverterCommand::$LANG;
+                $category->parent_id  = $parentId;
+                $category->lang_id    = $langId;
                 $category->name       = $name;
                 $category->title      = $cat->name;
                 $category->content    = $cat->description ?: '';
@@ -121,10 +124,23 @@ class NewsConverter implements IConverter
 
                 $this->doneCats++;
                 $this->progress();
+
+                return $category;
+            };
+
+            /* @var NewsCategories $category_ru */
+            $category_ru = $nc->findByAttributes(['parent_id' => $newParentRu, 'name' => $name]);
+            if (is_null($category_ru)) {
+                $category_ru = $save_cat($newParentRu, BaseFcModel::LANG_RU);
+            }
+            /* @var NewsCategories $category_en */
+            $category_en = $nc->findByAttributes(['parent_id' => $newParentEn, 'name' => $name]);
+            if (is_null($category_en)) {
+                $category_en = $save_cat($newParentEn, BaseFcModel::LANG_EN, $category_ru->multilangId);
             }
 
-            $this->saveObjects($cat, $category);
-            $this->saveCategories($cat->id, $category->category_id);
+            $this->saveObjects($cat, $category_ru->getId(), $category_en->getId());
+            $this->saveCategories($cat->id, $category_ru->getId(), $category_en->getId());
         }
 
         return true;
@@ -133,14 +149,15 @@ class NewsConverter implements IConverter
     /**
      * Сохранение объектов.
      *
-     * @param NewsCategs     $oldCategory Старая категория.
-     * @param NewsCategories $newCategory Новая категория.
+     * @param NewsCategs $oldCategory   Старая категория.
+     * @param integer    $newCategoryRu Новая категория.
+     * @param integer    $newCategoryEn Новая категория.
      *
      * @return bool
      */
-    private function saveObjects($oldCategory = null, $newCategory = null)
+    private function saveObjects($oldCategory = null, $newCategoryRu = null, $newCategoryEn = null)
     {
-        if (is_null($oldCategory) && is_null($newCategory)) {
+        if (is_null($oldCategory) && is_null($newCategoryRu) && is_null($newCategoryEn)) {
             $criteria = new CDbCriteria();
             $criteria->select = [
                 'id', 'date', 'title', 'type', 'message', 'link', 'details', 'metadescription', 'metatitle',
@@ -152,13 +169,15 @@ class NewsConverter implements IConverter
             $objects = News::model()->findAll($criteria);
 
             foreach ($objects as $i => $obj) {
-                $this->saveObject($obj, NewsCategories::CAT_NEWS_CAT, $i + 1);
+                $multilang_id = $this->saveObject($obj, NewsCategories::CAT_NEWS_CAT_RU, $i + 1, BaseFcModel::LANG_RU);
+                $this->saveObject($obj, NewsCategories::CAT_NEWS_CAT_EN, $i + 1, BaseFcModel::LANG_EN, $multilang_id);
             }
         } else {
             /* @var NewsLinks $link */
             foreach ($oldCategory->links as $link) {
                 foreach ($link->news_obj as $i => $obj) {
-                    $this->saveObject($obj, $newCategory->getId(), $i + 1);
+                    $multilang_id = $this->saveObject($obj, $newCategoryRu, $i + 1, BaseFcModel::LANG_RU);
+                    $this->saveObject($obj, $newCategoryEn, $i + 1, BaseFcModel::LANG_EN, $multilang_id);
                 }
             }
         }
@@ -169,28 +188,36 @@ class NewsConverter implements IConverter
     /**
      * Сохранение объекта.
      *
-     * @param News    $oldObject  Объект.
-     * @param integer $categoryId Идентификатор категории.
-     * @param integer $sort       Порядк в категории.
+     * @param News    $oldObject   Объект.
+     * @param integer $categoryId  Идентификатор категории.
+     * @param integer $sort        Порядк в категории.
+     * @param integer $langId      Язык.
+     * @param integer $multilangId
      *
-     * @return bool
+     * @return integer
      *
      * @throws CException
      */
-    private function saveObject(News $oldObject, $categoryId, $sort)
+    private function saveObject(News $oldObject, $categoryId, $sort, $langId, $multilangId = 0)
     {
-        if (in_array($oldObject->id, $this->savedNews)) {
+        /*if (in_array($oldObject->id, $this->savedNews)) {
             return true;
-        }
+        }*/
 
         $object = new NewsObjects();
+        if ($multilangId) {
+            $object->multilangId = $multilangId;
+        }
         $object->importId   = $oldObject->id;
         $object->writeFiles = $this->writeFiles;
         $this->setFilesParams($oldObject, $object);
         $object->main_category_id = $oldObject->isText()
-            ? NewsCategories::CAT_NEWS
-            : ($oldObject->isPhoto() ? NewsCategories::CAT_PHOTO : NewsCategories::CAT_VIDEO);
-        $object->lang_id          = ConverterCommand::$LANG;
+            ? ($langId == BaseFcModel::LANG_RU ? NewsCategories::CAT_NEWS_CAT_RU : NewsCategories::CAT_NEWS_CAT_EN)
+            : ($oldObject->isPhoto()
+                ? ($langId == BaseFcModel::LANG_RU ? NewsCategories::CAT_PHOTO_RU : NewsCategories::CAT_PHOTO_EN)
+                : ($langId == BaseFcModel::LANG_RU ? NewsCategories::CAT_VIDEO_RU : NewsCategories::CAT_VIDEO_EN)
+            );
+        $object->lang_id          = $langId;
         $object->name             = Utils::nameString($oldObject->title);
         $object->title            = $oldObject->title;
         $object->announce         = Utils::clearText($oldObject->message);
@@ -213,11 +240,11 @@ class NewsConverter implements IConverter
         $this->doneNews++;
         $this->progress();
 
-        $fh = fopen($this->newsFile, 'a');
+        /*$fh = fopen($this->newsFile, 'a');
         fwrite($fh, $oldObject->id . "\n");
-        fclose($fh);
+        fclose($fh);*/
 
-        return true;
+        return $object->multilangId;
     }
 
     /**
