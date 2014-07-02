@@ -38,41 +38,60 @@ class PersonsCategories extends KitCategories
     /**
      * Категории клуба.
      */
-    const CLUB_LEADS    = 6;
-    const CLUB_SPORT    = 7;
-    const CLUB_LAW      = 8;
-    const CLUB_SECURITY = 9;
-    const CLUB_MARKET   = 10;
-    const CLUB_TECH     = 11;
-    const CLUB_MEDIC    = 19;
+    const CLUB_LEADS_RU    = 6;
+    const CLUB_SPORT_RU    = 7;
+    const CLUB_LAW_RU      = 8;
+    const CLUB_SECURITY_RU = 9;
+    const CLUB_MARKET_RU   = 10;
+    const CLUB_TECH_RU     = 11;
+    const CLUB_MEDIC_RU    = 19;
+    const CLUB_LEADS_EN    = 30;
+    const CLUB_SPORT_EN    = 31;
+    const CLUB_LAW_EN      = 32;
+    const CLUB_SECURITY_EN = 33;
+    const CLUB_MARKET_EN   = 34;
+    const CLUB_TECH_EN     = 35;
+    const CLUB_MEDIC_EN    = 36;
 
     /**
      * Категории основного состава команды.
      */
-    const FC_COACHES = 12;
-    const FC_ADMIN   = 13;
-    const FC_MEDIC   = 14;
-    const FC_PRESS   = 15;
-    const FC_SELECT  = 16;
+    const FC_COACHES_RU = 12;
+    const FC_ADMIN_RU   = 13;
+    const FC_MEDIC_RU   = 14;
+    const FC_PRESS_RU   = 15;
+    const FC_SELECT_RU  = 16;
+    const FC_COACHES_EN = 37;
+    const FC_ADMIN_EN   = 38;
+    const FC_MEDIC_EN   = 39;
+    const FC_PRESS_EN   = 40;
+    const FC_SELECT_EN  = 41;
 
     /**
      * Категории молодежного состава.
      */
-    const FCM_COACHES = 17;
-    const FCM_PERSONS = 18;
+    const FCM_COACHES_RU = 17;
+    const FCM_PERSONS_RU = 18;
+    const FCM_COACHES_EN = 42;
+    const FCM_PERSONS_EN = 43;
 
     /**
      * Категории второй команды.
      */
-    const FC2_COACHES = 20;
-    const FC2_PERSONS = 21;
+    const FC2_COACHES_RU = 20;
+    const FC2_PERSONS_RU = 21;
+    const FC2_COACHES_EN = 44;
+    const FC2_PERSONS_EN = 45;
 
     /**
      * Категории команды академии.
      */
-    const A_LEADS   = 22;
-    const A_COACHES = 23;
-    const A_PERSONS = 24;
+    const A_LEADS_RU   = 22;
+    const A_COACHES_RU = 23;
+    const A_PERSONS_RU = 24;
+    const A_LEADS_EN   = 46;
+    const A_COACHES_EN = 47;
+    const A_PERSONS_EN = 48;
 
     /**
      * @return string Таблица модели

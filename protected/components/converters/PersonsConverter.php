@@ -23,27 +23,86 @@ class PersonsConverter implements IConverter
      * @var array
      */
     public static $categories = [
-        '634003665154257148'  => PersonsCategories::CLUB_LEADS,
-        '634327702653514462'  => PersonsCategories::CLUB_SPORT,
-        '634327702802704462'  => PersonsCategories::CLUB_LAW,
-        '634327702966294462'  => PersonsCategories::CLUB_SECURITY,
-        '634327703093084462'  => PersonsCategories::CLUB_MARKET,
-        '634327703204764462'  => PersonsCategories::CLUB_TECH,
-        '634327703371394462'  => PersonsCategories::CLUB_MEDIC,
-        '634327703968554462'  => PersonsCategories::FC_COACHES,
-        '634327704292614462'  => PersonsCategories::FC_ADMIN,
-        '634460819371416698'  => PersonsCategories::FC_MEDIC,
-        '634460819777869946'  => PersonsCategories::FC_PRESS,
-        '634460820642589405'  => PersonsCategories::FC_SELECT,
-        '634080561412439670'  => PersonsCategories::FC_SELECT,
-        '634378824976006501'  => PersonsCategories::FCM_COACHES,
-        '6340036650992571485' => PersonsCategories::FCM_PERSONS,
-        '635091372580586616'  => PersonsCategories::FC2_COACHES,
-        '635091373206982443'  => PersonsCategories::FC2_PERSONS,
-        '634080560806044986'  => PersonsCategories::A_LEADS,
-        '634327711464684462'  => PersonsCategories::A_COACHES,
-        '634327711323574462'  => PersonsCategories::A_PERSONS
-
+        '634003665154257148'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::CLUB_LEADS_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::CLUB_LEADS_EN
+        ],
+        '634327702653514462'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::CLUB_SPORT_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::CLUB_SPORT_EN
+        ],
+        '634327702802704462'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::CLUB_LAW_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::CLUB_LAW_EN
+        ],
+        '634327702966294462'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::CLUB_SECURITY_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::CLUB_SECURITY_EN
+        ],
+        '634327703093084462'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::CLUB_MARKET_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::CLUB_MARKET_EN
+        ],
+        '634327703204764462'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::CLUB_TECH_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::CLUB_TECH_EN
+        ],
+        '634327703371394462'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::CLUB_MEDIC_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::CLUB_MEDIC_EN
+        ],
+        '634327703968554462'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::FC_COACHES_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::FC_COACHES_EN
+        ],
+        '634327704292614462'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::FC_ADMIN_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::FC_ADMIN_EN
+        ],
+        '634460819371416698'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::FC_MEDIC_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::FC_MEDIC_EN
+        ],
+        '634460819777869946'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::FC_PRESS_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::FC_PRESS_EN
+        ],
+        '634460820642589405'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::FC_SELECT_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::FC_SELECT_EN
+        ],
+        '634080561412439670'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::FC_SELECT_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::FC_SELECT_EN
+        ],
+        '634378824976006501'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::FCM_COACHES_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::FCM_COACHES_EN
+        ],
+        '6340036650992571485' => [
+            BaseFcModel::LANG_RU => PersonsCategories::FCM_PERSONS_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::FCM_PERSONS_EN
+        ],
+        '635091372580586616'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::FC2_COACHES_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::FC2_COACHES_EN
+        ],
+        '635091373206982443'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::FC2_PERSONS_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::FC2_PERSONS_EN
+        ],
+        '634080560806044986'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::A_LEADS_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::A_LEADS_EN
+        ],
+        '634327711464684462'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::A_COACHES_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::A_COACHES_EN
+        ],
+        '634327711323574462'  => [
+            BaseFcModel::LANG_RU => PersonsCategories::A_PERSONS_RU,
+            BaseFcModel::LANG_EN => PersonsCategories::A_PERSONS_EN
+        ]
     ];
 
     /**
@@ -99,19 +158,27 @@ class PersonsConverter implements IConverter
         $person->writeFiles = $this->writeFiles;
         $person->filesUrl = Persons::PHOTO_URL;
         $person->main_category_id = isset(self::$categories[$p->path])
-            ? self::$categories[$p->path]
+            ? self::$categories[$p->path][BaseFcModel::LANG_RU]
             : PersonsCategories::NO_CAT;
         $person->setFileParams(
             $p->id,
-            in_array($person->main_category_id, [PersonsCategories::CLUB_LEADS, PersonsCategories::A_LEADS])
-                ? PersonsObjects::FILE_LEADER
-                : PersonsObjects::FILE
+            in_array(
+                $person->main_category_id,
+                [
+                    PersonsCategories::CLUB_LEADS_RU, PersonsCategories::A_LEADS_RU,
+                    PersonsCategories::CLUB_LEADS_EN, PersonsCategories::A_LEADS_EN
+                ]
+            ) ? PersonsObjects::FILE_LEADER : PersonsObjects::FILE
         );
         $person->setFileParams(
             $p->id,
-            in_array($person->main_category_id, [PersonsCategories::CLUB_LEADS, PersonsCategories::A_LEADS])
-                ? PersonsObjects::FILE_LEADER_LIST
-                : PersonsObjects::FILE_LIST,
+            in_array(
+                $person->main_category_id,
+                [
+                    PersonsCategories::CLUB_LEADS_RU, PersonsCategories::A_LEADS_RU,
+                    PersonsCategories::CLUB_LEADS_EN, PersonsCategories::A_LEADS_EN
+                ]
+            ) ? PersonsObjects::FILE_LEADER_LIST : PersonsObjects::FILE_LIST,
             0,
             PersonsObjects::FILE_FIELD_LIST
         );
@@ -136,6 +203,9 @@ class PersonsConverter implements IConverter
         $ru_id = $person->getId();
         $person->setNew();
         $person->fileParams = $fileparams;
+        $person->main_category_id = isset(self::$categories[$p->path])
+            ? self::$categories[$p->path][BaseFcModel::LANG_EN]
+            : PersonsCategories::NO_CAT;
         $person->save();
         $en_id = $person->getId();
 
