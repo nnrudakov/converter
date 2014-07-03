@@ -72,7 +72,7 @@ class NewsConverter implements IConverter
         $this->saveObjects();
 
         // все прошло успешно, удаляем кеш сохраненных
-        unlink($this->newsFile);
+        //unlink($this->newsFile);
     }
 
     /**
