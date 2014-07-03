@@ -106,6 +106,7 @@ class NewsConverter implements IConverter
             $save_cat = function ($parentId, $langId, $multilangId = 0) use ($that, $cat, $name, $i) {
                 $category = new NewsCategories();
                 if ($multilangId) {
+                    $category->setNew();
                     $category->multilangId = $multilangId;
                 }
                 $category->importId   = $cat->id;
@@ -206,6 +207,7 @@ class NewsConverter implements IConverter
 
         $object = new NewsObjects();
         if ($multilangId) {
+            $object->setNew();
             $object->multilangId = $multilangId;
         }
         $object->importId   = $oldObject->id;

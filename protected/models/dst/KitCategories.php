@@ -123,4 +123,16 @@ class KitCategories extends DestinationModel
     {
         return $this->category_id;
     }
+
+    /**
+     * Установка новой записи.
+     *
+     * @return bool
+     */
+    public function setNew()
+    {
+        $this->setIsNewRecord(true);
+        $this->category_id = null;
+        $this->lang = $this->lang_id = self::LANG_EN;
+    }
 }
