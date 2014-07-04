@@ -772,7 +772,7 @@ class PlayersConverter implements IConverter
         $tag = new Tags();
         $tag->category_id = $categoryId;
         $tag->name = substr(preg_replace('/(?!-)[\W]+/', '_', Utils::rus2lat($title)), 0, 255);
-        $tag->title = $title . '_' .BaseFcModel::LANG_RU . '_' . rand(0, 100);
+        $tag->title = $title . '_' .BaseFcModel::LANG_RU . '_' . rand(0, 200);
         $tag->publish = 1;
         $tag->priority = 0;
 
@@ -783,7 +783,7 @@ class PlayersConverter implements IConverter
         $ru_id = $tag->getId();
         $this->saveTagLinks($ru_id, $newEntities[BaseFcModel::LANG_RU]);
         $tag->setNew();
-        $tag->title = $title . '_' .BaseFcModel::LANG_EN . '_' . rand(0, 100);
+        $tag->title = $title . '_' .BaseFcModel::LANG_EN . '_' . rand(0, 200);
         $tag->save();
         $en_id = $tag->getId();
         $this->saveTagLinks($en_id, $newEntities[BaseFcModel::LANG_EN]);
