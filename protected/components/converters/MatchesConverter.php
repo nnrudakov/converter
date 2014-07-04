@@ -208,7 +208,7 @@ class MatchesConverter implements IConverter
                 $m->id,
                 $matches,
                 implode(
-                    ', ',
+                    ' ',
                     [
                         $s->champ->title,
                         $s->s->title,
