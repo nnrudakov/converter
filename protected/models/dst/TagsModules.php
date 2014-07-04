@@ -69,4 +69,25 @@ class TagsModules extends DestinationModel
     {
         return parent::model($className);
     }
+
+    /**
+     * Получение идентификатора.
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->link_id;
+    }
+
+    /**
+     * Установка новой записи.
+     *
+     * @return bool
+     */
+    public function setNew()
+    {
+        $this->setIsNewRecord(true);
+        $this->link_id = null;
+    }
 }

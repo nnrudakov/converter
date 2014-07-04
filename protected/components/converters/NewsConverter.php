@@ -338,8 +338,16 @@ class NewsConverter implements IConverter
 
             $id = (int) $tag->getAttribute('id');
             if (isset($this->tags[$type][$id])) {
-                $attrs = ['tag_id' => $this->tags[$type][$id][$langId], 'module_id' => BaseFcModel::FC_MODULE_ID];
+                $attrs = ['tag_id' => $this->tags[$type][$id][$langId], 'module_id' => BaseFcModel::NEWS_MODULE_ID];
                 $module_link = TagsModules::model()->findByAttributes($attrs);
+                if (!$module_link) {
+                    $module_link = new TagsModules();
+                    $module_link->tag_id = $this->tags[$type][$id][$langId];
+                    $module_link->module_id = BaseFcModel::NEWS_MODULE_ID;
+                    $module_link->publish = 1;
+                    $module_link->is_default = 0;
+                    $module_link->save();
+                }
                 $object_link = new TagsObjects();
                 $object_link->link_id = $module_link->link_id;
                 $object_link->object_id = $objectId;

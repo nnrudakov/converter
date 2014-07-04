@@ -814,6 +814,9 @@ class PlayersConverter implements IConverter
         $objects->link_id = $modules->link_id;
         $objects->object_id = $objectId;
         $objects->save();
+        $modules->setNew();
+        $modules->module_id = BaseFcModel::NEWS_MODULE_ID;
+        $modules->save();
 
         return true;
     }
