@@ -130,6 +130,21 @@ class PlayersConverter implements IConverter
     const POSITION_HALFBACK = 3;
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 26;
+
+    /**
+     * @var string
+     */
+    const TAGS_TEAM = 'team';
+
+    /**
+     * @var string
+     */
+    const TAGS_PLAYER = 'player';
+
+    /**
      * Соответствие между текущими и новыми амплуа.
      *
      * @var array
@@ -198,6 +213,11 @@ class PlayersConverter implements IConverter
     private $stages = [];
 
     /**
+     * @var array
+     */
+    private $tags = [];
+
+    /**
      * Файл соответствий текущих идентификаторов игроков новым.
      *
      * @var string
@@ -212,11 +232,16 @@ class PlayersConverter implements IConverter
     private $teamsFile = '';
 
     /**
+     * @var array
+     */
+    private $tagsFile = '';
+
+    /**
      * Строка для прогресс-бара.
      *
      * @var string
      */
-    private $progressFormat = "\rTeams: %d (%d). Players: %d (%d). Contracts: %d (%d). Players statistics: %d (%d). Teams statistics: %d (%d).";
+    private $progressFormat = "\rTeams: %d (%d). Players: %d (%d). Contracts: %d (%d). Players statistics: %d (%d). Teams statistics: %d (%d). Teams tags: %d (%d). Players tags: %d (%d).";
 
     /**
      * @var integer
@@ -244,12 +269,23 @@ class PlayersConverter implements IConverter
     private $doneTeamStats = 0;
 
     /**
+     * @var integer
+     */
+    private $doneTeamTags = 0;
+
+    /**
+     * @var integer
+     */
+    private $donePlayerTags = 0;
+
+    /**
      * Инициализация.
      */
     public function __construct()
     {
         $this->teamsFile   = Yii::getPathOfAlias('accordance') . '/teams.php';
         $this->playersFile = Yii::getPathOfAlias('accordance') . '/players.php';
+        $this->tagsFile    = Yii::getPathOfAlias('accordance') . '/tags.php';
 
         // сезоны и чемпионаты уже должны быть перенесены
         $cc = new ChampsConverter();
@@ -264,6 +300,7 @@ class PlayersConverter implements IConverter
     public function convert()
     {
         $this->progress();
+        $this->tags = ['team' => [], 'person' => [], 'match' => []];
         $criteria = new CDbCriteria(
             [
                 'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
@@ -313,10 +350,11 @@ class PlayersConverter implements IConverter
         $this->saveMatchPlayers();
         $this->savePlayerStat();
 
-        ksort($this->players);
         ksort($this->teams);
-        file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
+        ksort($this->players);
         file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
+        file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
+        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
     }
 
     public function getTeams()
@@ -327,6 +365,11 @@ class PlayersConverter implements IConverter
     public function getPlayers()
     {
         return file_exists($this->playersFile) ? include $this->playersFile : [];
+    }
+
+    public function getTags()
+    {
+        return file_exists($this->tagsFile) ? include $this->tagsFile : [];
     }
 
     /**
@@ -402,7 +445,7 @@ class PlayersConverter implements IConverter
         }
 
         $player = new FcPerson();
-        $player->importId   = $p->id;
+        //$player->importId   = $p->id;
         $player->writeFiles = $this->writeFiles;
         $player->filesUrl = Players::PHOTO_URL;
         $player->setFileParams($p->id);
@@ -436,11 +479,28 @@ class PlayersConverter implements IConverter
         $player->fileParams = $fileparams;
         $player->save();
         $this->players[$p->id][BaseFcModel::LANG_EN] = $en_id = (int) $player->id;
+        $ids = [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id];
 
         $this->donePlayers++;
         $this->progress();
 
-        return [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id];
+        $this->saveTags(
+            self::TAGS_PLAYER,
+            $p->id,
+            $ids,
+            TagsCategories::PLAYERS,
+            implode(
+                ' ',
+                [
+                    $player->lastname,
+                    $player->firstname,
+                    $player->middlename,
+                    '(' . preg_replace('/\s\d{2}:\d{2}:\d{2}/', '', $player->birthday) . ')'
+                ]
+            )
+        );
+
+        return $ids;
     }
 
     /**
@@ -460,9 +520,9 @@ class PlayersConverter implements IConverter
         }
 
         $team = new FcTeams();
-        if ($staff == FcTeams::MAIN) {
+        /*if ($staff == FcTeams::MAIN) {
             $team->importId = $t->id;
-        }
+        }*/
         $team->writeFiles = $this->writeFiles;
         $team->filesUrl = Teams::PHOTO_URL;
         $team->setFileParams($t->id);
@@ -497,6 +557,14 @@ class PlayersConverter implements IConverter
 
         $this->doneTeams++;
         $this->progress();
+
+        $this->saveTags(
+            self::TAGS_TEAM,
+            $t->id,
+            [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id],
+            TagsCategories::TEAMS,
+            implode(' ', [$team->title, $team->staff, '(' . $team->city . ')'])
+        );
 
         return $this->teams[$t->id][$staff];
     }
@@ -695,6 +763,67 @@ class PlayersConverter implements IConverter
     }
 
     /**
+     * @param string  $entity
+     * @param integer $entityId
+     * @param array   $newEntities
+     * @param integer $categoryId
+     * @param string  $title
+     *
+     * @return bool
+     * @throws CException
+     */
+    private function saveTags($entity, $entityId, $newEntities, $categoryId, $title)
+    {
+        $tag = new Tags();
+        $tag->category_id = $categoryId;
+        $tag->name = substr(preg_replace('/(?!-)[\W]+/', '_', Utils::rus2lat($title)), 0, 255);
+        $tag->title = $title . '_' .BaseFcModel::LANG_RU . '_' . rand(0, 100);
+        $tag->publish = 1;
+        $tag->priority = 0;
+
+        if (!$tag->save()) {
+            throw new CException('Tag not created.' . "\n" . var_export($tag->getErrors(), true) . "\n");
+        }
+
+        $ru_id = $tag->getId();
+        $this->saveTagLinks($ru_id, $newEntities[BaseFcModel::LANG_RU]);
+        $tag->setNew();
+        $tag->title = $title . '_' .BaseFcModel::LANG_EN . '_' . rand(0, 100);
+        $tag->save();
+        $en_id = $tag->getId();
+        $this->saveTagLinks($en_id, $newEntities[BaseFcModel::LANG_EN]);
+
+        $this->tags[$entity][$entityId] = [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id];
+
+        $entity == self::TAGS_TEAM ? $this->doneTeamTags++ : $this->donePlayerTags++;
+        $this->progress();
+
+        return true;
+    }
+
+    /**
+     * @param integer $tagId
+     * @param integer $objectId
+     *
+     * @return bool
+     */
+    private function saveTagLinks($tagId, $objectId)
+    {
+        $modules = new TagsModules();
+        $modules->tag_id = $tagId;
+        $modules->module_id = self::MODULE_ID;
+        $modules->publish = 1;
+        $modules->is_default = 0;
+        $modules->save();
+        $objects = new TagsSources();
+        $objects->link_id = $modules->link_id;
+        $objects->object_id = $objectId;
+        $objects->save();
+
+        return true;
+    }
+
+    /**
      * @param integer $teamId
      * @param integer $champId
      *
@@ -720,7 +849,11 @@ class PlayersConverter implements IConverter
             $this->donePlayerStats,
             $this->donePlayerStats * 2,
             $this->doneTeamStats,
-            $this->doneTeamStats * 2
+            $this->doneTeamStats * 2,
+            $this->doneTeamTags,
+            $this->doneTeamTags * 2,
+            $this->donePlayerTags,
+            $this->donePlayerTags * 2
         );
     }
 }

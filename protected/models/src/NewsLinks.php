@@ -46,9 +46,9 @@ class NewsLinks extends SourceModel
             'news_obj' => [self::HAS_MANY, 'News',       'id',
                 'select' => [
                     'id', 'date', 'title', 'message', 'type', 'link', 'details', 'metadescription', 'metatitle',
-                    'metakeywords', 'priority'
+                    'metakeywords', 'priority', 'tags'
                 ],
-                'condition' => 'news_obj.title!=\'\'',
+                'condition' => 'news_obj.title!=\'\' AND news_obj.tags IS NOT NULL',
                 'order' => 'id'
             ],
             'cat_obj'  => [self::HAS_MANY, 'NewsCategs', 'id']

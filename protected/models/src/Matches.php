@@ -32,6 +32,8 @@
  * @property Schedule       $sch
  * @property Matchevents[]  $events
  * @property Matchplayers[] $players
+ * @property Teams          $homeTeam
+ * @property Teams          $guestTeam
  *
  * @package    converter
  * @subpackage matches
@@ -68,9 +70,11 @@ class Matches extends SourceModel
     public function relations()
     {
         return [
-            'sch'     => [self::BELONGS_TO,  'Schedule', 'schedule'],
-            'events'  => [self::HAS_MANY, 'Matchevents', 'match', 'order' => 'id'],
-            'players' => [self::HAS_MANY, 'Matchplayers', 'match', 'condition' => 'player>0']
+            'sch'       => [self::BELONGS_TO,  'Schedule', 'schedule'],
+            'events'    => [self::HAS_MANY, 'Matchevents', 'match', 'order' => 'id'],
+            'players'   => [self::HAS_MANY, 'Matchplayers', 'match', 'condition' => 'player>0'],
+            'homeTeam'  => [self::BELONGS_TO, 'Teams', 'team1'],
+            'guestTeam' => [self::BELONGS_TO, 'Teams', 'team2']
         ];
     }
 
