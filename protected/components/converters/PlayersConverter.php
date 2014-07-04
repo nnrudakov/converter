@@ -142,7 +142,7 @@ class PlayersConverter implements IConverter
     /**
      * @var string
      */
-    const TAGS_PLAYER = 'player';
+    const TAGS_PLAYER = 'person';
 
     /**
      * Соответствие между текущими и новыми амплуа.
@@ -300,7 +300,7 @@ class PlayersConverter implements IConverter
     public function convert()
     {
         $this->progress();
-        $this->tags = ['team' => [], 'person' => [], 'match' => []];
+        $this->tags = [self::TAGS_TEAM => [], self::TAGS_PLAYER => [], MatchesConverter::TAGS_MATCH => []];
         $criteria = new CDbCriteria(
             [
                 'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],

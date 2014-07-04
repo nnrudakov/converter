@@ -23,6 +23,8 @@
  * @property Tournaments $champ
  * @property Seasons     $s
  * @property Stages      $st
+ * @property Teams       $homeTeam
+ * @property Teams       $guestTeam
  *
  * @package    converter
  * @subpackage schedule
@@ -61,7 +63,9 @@ class Schedule extends SourceModel
             'match' => [self::HAS_ONE, 'Matches', 'schedule', 'joinType' => 'INNER JOIN'],
             'champ' => [self::BELONGS_TO, 'Tournaments', 'tournament'],
             's'     => [self::BELONGS_TO, 'Seasons', 'season'],
-            'st'    => [self::BELONGS_TO, 'Stages', 'stage']
+            'st'    => [self::BELONGS_TO, 'Stages', 'stage'],
+            'homeTeam'  => [self::BELONGS_TO, 'Teams', 'team1'],
+            'guestTeam' => [self::BELONGS_TO, 'Teams', 'team2']
         ];
     }
 

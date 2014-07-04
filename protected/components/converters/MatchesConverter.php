@@ -11,6 +11,16 @@
 class MatchesConverter implements IConverter
 {
     /**
+     * @var integer
+     */
+    const MODULE_ID = 26;
+
+    /**
+     * @var string
+     */
+    const TAGS_MATCH = 'match';
+
+    /**
      * Команды.
      *
      * @var array
@@ -46,35 +56,21 @@ class MatchesConverter implements IConverter
     private $stages = [];
 
     /**
-     * Соотвествие матчей и чемпионатов для верного определения команды событий и расстановки.
-     *
      * @var array
      */
-    private $matches = [];
+    private $tags = [];
 
     /**
-     * Инициализация.
+     * @var array
      */
-    public function __construct()
-    {
-        // команды и игрока уже должны быть перенесены
-        $pc = new PlayersConverter();
-        $this->teams   = $pc->getTeams();
-        $this->players = $pc->getPlayers();
-
-        // сезоны и чемпионаты уже должны быть пересены
-        $cc = new ChampsConverter();
-        $this->seasons = $cc->getSeasons();
-        $this->champs  = $cc->getChamps();
-        $this->stages  = $cc->getStages();
-    }
+    private $tagsFile = '';
 
     /**
      * Строка для прогресс-бара.
      *
      * @var string
      */
-    private $progressFormat = "\rMatches: %d (%d). Events: %d (%d). Placements: %d (%d).";
+    private $progressFormat = "\rMatches: %d (%d). Events: %d (%d). Placements: %d (%d). Tags: %d (%d)";
 
     /**
      * @var integer
@@ -90,6 +86,31 @@ class MatchesConverter implements IConverter
      * @var integer
      */
     private $donePlacements = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneTags = 0;
+
+    /**
+     * Инициализация.
+     */
+    public function __construct()
+    {
+        $this->tagsFile = Yii::getPathOfAlias('accordance') . '/tags.php';
+
+        // команды и игрока уже должны быть перенесены
+        $pc = new PlayersConverter();
+        $this->teams   = $pc->getTeams();
+        $this->players = $pc->getPlayers();
+        $this->tags    = $pc->getTags();
+
+        // сезоны и чемпионаты уже должны быть пересены
+        $cc = new ChampsConverter();
+        $this->seasons = $cc->getSeasons();
+        $this->champs  = $cc->getChamps();
+        $this->stages  = $cc->getStages();
+    }
 
     /**
      * Запуск преобразований.
@@ -188,7 +209,22 @@ class MatchesConverter implements IConverter
 
             $this->saveMatchEvents($m->events, $matches, $s->tournament);
             $this->saveMatchPlaces($m->players, $matches, $s->tournament);
+            $this->saveTags(
+                $m->id,
+                $matches,
+                implode(
+                    ', ',
+                    [
+                        $s->champ->title,
+                        $s->s->title,
+                        ($s->st ? $s->st->title : ''),
+                        $s->homeTeam->title . ':' . $s->guestTeam->title
+                    ]
+                )
+            );
         }
+
+        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
     }
 
     /**
@@ -352,6 +388,65 @@ class MatchesConverter implements IConverter
             : $this->teams[$teamId][FcTeams::MAIN];
     }
 
+    /**
+     * @param integer $entityId
+     * @param array   $newEntities
+     * @param string  $title
+     *
+     * @return bool
+     * @throws CException
+     */
+    private function saveTags($entityId, $newEntities, $title)
+    {
+        $tag = new Tags();
+        $tag->category_id = TagsCategories::MATCHES;
+        $tag->name = substr(preg_replace('/(?!-)[\W]+/', '_', Utils::rus2lat($title)), 0, 50);
+        $tag->title = $title . '_' .BaseFcModel::LANG_RU . '_' . rand(0, 100);
+        $tag->publish = 1;
+        $tag->priority = 0;
+
+        if (!$tag->save()) {
+            throw new CException('Tag not created.' . "\n" . var_export($tag->getErrors(), true) . "\n");
+        }
+
+        $ru_id = $tag->getId();
+        $this->saveTagLinks($ru_id, $newEntities[BaseFcModel::LANG_RU]);
+        $tag->setNew();
+        $tag->title = $title . '_' .BaseFcModel::LANG_EN . '_' . rand(0, 100);
+        $tag->save();
+        $en_id = $tag->getId();
+        $this->saveTagLinks($en_id, $newEntities[BaseFcModel::LANG_EN]);
+
+        $this->tags[self::TAGS_MATCH][$entityId] = [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id];
+
+        $this->doneTags++;
+        $this->progress();
+
+        return true;
+    }
+
+    /**
+     * @param integer $tagId
+     * @param integer $objectId
+     *
+     * @return bool
+     */
+    private function saveTagLinks($tagId, $objectId)
+    {
+        $modules = new TagsModules();
+        $modules->tag_id = $tagId;
+        $modules->module_id = self::MODULE_ID;
+        $modules->publish = 1;
+        $modules->is_default = 0;
+        $modules->save();
+        $objects = new TagsSources();
+        $objects->link_id = $modules->link_id;
+        $objects->object_id = $objectId;
+        $objects->save();
+
+        return true;
+    }
+
     private function progress()
     {
         printf(
@@ -361,7 +456,9 @@ class MatchesConverter implements IConverter
             $this->doneEvents,
             $this->doneEvents * 2,
             $this->donePlacements,
-            $this->donePlacements * 2
+            $this->donePlacements * 2,
+            $this->doneTags,
+            $this->doneTags * 2
         );
     }
 }
