@@ -21,6 +21,20 @@
 class Tags extends DestinationModel
 {
     /**
+     * Имя сущности для многоязычности.
+     *
+     * @var string
+     */
+    const ENTITY = 'tag';
+
+    /**
+     * Модуль.
+     *
+     * @var string
+     */
+    const MODULE = 'tags';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()
