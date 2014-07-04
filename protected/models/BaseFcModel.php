@@ -25,6 +25,11 @@ class BaseFcModel extends CActiveRecord
     const LANG_EN = 2;
 
     /**
+     * @var integer
+     */
+    const FC_MODULE_ID = 26;
+
+    /**
      * Представление объекта в виде строки.
      *
      * @return string

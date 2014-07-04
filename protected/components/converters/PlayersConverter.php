@@ -130,11 +130,6 @@ class PlayersConverter implements IConverter
     const POSITION_HALFBACK = 3;
 
     /**
-     * @var integer
-     */
-    const MODULE_ID = 26;
-
-    /**
      * @var string
      */
     const TAGS_TEAM = 'team';
@@ -811,7 +806,7 @@ class PlayersConverter implements IConverter
     {
         $modules = new TagsModules();
         $modules->tag_id = $tagId;
-        $modules->module_id = self::MODULE_ID;
+        $modules->module_id = BaseFcModel::FC_MODULE_ID;
         $modules->publish = 1;
         $modules->is_default = 0;
         $modules->save();

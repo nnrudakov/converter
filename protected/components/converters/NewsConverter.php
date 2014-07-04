@@ -32,11 +32,16 @@ class NewsConverter implements IConverter
     private $savedNews = [];
 
     /**
+     * @var array
+     */
+    private $tags = [];
+
+    /**
      * Строка для прогресс-бара.
      *
      * @var string
      */
-    private $progressFormat = "\rCategories: %d. News: %d.";
+    private $progressFormat = "\rCategories: %d. News: %d. Tags links: %d.";
 
     /**
      * @var integer
@@ -47,6 +52,11 @@ class NewsConverter implements IConverter
      * @var integer
      */
     private $doneNews = 0;
+
+    /**
+     * @var integer
+     */
+    private $doneTags = 0;
 
     /**
      * Инициализация.
@@ -65,6 +75,9 @@ class NewsConverter implements IConverter
      */
     public function convert()
     {
+        $pc = new PlayersConverter();
+        $this->tags = $pc->getTags();
+
         $this->progress();
         // категории и связанные с ними объекты
         $this->saveCategories(0, NewsCategories::CAT_NEWS_CAT_RU, NewsCategories::CAT_NEWS_CAT_EN);
@@ -162,7 +175,7 @@ class NewsConverter implements IConverter
             $criteria = new CDbCriteria();
             $criteria->select = [
                 'id', 'date', 'title', 'type', 'message', 'link', 'details', 'metadescription', 'metatitle',
-                'metakeywords', 'priority'
+                'metakeywords', 'priority', 'tags'
             ];
             $criteria->condition = 'id NOT IN (SELECT news FROM ' . NewsLinks::model()->tableName() . ')';
             $criteria->addCondition('title!=\'\'');
@@ -242,6 +255,10 @@ class NewsConverter implements IConverter
         $this->doneNews++;
         $this->progress();
 
+        if ($oldObject->tags) {
+            $this->saveObjectTags($oldObject->tags, $object->getId(), $langId);
+        }
+
         /*$fh = fopen($this->newsFile, 'a');
         fwrite($fh, $oldObject->id . "\n");
         fclose($fh);*/
@@ -296,8 +313,49 @@ class NewsConverter implements IConverter
         }
     }
 
+    /**
+     * @param string $tags
+     * @param integer $objectId
+     * @param integer $langId
+     *
+     * @return bool
+     */
+    private function saveObjectTags($tags, $objectId, $langId)
+    {
+        $doc = new DOMDocument();
+        $doc->loadXML($tags);
+        /* @var DomElement $tag */
+        foreach ($doc->documentElement->childNodes as $tag) {
+            if ($tag->nodeType != XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $type = $tag->getAttribute('type');
+
+            if (!in_array($type, [PlayersConverter::TAGS_TEAM, PlayersConverter::TAGS_PLAYER, MatchesConverter::TAGS_MATCH])) {
+                continue;
+            }
+
+            $id = (int) $tag->getAttribute('id');
+            if (isset($this->tags[$type][$id])) {
+                $attrs = ['tag_id' => $this->tags[$type][$id][$langId], 'module_id' => BaseFcModel::FC_MODULE_ID];
+                $module_link = TagsModules::model()->findByAttributes($attrs);
+                $object_link = new TagsObjects();
+                $object_link->link_id = $module_link->link_id;
+                $object_link->object_id = $objectId;
+                $object_link->publish = 1;
+                $object_link->save();
+
+                $this->doneTags++;
+                $this->progress();
+            }
+        }
+
+        return true;
+    }
+
     private function progress()
     {
-        printf($this->progressFormat, $this->doneCats, $this->doneNews);
+        printf($this->progressFormat, $this->doneCats, $this->doneNews, $this->doneTags);
     }
 }
