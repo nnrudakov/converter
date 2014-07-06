@@ -4,7 +4,7 @@
  * Конвертер матчей
  *
  * @package    converter
- * @subpackage
+ * @subpackage matches
  * @author     Nikolaj Rudakov <n.rudakov@bstsoft.ru>
  * @copyright  2014
  */

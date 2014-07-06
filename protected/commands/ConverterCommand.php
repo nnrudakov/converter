@@ -47,10 +47,6 @@ EXAMPLES
     * yiic converter persons
         Convert persons.
 
-    * yiic converter teams
-        Parameters:
-            - writeFiles
-
     * yiic convert players
         Convert players, teams, contracts, stats.
 
@@ -62,6 +58,9 @@ EXAMPLES
 
     * yiic convert matches
         Convert matches (inc. events, placments).
+
+    * yiic convert files
+        Convert files.
 
 EOD;
     }
@@ -177,6 +176,15 @@ EOD;
     {
         $m = new MatchesConverter();
         $m->convert();
+    }
+
+    /**
+     * Перенос файлов из текущей структуры в новую.
+     */
+    public function actionFiles()
+    {
+        $f = new FilesConverter();
+        $f->convert();
     }
 
     protected function beforeAction($action, $params)

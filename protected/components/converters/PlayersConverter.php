@@ -4,7 +4,7 @@
  * Конвертер контрактов, персон и команд.
  *
  * @package    converter
- * @subpackage contracts
+ * @subpackage players
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */

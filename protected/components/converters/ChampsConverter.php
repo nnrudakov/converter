@@ -4,7 +4,7 @@
  * Конвертер сезонов, чемпионато и этапов.
  *
  * @package    converter
- * @subpackage contracts
+ * @subpackage champs
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */

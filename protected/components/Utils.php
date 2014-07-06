@@ -101,4 +101,29 @@ class Utils
 
         return $string;
     }
+
+    /**
+     * Создаёт папку со всеми необходимыми родителями.
+     *
+     * @param string  $dir  Имя создаваемой папки.
+     * @param integer $mode Права доступа к директории.
+     *
+     * @return bool
+     */
+    public static function makeDir($dir, $mode = 0775)
+    {
+        if (is_null($dir) || $dir === '') {
+            return false;
+        }
+
+        if (is_dir($dir) || $dir === '/') {
+            return true;
+        }
+
+        $oldumask = umask(0);
+        $res = mkdir($dir, $mode, true);
+        umask($oldumask);
+
+        return $res;
+    }
 }
