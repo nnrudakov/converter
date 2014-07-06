@@ -23,10 +23,14 @@ trait TFiles {
 
         $const_file = get_class($this) . '::FILE';
         $const_field = get_class($this) . '::FILE_FIELD';
+        $const_entity = get_class($this) . '::ENTITY';
+        $const_entity = defined($const_entity) ? constant($const_entity) : '';
         $main = 1;
         $dir = Yii::app()->params['files_dir'];
+        $path = $this->module->name . '/' . $const_entity . ($const_entity ? '/' : '');
 
         foreach ($this->fileParams as $params) {
+            $filepath = $path . $this->getId() . '/';
             $name = isset($params['name']) ? $params['name'] : constant($const_file);
             $name = sprintf($name, $params['old_id']);
             $remote_file = $this->getFile($name);
@@ -35,9 +39,11 @@ trait TFiles {
                 continue;
             }
 
+            $name = preg_replace('/.+?\//', '', $name);
             list($size, $content) = $remote_file;
             $attributes = [
                 'ext'        => substr($name, -3),
+                'path'       => $filepath,
                 'name'       => $name,
                 'size'       => $size,
                 'descr'      => $params['descr'],
@@ -59,7 +65,7 @@ trait TFiles {
             $link->file_id     = $file->file_id;
             $link->module_id   = $this->module->module_id;
             $link->category_id = $params['category_id'];
-            $link->object_id   = $this->id;
+            $link->object_id   = $this->getId();
             $link->field_id    = $field_id;
             $link->main        = $main;
             $link->sort        = $params['sort'];
@@ -73,7 +79,7 @@ trait TFiles {
             }
 
             if (!$exist_file) {
-                $this->setFile($dir . $name, $file->ext, $content);
+                $this->setFile($dir . $filepath . $name, $file->ext, $content);
             }
         }
 

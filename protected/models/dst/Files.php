@@ -6,6 +6,7 @@
  * Доступные поля таблицы "{{files}}":
  * @property integer $file_id Идентификатор файла.
  * @property string $ext Расширение файла.
+ * @property string $path Путь к файлу.
  * @property string $name Имя файла.
  * @property string $thumb1 Имя первого превью.
  * @property string $thumb2 Имя второго превью.
@@ -47,7 +48,7 @@ class Files extends DestinationModel
             ['ext', 'length', 'max'=>5],
             ['name, thumb1, thumb2, thumb3, thumb4, thumb5', 'length', 'max'=>200],
             ['author', 'length', 'max'=>50],
-            ['source', 'length', 'max'=>255],
+            ['path, source', 'length', 'max'=>255],
             ['descr', 'length', 'max'=>500],
             ['tags', 'length', 'max'=>100],
             ['size', 'length', 'max'=>10],
@@ -74,6 +75,7 @@ class Files extends DestinationModel
         return [
             'file_id'    => 'Идентификатор файла',
             'ext'        => 'Расширение файла',
+            'path'       => 'Путь к файлу',
             'name'       => 'Имя файла',
             'thumb1'     => 'Имя первого превью',
             'thumb2'     => 'Имя второго превью',
