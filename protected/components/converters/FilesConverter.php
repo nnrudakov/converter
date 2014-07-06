@@ -53,11 +53,17 @@ class FilesConverter implements IConverter
     private $modules = null;
 
     /**
+     * @var Image
+     */
+    private $image = null;
+
+    /**
      * Инициализация.
      */
     public function __construct()
     {
         $this->files = Files::model();
+        $this->image = new Image();
 
         foreach (CoreModules::model()->findAll() as $module) {
             $this->modules[$module->module_id] = $module;
@@ -112,9 +118,7 @@ class FilesConverter implements IConverter
     private function moveFile($file, $link, $srcFile)
     {
         $name = preg_replace('/.+?\//', '', $file->name);
-        //echo "$name\n";
         $module = $this->modules[$link->module_id];
-        //print_r($link->getAttributes());
         $path = $module->name . '/';
 
         switch ($module->name) {
@@ -146,14 +150,45 @@ class FilesConverter implements IConverter
         $path .= $link->object_id . '/';
         $dst_dir = self::DST_DIR . $path;
         Utils::makeDir($dst_dir);
-        copy($srcFile, $dst_dir . $name);
+
+        if (!file_exists($dst_dir . $name)) {
+            copy($srcFile, $dst_dir . $name);
+        }
 
         $file->path = $path;
         $file->name = $name;
+        $thumbs = $this->makeThumbs($file, $dst_dir);
         //$file->save(false);
 
         $this->doneFiles++;
         $this->progress();
+    }
+
+    /**
+     * @param Files  $file
+     * @param string $dirname
+     *
+     * @return bool
+     */
+    private function makeThumbs($file, $dirname)
+    {
+        if ('mp4' == $file->ext) {
+            return false;
+        }
+
+        $base_image = $this->image->load($dirname . $file->name);
+        // превью для админки
+        $base_image->resize(100, 100)->save(
+            $dirname . substr($file->name, 0, -strlen('.' . $file->ext)) . '_admin.' . $file->ext
+        );
+
+        $thumbs = [];
+
+        // @todo do the thumbs. needs size
+
+        foreach ($thumbs as $i => $thumb) {
+            $file->{'thumb' . $i} = $thumb;
+        }
     }
 
     private function progress()
