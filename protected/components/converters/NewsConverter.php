@@ -227,7 +227,7 @@ class NewsConverter implements IConverter
         $object->writeFiles = $this->writeFiles;
         $this->setFilesParams($oldObject, $object);
         $object->main_category_id = $oldObject->isText()
-            ? ($langId == BaseFcModel::LANG_RU ? NewsCategories::CAT_NEWS_CAT_RU : NewsCategories::CAT_NEWS_CAT_EN)
+            ? ($langId == BaseFcModel::LANG_RU ? NewsCategories::CAT_NEWS_RU : NewsCategories::CAT_NEWS_EN)
             : ($oldObject->isPhoto()
                 ? ($langId == BaseFcModel::LANG_RU ? NewsCategories::CAT_PHOTO_RU : NewsCategories::CAT_PHOTO_EN)
                 : ($langId == BaseFcModel::LANG_RU ? NewsCategories::CAT_VIDEO_RU : NewsCategories::CAT_VIDEO_EN)
