@@ -30,8 +30,41 @@ class FilesConverter implements IConverter
      */
     const DST_DIR = '/var/www/html/media.fckrasnodar.ru/';
 
+    /**
+     * @var string
+     */
     const CRASH_SRC_FILE = '/var/www/html/media.fckrasnodar.ru/crash_src_file';
+
+    /**
+     * @var string
+     */
     const CRASH_DST_FILE = '/var/www/html/media.fckrasnodar.ru/crash_dst_file';
+
+    /**
+     * @var string
+     */
+    const WATERMARK = '/var/www/html/media.fckrasnodar.ru/c222623cea46a660e0466dd9a47629cd.png';
+
+    /**
+     * @var Image
+     */
+    private $watermark = null;
+
+    /**
+     * @var array
+     */
+    private static $watermarkSettings = [
+        'news' => [
+            ['width' => 120, 'height' => 80,   'crop' => 'center'],
+            ['width' => 180, 'height' => 120,  'crop' => 'center'],
+            ['width' => 620, 'height' => 0,    'crop' => 'proportionally']
+        ]
+    ];
+
+    /**
+     * @var array
+     */
+    private static $quality = ['jpg' => 95 , 'png' => 8];
 
     /**
      * Строка для прогресс-бара.
@@ -67,6 +100,7 @@ class FilesConverter implements IConverter
     {
         $this->files = Files::model();
         $this->image = new Image();
+        $this->watermark = $this->image->load(self::WATERMARK);
 
         foreach (CoreModules::model()->findAll() as $module) {
             $this->modules[$module->module_id] = $module;
@@ -162,7 +196,7 @@ class FilesConverter implements IConverter
 
         $file->path = $path;
         $file->name = $name;
-        $thumbs = $this->makeThumbs($file, $dst_dir);
+        $thumbs = $this->makeThumbs($file, $dst_dir, $module->name);
         //$file->save(false);
 
         $this->doneFiles++;
@@ -172,10 +206,11 @@ class FilesConverter implements IConverter
     /**
      * @param Files  $file
      * @param string $dirname
+     * @param string $moduleName
      *
      * @return bool
      */
-    private function makeThumbs($file, $dirname)
+    private function makeThumbs($file, $dirname, $moduleName)
     {
         if ('mp4' == $file->ext) {
             return false;
@@ -184,16 +219,63 @@ class FilesConverter implements IConverter
         $base_image = $this->image->load($dirname . $file->name);
         // превью для админки
         $admin_thumb = $dirname . substr($file->name, 0, -strlen('.' . $file->ext)) . '_admin.' . $file->ext;
+
         if (!file_exists($admin_thumb)) {
             $base_image->resize(100, 100)->save($admin_thumb);
         }
 
-        $thumbs = [];
+        if (isset(self::$watermarkSettings[$moduleName])) {
+            $i = 1;
+            foreach (self::$watermarkSettings[$moduleName] as $settings) {
+                $thumb_name = substr($file->name, 0, -strlen('.' . $file->ext)) .
+                    '_t' . $i . '.' . $file->ext;
+                if ('proportionally' == $settings['crop']) {
+                    if (!$settings['width']) {
+                        $settings['width'] = null;
+                    }
+                    if (!$settings['height']) {
+                        $settings['height'] = null;
+                    }
+                    $thumb = $base_image->resize($settings['width'], $settings['height'], 'height', 'down');
+                } else {
+                    $iw = $base_image->getWidth();
+                    $ih = $base_image->getHeight();
+                    if (!$settings['width']) {
+                        $settings['width'] = $iw;
+                    }
+                    if (!$settings['height']) {
+                        $settings['height'] = $ih;
+                    }
+                    // ресайз до конечных размеров по ширине
+                    $resized_image = $base_image->resize($settings['width'], null, 'exact');
+                    /*
+                     * если после ресайза какая-либо из сторон меньше той, что
+                     * должна получится, меняем направление ресайза оригинала
+                     */
+                    if ($resized_image->getWidth() < $settings['width'] ||
+                        $resized_image->getHeight() < $settings['height']) {
+                        $resized_image = $base_image->resize(null, $settings['height'], 'exact');
+                    }
 
-        // @todo do the thumbs. needs size
+                    if ('center' == $settings['crop']) {
+                        $left = $top = 'center';
+                    } else {
+                        $left = 'center';
+                        $top  = 'top';
+                    }
 
-        foreach ($thumbs as $i => $thumb) {
-            $file->{'thumb' . $i} = $thumb;
+                    $thumb = $resized_image->crop($left, $top, $settings['width'], $settings['height']);
+                }
+
+                // поставить водяной знак
+                if (isset($settings['watermark'])) {
+                    $thumb = $thumb->watermark($this->watermark);
+                }
+
+                $thumb->save($dirname . $thumb_name, self::$quality[$file->ext]);
+                $file->{'thumb' . $i} = $thumb_name;
+                $i++;
+            }
         }
     }
 
