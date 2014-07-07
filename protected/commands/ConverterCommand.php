@@ -187,6 +187,11 @@ EOD;
         $f->convert();
     }
 
+    public function actionBranches($lastId = 0)
+    {
+        $b = new BranchesObjectsTest();
+    }
+
     protected function beforeAction($action, $params)
     {
         $this->ensureDirectory(Yii::getPathOfAlias('accordance'));

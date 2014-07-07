@@ -77,7 +77,12 @@ class Image
     private function loadFromFile($file)
     {
         $data   = file_get_contents($file);
-        $handle = imagecreatefromstring($data);
+        $handle = @imagecreatefromstring($data);
+
+        // некоторые изображения не угадываются
+        if (!$handle) {
+            $handle = imagecreatefromjpeg($file);
+        }
 
         // угадываем тип файла
         if (!$this->isGdHandle($handle)) {

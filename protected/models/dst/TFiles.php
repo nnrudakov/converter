@@ -16,6 +16,7 @@ trait TFiles {
      */
     protected function saveFile()
     {
+        return false;
         /* @var DestinationModel $this */
         if (!$this->fileParams) {
             return false;

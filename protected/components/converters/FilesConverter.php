@@ -30,6 +30,9 @@ class FilesConverter implements IConverter
      */
     const DST_DIR = '/var/www/html/media.fckrasnodar.ru/';
 
+    const CRASH_SRC_FILE = '/var/www/html/media.fckrasnodar.ru/crash_src_file';
+    const CRASH_DST_FILE = '/var/www/html/media.fckrasnodar.ru/crash_dst_file';
+
     /**
      * Строка для прогресс-бара.
      *
@@ -149,10 +152,12 @@ class FilesConverter implements IConverter
 
         $path .= $link->object_id . '/';
         $dst_dir = self::DST_DIR . $path;
+        $dst_file = $dst_dir . $name;
         Utils::makeDir($dst_dir);
+        file_put_contents(self::CRASH_SRC_FILE, $srcFile);
 
-        if (!file_exists($dst_dir . $name)) {
-            copy($srcFile, $dst_dir . $name);
+        if (!file_exists($dst_file) || filesize($srcFile) != filesize($dst_file)) {
+            copy($srcFile, $dst_file);
         }
 
         $file->path = $path;
@@ -175,12 +180,13 @@ class FilesConverter implements IConverter
         if ('mp4' == $file->ext) {
             return false;
         }
-
+        file_put_contents(self::CRASH_DST_FILE, $dirname . $file->name);
         $base_image = $this->image->load($dirname . $file->name);
         // превью для админки
-        $base_image->resize(100, 100)->save(
-            $dirname . substr($file->name, 0, -strlen('.' . $file->ext)) . '_admin.' . $file->ext
-        );
+        $admin_thumb = $dirname . substr($file->name, 0, -strlen('.' . $file->ext)) . '_admin.' . $file->ext;
+        if (!file_exists($admin_thumb)) {
+            $base_image->resize(100, 100)->save($admin_thumb);
+        }
 
         $thumbs = [];
 

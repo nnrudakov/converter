@@ -287,6 +287,8 @@ class PlayersConverter implements IConverter
         $this->seasons = $cc->getSeasons();
         $this->champs  = $cc->getChamps();
         $this->stages  = $cc->getStages();
+        $this->players = $this->getPlayers();
+        $this->teams   = $this->getTeams();
     }
 
     /**
@@ -295,7 +297,7 @@ class PlayersConverter implements IConverter
     public function convert()
     {
         $this->progress();
-        $this->tags = [self::TAGS_TEAM => [], self::TAGS_PLAYER => [], MatchesConverter::TAGS_MATCH => []];
+        /*$this->tags = [self::TAGS_TEAM => [], self::TAGS_PLAYER => [], MatchesConverter::TAGS_MATCH => []];
         $criteria = new CDbCriteria(
             [
                 'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
@@ -342,14 +344,14 @@ class PlayersConverter implements IConverter
         $this->saveTeamStat();
 
         // игроки, для которых нет контрактов, но они участвовали в матчах
-        $this->saveMatchPlayers();
+        $this->saveMatchPlayers();*/
         $this->savePlayerStat();
 
-        ksort($this->teams);
+        /*ksort($this->teams);
         ksort($this->players);
         file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
         file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
-        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
+        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));*/
     }
 
     public function getTeams()
@@ -620,8 +622,7 @@ class PlayersConverter implements IConverter
         $save_stat = function ($s, $teamId, $playerId, $langId) use ($that) {
             // пропускаем отсуствующие сезоны
             if (empty($that->seasons[$s->season][$langId])    ||
-                empty($that->champs[$s->tournament][$langId]) ||
-                empty($that->teams[$s->team][$langId])) {
+                empty($that->champs[$s->tournament][$langId])) {
                 return false;
             }
 
@@ -772,7 +773,7 @@ class PlayersConverter implements IConverter
         $tag = new Tags();
         $tag->category_id = $categoryId;
         $tag->name = substr(preg_replace('/(?!-)[\W]+/', '_', Utils::rus2lat($title)), 0, 255);
-        $tag->title = $title . '_' .BaseFcModel::LANG_RU . '_' . rand(0, 200);
+        $tag->title = $title . '_' .BaseFcModel::LANG_RU . '_' . rand(0, 500);
         $tag->publish = 1;
         $tag->priority = 0;
 
@@ -783,7 +784,7 @@ class PlayersConverter implements IConverter
         $ru_id = $tag->getId();
         $this->saveTagLinks($ru_id, $newEntities[BaseFcModel::LANG_RU]);
         $tag->setNew();
-        $tag->title = $title . '_' .BaseFcModel::LANG_EN . '_' . rand(0, 200);
+        $tag->title = $title . '_' .BaseFcModel::LANG_EN . '_' . rand(0, 500);
         $tag->save();
         $en_id = $tag->getId();
         $this->saveTagLinks($en_id, $newEntities[BaseFcModel::LANG_EN]);
