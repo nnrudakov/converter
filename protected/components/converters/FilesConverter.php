@@ -188,7 +188,7 @@ class FilesConverter implements IConverter
         $dst_dir = self::DST_DIR . $path;
         $dst_file = $dst_dir . $name;
         Utils::makeDir($dst_dir);
-        file_put_contents(self::CRASH_SRC_FILE, $srcFile);
+        //file_put_contents(self::CRASH_SRC_FILE, $srcFile);
 
         if (!file_exists($dst_file) || filesize($srcFile) != filesize($dst_file)) {
             copy($srcFile, $dst_file);
@@ -197,7 +197,7 @@ class FilesConverter implements IConverter
         $file->path = $path;
         $file->name = $name;
         $thumbs = $this->makeThumbs($file, $dst_dir, $module->name);
-        //$file->save(false);
+        $file->save(false);
 
         $this->doneFiles++;
         $this->progress();
@@ -215,7 +215,7 @@ class FilesConverter implements IConverter
         if ('mp4' == $file->ext) {
             return false;
         }
-        file_put_contents(self::CRASH_DST_FILE, $dirname . $file->name);
+        //file_put_contents(self::CRASH_DST_FILE, $dirname . $file->name);
         $base_image = $this->image->load($dirname . $file->name);
         // превью для админки
         $admin_thumb = $dirname . substr($file->name, 0, -strlen('.' . $file->ext)) . '_admin.' . $file->ext;
@@ -229,50 +229,52 @@ class FilesConverter implements IConverter
             foreach (self::$watermarkSettings[$moduleName] as $settings) {
                 $thumb_name = substr($file->name, 0, -strlen('.' . $file->ext)) .
                     '_t' . $i . '.' . $file->ext;
-                if ('proportionally' == $settings['crop']) {
-                    if (!$settings['width']) {
-                        $settings['width'] = null;
-                    }
-                    if (!$settings['height']) {
-                        $settings['height'] = null;
-                    }
-                    $thumb = $base_image->resize($settings['width'], $settings['height'], 'height', 'down');
-                } else {
-                    $iw = $base_image->getWidth();
-                    $ih = $base_image->getHeight();
-                    if (!$settings['width']) {
-                        $settings['width'] = $iw;
-                    }
-                    if (!$settings['height']) {
-                        $settings['height'] = $ih;
-                    }
-                    // ресайз до конечных размеров по ширине
-                    $resized_image = $base_image->resize($settings['width'], null, 'exact');
-                    /*
-                     * если после ресайза какая-либо из сторон меньше той, что
-                     * должна получится, меняем направление ресайза оригинала
-                     */
-                    if ($resized_image->getWidth() < $settings['width'] ||
-                        $resized_image->getHeight() < $settings['height']) {
-                        $resized_image = $base_image->resize(null, $settings['height'], 'exact');
-                    }
-
-                    if ('center' == $settings['crop']) {
-                        $left = $top = 'center';
+                if (!file_exists($admin_thumb)) {
+                    if ('proportionally' == $settings['crop']) {
+                        if (!$settings['width']) {
+                            $settings['width'] = null;
+                        }
+                        if (!$settings['height']) {
+                            $settings['height'] = null;
+                        }
+                        $thumb = $base_image->resize($settings['width'], $settings['height'], 'height', 'down');
                     } else {
-                        $left = 'center';
-                        $top  = 'top';
+                        $iw = $base_image->getWidth();
+                        $ih = $base_image->getHeight();
+                        if (!$settings['width']) {
+                            $settings['width'] = $iw;
+                        }
+                        if (!$settings['height']) {
+                            $settings['height'] = $ih;
+                        }
+                        // ресайз до конечных размеров по ширине
+                        $resized_image = $base_image->resize($settings['width'], null, 'exact');
+                        /*
+                         * если после ресайза какая-либо из сторон меньше той, что
+                         * должна получится, меняем направление ресайза оригинала
+                         */
+                        if ($resized_image->getWidth() < $settings['width'] ||
+                            $resized_image->getHeight() < $settings['height']) {
+                            $resized_image = $base_image->resize(null, $settings['height'], 'exact');
+                        }
+
+                        if ('center' == $settings['crop']) {
+                            $left = $top = 'center';
+                        } else {
+                            $left = 'center';
+                            $top  = 'top';
+                        }
+
+                        $thumb = $resized_image->crop($left, $top, $settings['width'], $settings['height']);
                     }
 
-                    $thumb = $resized_image->crop($left, $top, $settings['width'], $settings['height']);
-                }
+                    // поставить водяной знак
+                    if (isset($settings['watermark'])) {
+                        $thumb = $thumb->watermark($this->watermark);
+                    }
 
-                // поставить водяной знак
-                if (isset($settings['watermark'])) {
-                    $thumb = $thumb->watermark($this->watermark);
+                    $thumb->save($dirname . $thumb_name, self::$quality[$file->ext]);
                 }
-
-                $thumb->save($dirname . $thumb_name, self::$quality[$file->ext]);
                 $file->{'thumb' . $i} = $thumb_name;
                 $i++;
             }
