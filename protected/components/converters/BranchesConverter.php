@@ -59,7 +59,7 @@ class BranchesConverter implements IConverter
     {
         $this->progress();
         //$this->saveCategories();
-        $this->saveObjects();
+        //$this->saveObjects();
         $this->saveFiles();
     }
 
@@ -127,62 +127,26 @@ class BranchesConverter implements IConverter
         $criteria = new CDbCriteria();
         $criteria->addCondition('module_id=' . BranchesObjects::MODULE_ID);
         $criteria->order = 'file_id, object_id';
-        $src_links = new FilesLinkBranches();
+        $src_links = new FilesLink();
+        $path = self::MODULE_NAME . '/' . self::ENTITY . '/';
+        $files_dir = Yii::app()->params['files_dir'];
 
         foreach ($src_links->findAll($criteria) as $l) {
-            $file_link = FilesLink::model()->findByPk(
-                [
-                    'file_id'     => (int) $l->file_id,
-                    'module_id'   => $l->module_id,
-                    'category_id' => $l->category_id,
-                    'object_id'   => $l->object_id,
-                    'field_id'    => $l->field_id
-                ]
-            );
+            /* @var Files $file */
+            $file = $l->file;
+            $file->path = $path . $l->object_id . '/';
+            $file->save();
+            Utils::makeDir($files_dir . $file->path);
 
-            if ($file_link) {
-                $file = $file_link->file;
-                /*$link = new FilesLink();
-                $link->setAttributes($file_link->getAttributes());
-                $link->object_id = $this->branches[$l->object_id][BaseFcModel::LANG_EN];
-                $link->save();*/
-            } else {
-                $fattrs = $l->file->getAttributes();
-                unset($fattrs['file_id']);
-                $lattrs = $l->getAttributes();
-                $file = new Files();
-                $file->setAttributes($fattrs);
-                $file->save();
-                $lattrs['file_id'] = $file->getId();
-                $link = new FilesLink();
-                $link->setAttributes($lattrs);
-                $link->save();
-
-                $this->doneFiles++;
-                $this->progress();
+            if (file_exists($files_dir . $file->name)) {
+                $admin_name = str_replace('.' . $file->ext, '', $file->name);
+                $admin_name .= '_admin.' . $file->ext;
+                copy($files_dir . $file->name, $files_dir . $file->path . $file->name);
+                copy($files_dir . $admin_name, $files_dir . $file->path . $admin_name);
             }
 
-            if ($file) {
-                $file->path = self::MODULE_NAME . '/' . self::ENTITY . '/' . $l->object_id . '/';
-                $file->save();
-
-                /*if (!$file_link) {
-                    $link = new FilesLink();
-                    $link->setAttributes($l->getAttributes());
-                    $link->file_id = $file->getId();
-                    $link->save();
-
-                    $this->doneFiles++;
-                    $this->progress();
-
-                    $link->setIsNewRecord(true);
-                    $link->object_id = $branches[$l->object_id][BaseFcModel::LANG_EN];
-                    $link->save();
-
-                    $this->doneFiles++;
-                    $this->progress();
-                }*/
-            }
+            $this->doneFiles++;
+            $this->progress();
         }
     }
 
