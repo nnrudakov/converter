@@ -4,7 +4,7 @@
  * Модель таблицы "{{persons__object_sets}}".
  *
  * Доступные поля таблицы "{{persons__object_sets}}":
- * @property string  $object_id Идентификатор объекта.
+ * @property integer $object_id Идентификатор объекта.
  * @property integer $set_id    Идентификатор набора свойств.
  *
  * Доступные отношения:
@@ -31,5 +31,16 @@ class PersonsObjectSets extends KitObjectSets
     public function relations()
     {
         return ['object' => [self::HAS_ONE, 'PersonsObjects', 'object_id']];
+    }
+
+    /**
+     * Статический метод возвращения модели.
+     *
+     * @param string $className Имя класса.
+     * @return KitObjectSets Модель.
+     */
+    public static function model($className = __CLASS__)
+    {
+        return parent::model($className);
     }
 }

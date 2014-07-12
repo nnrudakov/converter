@@ -16,7 +16,6 @@ trait TFiles {
      */
     protected function saveFile()
     {
-        return false;
         /* @var DestinationModel $this */
         if (!$this->fileParams) {
             return false;
@@ -24,8 +23,7 @@ trait TFiles {
 
         $const_file = get_class($this) . '::FILE';
         $const_field = get_class($this) . '::FILE_FIELD';
-        $const_entity = get_class($this) . '::ENTITY';
-        $const_entity = defined($const_entity) ? constant($const_entity) : '';
+        $const_entity = $this->getEntityName();
         $main = 1;
         $dir = Yii::app()->params['files_dir'];
         $path = $this->module->name . '/' . $const_entity . ($const_entity ? '/' : '');
@@ -44,8 +42,6 @@ trait TFiles {
             list($size, $content) = $remote_file;
             $attributes = [
                 'ext'        => substr($name, -3),
-                'path'       => $filepath,
-                'name'       => $name,
                 'size'       => $size,
                 'descr'      => $params['descr'],
                 'video_time' => $params['video_time']
@@ -53,26 +49,40 @@ trait TFiles {
 
             $file = new Files();
             $file->setAttributes($attributes, false);
+            $file->path = $filepath;
+            $file->name = $name;
+            $exist_file = Files::model()->find(
+                new CDbCriteria(['condition' => 'name LIKE :name', 'params' => [':name' => '%' . $name]])
+            );
 
             // Если файл такой есть, берем айдишник и создаем только новую связку
-            if ($exist_file = Files::model()->findByAttributes($attributes)) {
+            if ($exist_file) {
                 $file->file_id = $exist_file->file_id;
-            } elseif (!$file->save()) {
+                $file->setIsNewRecord(false);
+            }
+            if (!$file->save()) {
                 throw new CException('Files not created.' . "\n" . var_export($file->getErrors(), true) . "\n");
             }
 
             $field_id = isset($params['field_id']) ? $params['field_id'] : constant($const_field);
-            $link = new FilesLink();
-            $link->file_id     = $file->file_id;
-            $link->module_id   = $this->module->module_id;
-            $link->category_id = $params['category_id'];
-            $link->object_id   = $this->getId();
-            $link->field_id    = $field_id;
-            $link->main        = $main;
-            $link->sort        = $params['sort'];
+            $link_attributes = [
+                'file_id' => $file->file_id,
+                'module_id' => $this->module->module_id,
+                'category_id' => $params['category_id'],
+                'object_id'   => $this->getId(),
+                'field_id'    => $field_id
+            ];
 
-            if (!$link->save()) {
-                throw new CException('Link not created.' . "\n" . var_export($link->getErrors(), true) . "\n");
+            // проверяем связку
+            if (!$exist_link = FilesLink::model()->findByPk($link_attributes)) {
+                $link = new FilesLink();
+                $link->setAttributes($link_attributes);
+                $link->main        = $main;
+                $link->sort        = $params['sort'];
+
+                if (!$link->save()) {
+                    throw new CException('Link not created.' . "\n" . var_export($link->getErrors(), true) . "\n");
+                }
             }
 
             if ($main) {

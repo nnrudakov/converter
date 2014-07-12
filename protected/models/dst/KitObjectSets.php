@@ -4,7 +4,7 @@
  * Базовая модель наборов свойств.
  *
  * Доступные поля таблиц:
- * @property string $object_id Идентификатор объекта.
+ * @property integer $object_id Идентификатор объекта.
  * @property integer $set_id Идентификатор набора свойств.
  *
  * @package    converter
@@ -46,5 +46,16 @@ class KitObjectSets extends DestinationModel
     public static function model($className = __CLASS__)
     {
         return parent::model($className);
+    }
+
+    /**
+     * Установка новой записи.
+     *
+     * @return bool
+     */
+    public function setNew()
+    {
+        $this->setIsNewRecord(true);
+        $this->object_id = null;
     }
 }

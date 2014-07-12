@@ -73,6 +73,16 @@ class DestinationModel extends BaseFcModel
     private $modelModule = null;
 
     /**
+     * @var bool
+     */
+    public $setOwner = true;
+
+    /**
+     * @var bool
+     */
+    public $setMultilang = true;
+
+    /**
      * Получение свойств.
      *
      * @param string $name Имя.
@@ -175,9 +185,44 @@ class DestinationModel extends BaseFcModel
         $this->lang = self::LANG_EN;
     }
 
+    /**
+     * @return string
+     */
+    public function getEntityName()
+    {
+        $const_entity = get_class($this) . '::ENTITY';
+        return defined($const_entity) ? constant($const_entity) : '';
+    }
+
+    /**
+     * @return integer
+     */
+    public function getPairId()
+    {
+        return (int) $this->dbConnection->createCommand(
+            'SELECT
+                `m`.`id` AS `id`
+            FROM
+                `fc__core__multilang` AS `m`
+                JOIN `fc__core__multilang_link` AS `ml`
+                    ON `ml`.`multilang_id`=`m`.`id`
+                    AND `m`.`module_id`=:module_id
+                    AND `m`.`entity`=:entity
+                    AND `ml`.`entity_id`=:entity_id'
+        )->queryScalar(
+            [
+                ':module_id' => $this->module->module_id,
+                ':entity'    => $this->getEntityName(),
+                ':entity_id' => $this->getId()
+            ]
+        );
+    }
+
     protected function afterSave()
     {
-        $this->setMultilang();
+        if ($this->setMultilang) {
+            $this->setMultilang();
+        }
         $this->saveFile();
 
         parent::afterSave();

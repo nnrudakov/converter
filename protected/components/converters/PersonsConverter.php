@@ -125,19 +125,18 @@ class PersonsConverter implements IConverter
         $this->progress();
         $criteria = new CDbCriteria();
         $criteria->select = [
-            'id', 'citizenship', 'surname', 'first_name', 'patronymic', 'bio', 'borned', 'post', 'path', 'achivements'
+            'id', 'citizenship', 'surname', 'first_name', 'patronymic', 'bio', 'borned', 'post', 'path', 'achivements',
+            'ord'
         ];
         $criteria->condition = 'surname!=\'\' AND first_name!=\'\' AND patronymic!=\'\'';
         $criteria->order = 'id';
         $src_persons = new Persons();
-        $sort = 1;
 
         foreach ($src_persons->findAll($criteria) as $p) {
-            $persons = $this->savePerson($p, $sort);
-            $this->saveData($p, $persons);
-            $this->donePersons++;
-            $this->progress();
-            $sort++;
+            list($persons, $exists) = $this->savePerson($p);
+            //if (!$exists) {
+                $this->saveData($p, $persons);
+            //}
         }
     }
 
@@ -145,13 +144,12 @@ class PersonsConverter implements IConverter
      * Сохранение объекта.
      *
      * @param Persons $p
-     * @param integer $sort
      *
      * @return array
      *
      * @throws CException
      */
-    private function savePerson(Persons $p, $sort)
+    private function savePerson(Persons $p)
     {
         $person = new PersonsObjects();
         //$person->importId   = $p->id;
@@ -185,11 +183,32 @@ class PersonsConverter implements IConverter
         $person->title = $p->first_name . ' ' . $p->patronymic . ' ' . $p->surname;
         $person->name = Utils::nameString($person->title);
         $person->lang_id = BaseFcModel::LANG_RU;
+        $p_attrs = [
+            'main_category_id' => $person->main_category_id,
+            'name'             => $person->name,
+            'lang_id'          => $person->lang_id
+        ];
+
+        // переносили уже
+        if ($exists_person = PersonsObjects::model()->findByAttributes($p_attrs)) {
+            $person->setOwner = $person->setMultilang = false;
+            $person->setIsNewRecord(false);
+            $person->setAttributes($exists_person->getAttributes());
+            $person->object_id = $exists_person->object_id;
+            // переделываем файлы
+            $person->save();
+
+            return [
+                [BaseFcModel::LANG_RU => $exists_person->getId(), BaseFcModel::LANG_EN => $person->getPairId()],
+                true
+            ];
+        }
+
         $person->content = Utils::clearText($p->bio);
         $person->publish = 1;
         $person->publish_date_on = date('Y-m-d H:i:s');
         $person->created = $person->publish_date_on;
-        $person->sort = $sort;
+        $person->sort = $p->ord;
         $fileparams = $person->fileParams;
 
         if (!$person->save()) {
@@ -209,7 +228,10 @@ class PersonsConverter implements IConverter
         $person->save();
         $en_id = $person->getId();
 
-        return [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id];
+        $this->donePersons++;
+        $this->progress();
+
+        return [[BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id], false];
     }
 
     /**
@@ -224,10 +246,20 @@ class PersonsConverter implements IConverter
     {
         $set = new PersonsSets();
         $set = $set->findByPk(PersonsSets::SET);
+        $exists_link = PersonsObjectSets::model()->findByPk(
+            ['object_id' => $personId[BaseFcModel::LANG_RU], 'set_id' => $set->getId()]
+        );
+
+        if ($exists_link) {
+            return true;
+        }
+
         $object_set = new PersonsObjectSets();
         $object_set->object_id = $personId[BaseFcModel::LANG_RU];
         $object_set->set_id = $set->getId();
         $object_set->save();
+        return true;
+        $object_set->setNew();
         $object_set->object_id = $personId[BaseFcModel::LANG_EN];
         $object_set->save();
 
