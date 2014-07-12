@@ -138,6 +138,16 @@ class PersonsConverter implements IConverter
                 $this->saveData($p, $persons);
             //}
         }
+
+        $criteria = new CDbCriteria();
+        $criteria->condition = 'MOD(object_id, 2)=0';
+        $criteria->order = 'object_id';
+        foreach (PersonsCategoryObjects::model()->findAll($criteria) as $co) {
+            if ($prev_co = PersonsCategoryObjects::model()->findByAttributes(['object_id' => $co->object_id - 1])) {
+                $co->sort = $prev_co->sort;
+                $co->save();
+            }
+        }
     }
 
     /**
