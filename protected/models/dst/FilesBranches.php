@@ -22,14 +22,14 @@
  * @property string $load_date Дата загрузки файла.
  *
  * Доступные отношения:
- * @property FilesLink[] $links Свзяки файлов.
+ * @property FilesLinkBranches[] $links Свзяки файлов.
  *
  * @package    converter
- * @subpackage files
+ * @subpackage filesbranches
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class Files extends DestinationModel
+class FilesBranches extends DestinationBranchModel
 {
     /**
      * @return string Таблица модели
@@ -63,7 +63,7 @@ class Files extends DestinationModel
     public function relations()
     {
         return [
-            'links' => [self::HAS_MANY, 'FilesLink', 'file_id']
+            'links' => [self::HAS_MANY, 'FilesLinkBranches', 'file_id']
         ];
     }
 

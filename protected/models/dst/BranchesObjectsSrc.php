@@ -25,12 +25,16 @@
  * @property integer $minorCategoryId  Идентификатор не основной категории.
  * @property integer $sort             Порядок в категории.
  *
+ * Доступные отношения:
+ * @property BranchesCategoryObjectsSrc[] $catLink
+ * @property FilesLinkBranches          $fileLink
+ *
  * @package    converter
- * @subpackage kitobjects
+ * @subpackage branchesobjects
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class KitObjects extends DestinationModel
+class BranchesObjectsSrc extends DestinationBranchModel
 {
     /**
      * Сущность.
@@ -38,6 +42,11 @@ class KitObjects extends DestinationModel
      * @var string
      */
     const ENTITY = 'object';
+
+    /**
+     * @var integer
+     */
+    const MODULE_ID = 29;
 
     /**
      * Идентификатор не основной категории.
@@ -52,6 +61,14 @@ class KitObjects extends DestinationModel
      * @var integer
      */
     public $sort = 0;
+
+    /**
+     * @return string Таблица модели
+     */
+    public function tableName()
+    {
+        return '{{branches__objects}}';
+    }
 
     /**
      * @return array Правила валидации.
@@ -71,6 +88,20 @@ class KitObjects extends DestinationModel
                 'publish_date_on, publish_date_off, source, source_link, created, meta_title, meta_description, ' .
                 'meta_keywords', 'safe', 'on'=>'search'
             ],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function relations()
+    {
+        return [
+            'catLink'  => [self::HAS_MANY, 'BranchesCategoryObjectsSrc', 'object_id'],
+            'fileLink' => [self::BELONGS_TO, 'FilesLinkBranches',          'object_id',
+                'condition' => 'module_id=:module_id',
+                'params'    => [':module_id' => self::MODULE_ID]
+            ]
         ];
     }
 
@@ -130,6 +161,17 @@ class KitObjects extends DestinationModel
     }
 
     /**
+     * Статический метод возвращения модели.
+     *
+     * @param string $className Имя класса.
+     * @return NewsObjects Модель.
+     */
+    public static function model($className = __CLASS__)
+    {
+        return parent::model($className);
+    }
+
+    /**
      * Получение идентификатора.
      *
      * @return integer
@@ -137,52 +179,5 @@ class KitObjects extends DestinationModel
     public function getId()
     {
         return $this->object_id;
-    }
-
-    /**
-     * Установка новой записи.
-     *
-     * @return bool
-     */
-    public function setNew()
-    {
-        $this->setIsNewRecord(true);
-        $this->object_id = null;
-        $this->lang = $this->lang_id = self::LANG_EN;
-    }
-
-    /**
-     * @throws CException
-     */
-    protected function afterSave()
-    {
-        $owner = new AdminUsersOwners();
-        $owner->module_id = $this->module->module_id;
-        $owner->object_id = $this->object_id;
-        $owner->extend_id = '';
-        $owner->user_id   = self::ADMIN_ID;
-        if (!$owner->save()) {
-            throw new CException('Can\'t save ' . $this->module->name . ' object owner.');
-        }
-
-        $link_class = ucfirst($this->module->name) . 'CategoryObjects';
-        $categories = [$this->main_category_id];
-
-        if ($this->minorCategoryId != $this->main_category_id) {
-            $categories[] = $this->minorCategoryId;
-        }
-
-        foreach ($categories as $category_id) {
-            /* @var KitCategoryObjects $link */
-            $link = new $link_class();
-            $link->category_id = $category_id;
-            $link->object_id   = $this->object_id;
-            $link->sort        = $this->sort;
-            if (!$link->save()) {
-                throw new CException($link->getErrorMsg('Can\'t save ' . $this->module->name . ' object link.', $this));
-            }
-        }
-
-        parent::afterSave();
     }
 }

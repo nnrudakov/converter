@@ -47,7 +47,7 @@ EXAMPLES
     * yiic converter persons
         Convert persons.
 
-    * yiic convert players
+    * yiic converter players
         Convert players, teams, contracts, stats.
 
         Parameters:
@@ -56,11 +56,14 @@ EXAMPLES
     * yiic convert champs
         Convert seasons, championships and stages.
 
-    * yiic convert matches
+    * yiic converter matches
         Convert matches (inc. events, placments).
 
-    * yiic convert files
+    * yiic converter files
         Convert files.
+
+    * yiic converter branches.
+        Convert branches.
 
 EOD;
     }
@@ -187,9 +190,10 @@ EOD;
         $f->convert();
     }
 
-    public function actionBranches($lastId = 0)
+    public function actionBranches()
     {
-        $b = new BranchesObjectsTest();
+        $b = new BranchesConverter();
+        $b->convert();
     }
 
     protected function beforeAction($action, $params)
