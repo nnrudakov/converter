@@ -100,7 +100,7 @@ class FilesConverter implements IConverter
     {
         $this->files = Files::model();
         $this->image = new Image();
-        $this->watermark = $this->image->load(self::WATERMARK);
+        //$this->watermark = $this->image->load(self::WATERMARK);
 
         foreach (CoreModules::model()->findAll() as $module) {
             $this->modules[$module->module_id] = $module;
@@ -113,9 +113,10 @@ class FilesConverter implements IConverter
     public function convert()
     {
         $this->progress();
-        $this->chooseFiles(self::SRC_PERSONS_NEWS_DIR);
+        /*$this->chooseFiles(self::SRC_PERSONS_NEWS_DIR);
         $this->chooseFiles(self::SRC_PLAYERS_TEAMS_DIR);
-        $this->chooseFiles(self::SRC_NEWS_PHOTO_DIR);
+        $this->chooseFiles(self::SRC_NEWS_PHOTO_DIR);*/
+        $this->onlyPaths();
     }
 
     private function chooseFiles($dir)
@@ -142,6 +143,58 @@ class FilesConverter implements IConverter
             }
 
             closedir($dh);
+        }
+    }
+
+    private function onlyPaths()
+    {
+        $criteria = new CDbCriteria();
+        $criteria->addCondition(['path=\'\'']);
+
+        foreach (Files::model()->findAll($criteria) as $file) {
+            $links = $file->links;
+
+            if (!$links) {
+                continue;
+            }
+
+            $link = array_shift($links);
+            $name = preg_replace('/.+?\//', '', $file->name);
+            $module = $this->modules[$link->module_id];
+            $path = $module->name . '/';
+
+            switch ($module->name) {
+                case 'news':
+                    $path .= NewsObjects::ENTITY . '/';
+                    break;
+                case 'fc':
+                    if (false !== strpos($name, 'players')) {
+                        $path .= FcPerson::ENTITY . '/';
+                    } elseif (false !== strpos($name, 'teams')) {
+                        $path .= FcTeams::ENTITY . '/';
+                    } else {
+                        $path = '';
+                    }
+                    break;
+                case 'persons':
+                    $path .= PersonsObjects::ENTITY . '/';
+
+                    break;
+                default:
+                    $path = '';
+                    break;
+            }
+
+            if (!$path) {
+                continue;
+            }
+
+            $file->path = $path . $link->object_id . '/';
+            $file->name = $name;
+            $file->save(false);
+
+            $this->doneFiles++;
+            $this->progress();
         }
     }
 

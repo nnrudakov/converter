@@ -196,6 +196,101 @@ EOD;
         $b->convert();
     }
 
+    public function actionFail()
+    {
+        $players_names = [];
+        $players = [[
+            'player_id' => 'Ид игрока',
+            'first_name' => 'Имя',
+            'surname' => 'Фамилия',
+            'patronymic' => 'Отчество',
+            'borned' => 'ДР',
+            'team_id' => 'Ид команды',
+            'date_from' => 'Контракт "от"',
+            'date_to' => 'Контракт "до"',
+            'staff' => 'Состав',
+            'number' => 'Номер',
+            'team_title' => 'Команда',
+            'region' => 'Город'
+        ]];
+        $db = Players::model()->dbConnection;
+        $command = $db->createCommand(
+            'SELECT
+                CONCAT(first_name, surname, patronymic, to_char(borned, \'YYYY-MM-DD\')) AS str,
+                COUNT(*) AS cnt
+            FROM tsi.players
+            WHERE first_name!=\'\' OR surname!=\'\' OR patronymic!=\'\'
+            GROUP BY str
+            ORDER BY cnt DESC, str'
+        )->queryAll();
+
+
+        foreach ($command as $row) {
+            if ($row['cnt'] > 1) {
+                $players_names[] = $row['str'];
+            }
+        }
+
+        foreach ($players_names as $name) {
+            $pc = $db->createCommand(
+                'SELECT
+                    id AS player_id, first_name, surname, patronymic, to_char(borned, \'YYYY-MM-DD\') AS borned
+                 FROM
+                    tsi.players
+                 WHERE
+                    CONCAT(first_name, surname, patronymic, to_char(borned, \'YYYY-MM-DD\'))=:name'
+            )->queryAll(true, [':name' => $name]);
+
+            foreach ($pc as $prow) {
+                $full_row = [
+                    'player_id' => '',
+                    'first_name' => '',
+                    'surname' => '',
+                    'patronymic' => '',
+                    'borned' => '',
+                    'team_id' => '',
+                    'date_from' => '',
+                    'date_to' => '',
+                    'staff' => '',
+                    'number' => '',
+                    'team_title' => '',
+                    'region' => ''
+                ];
+                $full_row = array_merge($full_row, $prow);
+                $cc = $db->createCommand(
+                    'SELECT
+                        team AS team_id, date_from, date_to, staff, number
+                     FROM
+                        tsi.contracts
+                     WHERE
+                        player=:player'
+                )->queryAll(true, [':player' => $prow['player_id']]);
+                foreach ($cc as $crow) {
+                    $crow['staff'] = (int) $crow['staff'] ? 'моложедный' : 'основной';
+                    $full_row = array_merge($full_row, $crow);
+                    $tc = $db->createCommand(
+                        'SELECT
+                            title AS team_title, region
+                         FROM
+                            tsi.teams
+                         WHERE
+                            id=:team_id'
+                    )->queryAll(true, [':team_id' => $crow['team_id']]);
+                    foreach ($tc as $trow) {
+                        $full_row = array_merge($full_row, $trow);
+                    }
+                }
+                $players[] = $full_row;
+            }
+        }
+
+        $fh = fopen(__DIR__ . '/players.csv', 'w');
+        foreach ($players as $player) {
+            fwrite($fh, implode(';', array_values($player)) . "\n");
+        }
+        fclose($fh);
+    }
+
     protected function beforeAction($action, $params)
     {
         $this->ensureDirectory(Yii::getPathOfAlias('accordance'));

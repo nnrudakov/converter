@@ -195,6 +195,7 @@ class PersonsConverter implements IConverter
             $person->setIsNewRecord(false);
             $person->setAttributes($exists_person->getAttributes());
             $person->object_id = $exists_person->object_id;
+            $person->sort = $p->ord;
             // переделываем файлы
             $person->save();
 

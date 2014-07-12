@@ -165,23 +165,25 @@ class KitObjects extends DestinationModel
             if (!$owner->save()) {
                 throw new CException('Can\'t save ' . $this->module->name . ' object owner.');
             }
+        }
 
-            $link_class = ucfirst($this->module->name) . 'CategoryObjects';
-            $categories = [$this->main_category_id];
+        $link_class = ucfirst($this->module->name) . 'CategoryObjects';
+        $categories = [$this->main_category_id];
 
-            if ($this->minorCategoryId && $this->minorCategoryId != $this->main_category_id) {
-                $categories[] = $this->minorCategoryId;
-            }
+        if ($this->minorCategoryId && $this->minorCategoryId != $this->main_category_id) {
+            $categories[] = $this->minorCategoryId;
+        }
 
-            foreach ($categories as $category_id) {
-                /* @var KitCategoryObjects $link */
-                $link = new $link_class();
-                $link->category_id = $category_id;
-                $link->object_id   = $this->object_id;
-                $link->sort        = $this->sort;
-                if (!$link->save()) {
-                    throw new CException($link->getErrorMsg('Can\'t save ' . $this->module->name . ' object link.', $this));
-                }
+        foreach ($categories as $category_id) {
+            /* @var KitCategoryObjects $link */
+            $link = call_user_func($link_class  . '::model');
+            $link = $link->findByPk(['category_id' => $category_id, 'object_id' => $this->object_id]);
+            $link = $link ?: new $link_class();
+            $link->category_id = $category_id;
+            $link->object_id   = $this->object_id;
+            $link->sort        = $this->sort;
+            if (!$link->save()) {
+                throw new CException($link->getErrorMsg('Can\'t save ' . $this->module->name . ' object link.', $this));
             }
         }
 

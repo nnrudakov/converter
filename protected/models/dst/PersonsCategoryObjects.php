@@ -38,4 +38,15 @@ class PersonsCategoryObjects extends KitCategoryObjects
             'object'   => [self::HAS_ONE, 'PersonsObjects',    'object_id']
         ];
     }
+
+    /**
+     * Статический метод возвращения модели.
+     *
+     * @param string $className Имя класса.
+     * @return NewsObjects Модель.
+     */
+    public static function model($className = __CLASS__)
+    {
+        return parent::model($className);
+    }
 }
