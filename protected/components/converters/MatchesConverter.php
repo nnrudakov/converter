@@ -88,6 +88,25 @@ class MatchesConverter implements IConverter
     private $doneTags = 0;
 
     /**
+     * @var array
+     */
+    private static $types = [
+        'timeout'           => FcEvent::TYPE_TIMEOUT,
+        'goal'              => FcEvent::TYPE_GOAL,
+        'autogoal'          => FcEvent::TYPE_AUTOGOAL,
+        'goalfrompenalty'   => FcEvent::TYPE_GOALPENALTY,
+        'pin'               => FcEvent::TYPE_CAMEOFFBANCH,
+        'yc'                => FcEvent::TYPE_YELLOWCARD,
+        'ycyc'              => FcEvent::TYPE_SECONDYELLOWCARD,
+        'rc'                => FcEvent::TYPE_REDCARD,
+        'unrealizedpenalty' => FcEvent::TYPE_MISSEDPENALTY,
+        'pout'              => FcEvent::TYPE_LEFTONBENCH,
+        'cornergoal'        => FcEvent::TYPE_GOALCORNER,
+        'finegoal'          => FcEvent::TYPE_TIMEOUT,
+        'help'              => FcEvent::TYPE_GOALSHTRAFNOY
+    ];
+
+    /**
      * Инициализация.
      */
     public function __construct()
@@ -155,13 +174,34 @@ class MatchesConverter implements IConverter
             /* @var Matches $m */
             $m = $s->match;
             $match = new FcMatch();
-            $match->importId            = $m->id;
-            $match->championship_id     = $this->champs[$s->tournament][BaseFcModel::LANG_RU];
-            $match->season_id           = $this->seasons[$s->season][BaseFcModel::LANG_RU];
-            $match->stage_id            = $this->stages[$s->stage][BaseFcModel::LANG_RU];
+            $match->importId        = $m->id;
+            $match->championship_id = $this->champs[$s->tournament][BaseFcModel::LANG_RU];
+            $match->season_id       = $this->seasons[$s->season][BaseFcModel::LANG_RU];
+            $match->stage_id        = $this->stages[$s->stage][BaseFcModel::LANG_RU];
+            $match->home_team_id    = $home_team[BaseFcModel::LANG_RU];
+            $match->guest_team_id   = $guest_team[BaseFcModel::LANG_RU];
+
+            // переносили уже
+            $exists_match = FcMatch::model()->exists(
+                new CDbCriteria(
+                    [
+                        'condition' => 'season_id=:season_id AND stage_id=:stage_id AND home_team_id=:home_team_id ' .
+                            'AND guest_team_id=:guest_team_id',
+                        'params' => [
+                            ':season_id'     => $match->season_id,
+                            ':stage_id'      => $match->stage_id,
+                            ':home_team_id'  => $match->home_team_id,
+                            ':guest_team_id' => $match->guest_team_id
+                        ]
+                    ]
+                )
+            );
+
+            if ($exists_match) {
+                continue;
+            }
+
             $match->tour                = $s->circle;
-            $match->home_team_id        = $home_team[BaseFcModel::LANG_RU];
-            $match->guest_team_id       = $guest_team[BaseFcModel::LANG_RU];
             $match->city                = $s->region;
             $match->stadium             = $s->stadium;
             $match->viewers             = $m->audience;
@@ -255,53 +295,7 @@ class MatchesConverter implements IConverter
                     continue;
                 }
 
-                switch ($n) {
-                    case 'timeout':
-                        $event->type = FcEvent::TYPE_TIMEOUT;
-                        break;
-                    case 'goal':
-                        $event->type = FcEvent::TYPE_GOAL;
-                        break;
-                    case 'autogoal':
-                        $event->type = FcEvent::TYPE_AUTOGOAL;
-                        break;
-                    case 'goalfrompenalty':
-                        $event->type = FcEvent::TYPE_GOALPENALTY;
-                        break;
-                    case 'pin':
-                        $event->type = FcEvent::TYPE_CAMEOFFBANCH;
-                        break;
-                    case 'yc':
-                        $event->type = FcEvent::TYPE_YELLOWCARD;
-                        break;
-                    case 'ycyc':
-                        $event->type = FcEvent::TYPE_SECONDYELLOWCARD;
-                        break;
-                    case 'rc':
-                        $event->type = FcEvent::TYPE_REDCARD;
-                        break;
-                    case 'unrealizedpenalty':
-                        $event->type = FcEvent::TYPE_MISSEDPENALTY;
-                        break;
-                    case 'pout':
-                        $event->type = FcEvent::TYPE_LEFTONBENCH;
-                        break;
-                    case 'cornergoal':
-                        $event->type = FcEvent::TYPE_GOALCORNER;
-                        break;
-                    case 'finegoal':
-                        $event->type = FcEvent::TYPE_TIMEOUT;
-                        break;
-                    case 'help':
-                        $event->type = FcEvent::TYPE_GOALSHTRAFNOY;
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            if (!$event->type) {
-                $event->type = FcEvent::TYPE_COMMENT;
+                $event->type = isset(self::$types[$n]) ? self::$types[$n] : FcEvent::TYPE_COMMENT;
             }
 
             if (!$event->save()) {
