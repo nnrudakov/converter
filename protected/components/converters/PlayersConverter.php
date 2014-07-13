@@ -137,6 +137,11 @@ class PlayersConverter implements IConverter
     /**
      * @var string
      */
+    const TAGS_PLAYER_FC = 'player';
+
+    /**
+     * @var string
+     */
     const TAGS_PLAYER = 'person';
 
     /**
@@ -289,6 +294,7 @@ class PlayersConverter implements IConverter
         $this->stages  = $cc->getStages();
         $this->players = $this->getPlayers();
         $this->teams   = $this->getTeams();
+        $this->tags    = $this->getTags();
     }
 
     /**
@@ -297,7 +303,7 @@ class PlayersConverter implements IConverter
     public function convert()
     {
         $this->progress();
-        /*$this->tags = [self::TAGS_TEAM => [], self::TAGS_PLAYER => [], MatchesConverter::TAGS_MATCH => []];
+        $this->tags = [self::TAGS_TEAM => [], self::TAGS_PLAYER => [], MatchesConverter::TAGS_MATCH => []];
         $criteria = new CDbCriteria(
             [
                 'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
@@ -322,6 +328,10 @@ class PlayersConverter implements IConverter
             $contract->untiltime = $c->date_to;
             $contract->number    = $c->number;
 
+            if (FcContracts::model()->findByAttributes($contract->getAttributes())) {
+                continue;
+            }
+
             if (!$contract->save()) {
                 throw new CException(
                     'Player\'s contract not created.' . "\n" .
@@ -344,14 +354,14 @@ class PlayersConverter implements IConverter
         $this->saveTeamStat();
 
         // игроки, для которых нет контрактов, но они участвовали в матчах
-        $this->saveMatchPlayers();*/
+        $this->saveMatchPlayers();
         $this->savePlayerStat();
 
-        /*ksort($this->teams);
+        ksort($this->teams);
         ksort($this->players);
         file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
         file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
-        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));*/
+        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
     }
 
     public function getTeams()
@@ -401,21 +411,23 @@ class PlayersConverter implements IConverter
                     $contract->person_id = $players[BaseFcModel::LANG_RU];
                     $contract->number    = $mp->number;
 
-                    if (!$contract->save()) {
-                        throw new CException(
-                            'Player\'s contract not created.' . "\n" .
-                            var_export($contract->getErrors(), true) . "\n" .
-                            $mp . "\n"
-                        );
+                    if (!FcContracts::model()->findByAttributes($contract->getAttributes())) {
+                        if (!$contract->save()) {
+                            throw new CException(
+                                'Player\'s contract not created.' . "\n" .
+                                var_export($contract->getErrors(), true) . "\n" .
+                                $mp . "\n"
+                            );
+                        }
+
+                        $contract->setNew();
+                        $contract->team_id = $teams[BaseFcModel::LANG_EN];
+                        $contract->person_id = $players[BaseFcModel::LANG_EN];
+                        $contract->save();
+
+                        $this->doneContracts++;
+                        $this->progress();
                     }
-
-                    $contract->setNew();
-                    $contract->team_id = $teams[BaseFcModel::LANG_EN];
-                    $contract->person_id = $players[BaseFcModel::LANG_EN];
-                    $contract->save();
-
-                    $this->doneContracts++;
-                    $this->progress();
                 }
 
                 $prev = $mp->player . $mp->team . $mp->number;
@@ -452,6 +464,28 @@ class PlayersConverter implements IConverter
         $player->lastname    = $p->surname;
         $player->middlename  = $p->patronymic;
         $player->birthday    = $p->borned;
+        $p_attrs = [
+            'firstname'  => $player->firstname,
+            'lastname'   => $player->lastname,
+            'middlename' => $player->middlename,
+            'birthday'   => $player->birthday
+        ];
+
+        // переносили уже
+        if ($exists_player = FcPerson::model()->findByAttributes($p_attrs, new CDbCriteria(['order' => 'id']))) {
+            $player->setOwner = $player->setMultilang = false;
+            $player->setIsNewRecord(false);
+            $player->setAttributes($exists_player->getAttributes());
+            $player->id = $exists_player->id;
+            // переделываем файлы
+            $player->save();
+
+            $ids = [BaseFcModel::LANG_RU => $exists_player->getId(), BaseFcModel::LANG_EN => $player->getPairId()];
+            $this->players[$p->id] = $ids;
+
+            return $ids;
+        }
+
         $player->citizenship = $p->citizenship;
         $player->biograpy    = Utils::clearText($p->bio);
         $player->profile     = self::PROFILE_PLAYER;
@@ -526,9 +560,25 @@ class PlayersConverter implements IConverter
         $team->setFileParams($t->id, FcTeams::FILE_LOGO_SMALL, 0, FcTeams::FILE_FIELD_LOGO_SMALL);
         $team->setFileParams($t->id, FcTeams::FILE_LOGO_BIG, 0, FcTeams::FILE_FIELD_LOGO_BIG);
         $team->title   = $t->title;
-        $team->info    = Utils::clearText($t->info);
         $team->city    = $t->region;
         $team->staff   = $staff;
+        $t_attrs = ['title' => $team->title, 'city' => $team->city, 'staff' => $team->staff];
+
+        // переносили уже
+        if ($exists_team = FcTeams::model()->findByAttributes($t_attrs)) {
+            $team->setOwner = $team->setMultilang = false;
+            $team->setIsNewRecord(false);
+            $team->setAttributes($exists_team->getAttributes());
+            $team->id = $exists_team->id;
+            // переделываем файлы
+            $team->save();
+
+            $ids = [BaseFcModel::LANG_RU => $exists_team->getId(), BaseFcModel::LANG_EN => $team->getPairId()];
+            $this->teams[$t->id][$staff] = $ids;
+
+            return $ids;
+        }
+        $team->info    = Utils::clearText($t->info);
         $team->country = $t->country;
         $fileparams = $team->fileParams;
 

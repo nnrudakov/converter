@@ -198,7 +198,7 @@ EOD;
 
     public function actionFail()
     {
-        $players_names = [];
+        /*$players_names = [];
         $players = [[
             'player_id' => 'Ид игрока',
             'first_name' => 'Имя',
@@ -287,6 +287,37 @@ EOD;
         $fh = fopen(__DIR__ . '/players.csv', 'w');
         foreach ($players as $player) {
             fwrite($fh, implode(';', array_values($player)) . "\n");
+        }
+        fclose($fh);*/
+
+        $teams = [[
+            'id' => 'Ид команды',
+            'title' => 'Название',
+            'region' => 'Город'
+        ]];
+        $db = Teams::model()->dbConnection;
+        $command = $db->createCommand(
+            'SELECT
+                id, title, region
+            FROM tsi.teams
+            WHERE
+                id NOT IN (SELECT team FROM tsi.teamstats) AND
+                id NOT IN (SELECT team FROM tsi.contracts) AND
+                title!=\'\'
+            ORDER BY title'
+        )->queryAll();
+
+        foreach ($command as $row) {
+            $mc = $db->createCommand('SELECT COUNT(id) FROM tsi.matches WHERE team1=:team_id OR team2=:team_id')
+                ->queryScalar([':team_id' => $row['id']]);
+            if (!$mc) {
+                $teams[] = $row;
+            }
+        }
+
+        $fh = fopen(__DIR__ . '/teams.csv', 'w');
+        foreach ($teams as $team) {
+            fwrite($fh, implode(';', array_values($team)) . "\n");
         }
         fclose($fh);
     }
