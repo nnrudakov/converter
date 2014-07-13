@@ -324,11 +324,27 @@ class PlayersConverter implements IConverter
             $contract = new FcContracts();
             $contract->team_id   = $teams[BaseFcModel::LANG_RU];
             $contract->person_id = $players[BaseFcModel::LANG_RU];
-            $contract->fromtime  = $c->date_from;
-            $contract->untiltime = $c->date_to;
+            $contract->fromtime  = date('Y-m-d', strtotime($c->date_from));
+            $contract->untiltime = date('Y-m-d', strtotime($c->date_to));
             $contract->number    = $c->number;
 
-            if (FcContracts::model()->findByAttributes($contract->getAttributes())) {
+            $exists_contract = FcContracts::model()->exists(
+                new CDbCriteria(
+                    [
+                        'condition' => 'team_id=:team_id AND person_id=:person_id AND fromtime=:fromtime ' .
+                            'AND untiltime=:untiltime AND number=:number',
+                        'params' => [
+                            ':team_id'   => $contract->team_id,
+                            ':person_id' => $contract->person_id,
+                            ':fromtime'  => $contract->fromtime,
+                            ':untiltime' => $contract->untiltime,
+                            ':number'    => $contract->number
+                        ]
+                    ]
+                )
+            );
+
+            if ($exists_contract) {
                 continue;
             }
 
@@ -727,11 +743,13 @@ class PlayersConverter implements IConverter
 
             foreach ($p->stat as $s) {
                 $teams = $this->getTrueTeam($s->team, $s->tournament);
-                $save_stat($s, $teams[BaseFcModel::LANG_RU], $players[BaseFcModel::LANG_RU], BaseFcModel::LANG_RU);
+                $saved = $save_stat($s, $teams[BaseFcModel::LANG_RU], $players[BaseFcModel::LANG_RU], BaseFcModel::LANG_RU);
                 $save_stat($s, $teams[BaseFcModel::LANG_EN], $players[BaseFcModel::LANG_EN], BaseFcModel::LANG_EN);
 
-                $this->donePlayerStats++;
-                $this->progress();
+                if ($saved) {
+                    $this->donePlayerStats++;
+                    $this->progress();
+                }
             }
         }
     }
@@ -799,11 +817,13 @@ class PlayersConverter implements IConverter
                 }
 
                 $teams = $this->getTrueTeam($s->team, $s->tournament);
-                $save_stat($s, $teams[BaseFcModel::LANG_RU], BaseFcModel::LANG_RU);
+                $saved = $save_stat($s, $teams[BaseFcModel::LANG_RU], BaseFcModel::LANG_RU);
                 $save_stat($s, $teams[BaseFcModel::LANG_EN], BaseFcModel::LANG_EN);
 
-                $this->doneTeamStats++;
-                $this->progress();
+                if ($saved) {
+                    $this->doneTeamStats++;
+                    $this->progress();
+                }
             }
         }
     }
