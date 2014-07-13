@@ -92,15 +92,16 @@ class ChampsConverter implements IConverter
     public function convert()
     {
         $this->progress();
+        $this->seasons = $this->getSeasons();
         $this->convertSeasons();
-        $this->convertChamps();
+        //$this->convertChamps();
 
         ksort($this->seasons);
-        ksort($this->champs);
-        ksort($this->stages);
+        /*ksort($this->champs);
+        ksort($this->stages);*/
         file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
-        file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
-        file_put_contents($this->stagesFile, sprintf(self::FILE_ACCORDANCE, var_export($this->stages, true)));
+        /*file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
+        file_put_contents($this->stagesFile, sprintf(self::FILE_ACCORDANCE, var_export($this->stages, true)));*/
     }
 
     /**
@@ -114,6 +115,14 @@ class ChampsConverter implements IConverter
         $src_seasons = new Seasons();
 
         foreach ($src_seasons->findAll($criteria) as $s) {
+            $exists_season = FcSeason::model()->exists(
+                new CDbCriteria(['condition' => 'title=:title', 'params' => [':title' => $s->title]])
+            );
+
+            if ($exists_season) {
+                continue;
+            }
+
             $season = new FcSeason();
             //$season->importId = $s->id;
             $season->title = $s->title;
