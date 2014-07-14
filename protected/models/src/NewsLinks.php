@@ -8,8 +8,8 @@
  * @property integer $category Код категории.
  *
  * Доступные отношения:
- * @property News[]       $news_obj Объект.
- * @property NewsCategs[] $cat_obj  Категория.
+ * @property News[]     $news_obj Объект.
+ * @property NewsCategs $cat_obj  Категория.
  *
  * @package    converter
  * @subpackage newslinks
@@ -51,7 +51,7 @@ class NewsLinks extends SourceModel
                 'condition' => 'news_obj.title!=\'\'',
                 'order' => 'id'
             ],
-            'cat_obj'  => [self::HAS_MANY, 'NewsCategs', 'id']
+            'cat_obj'  => [self::HAS_ONE, 'NewsCategs', 'id']
         ];
     }
 

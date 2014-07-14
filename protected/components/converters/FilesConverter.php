@@ -58,6 +58,11 @@ class FilesConverter implements IConverter
             ['width' => 120, 'height' => 80,   'crop' => 'center'],
             ['width' => 180, 'height' => 120,  'crop' => 'center'],
             ['width' => 620, 'height' => 0,    'crop' => 'proportionally']
+        ],
+        'branches' => [
+            ['width' => 120, 'height' => 80,   'crop' => 'center'],
+            ['width' => 180, 'height' => 120,  'crop' => 'center'],
+            ['width' => 620, 'height' => 0,    'crop' => 'proportionally']
         ]
     ];
 
@@ -280,9 +285,8 @@ class FilesConverter implements IConverter
         if (isset(self::$watermarkSettings[$moduleName])) {
             $i = 1;
             foreach (self::$watermarkSettings[$moduleName] as $settings) {
-                $thumb_name = substr($file->name, 0, -strlen('.' . $file->ext)) .
-                    '_t' . $i . '.' . $file->ext;
-                if (!file_exists($admin_thumb)) {
+                $thumb_name = substr($file->name, 0, -strlen('.' . $file->ext)) . '_t' . $i . '.' . $file->ext;
+                if (!file_exists($thumb_name)) {
                     if ('proportionally' == $settings['crop']) {
                         if (!$settings['width']) {
                             $settings['width'] = null;

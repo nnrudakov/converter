@@ -28,7 +28,7 @@
  * @property string  $flags           .
  *
  * Доступные отношения:
- * @property NewsLinks $links Связка с категорией.
+ * @property NewsLinks[] $links Связка с категорией.
  *
  * @package    Converter
  * @subpackage news
@@ -92,7 +92,7 @@ class News extends SourceModel
     public function relations()
     {
         return [
-            'links' => [self::HAS_ONE, 'NewsLinks', 'news']
+            'links' => [self::HAS_MANY, 'NewsLinks', 'news']
         ];
     }
 
@@ -205,7 +205,7 @@ class News extends SourceModel
      *
      * @return integer
      */
-    public function getGalleyId()
+    public function getGalleryId()
     {
         if ($this->isText()) {
             return 0;

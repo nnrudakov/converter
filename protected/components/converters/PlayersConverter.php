@@ -286,6 +286,7 @@ class PlayersConverter implements IConverter
         $this->teamsFile   = Yii::getPathOfAlias('accordance') . '/teams.php';
         $this->playersFile = Yii::getPathOfAlias('accordance') . '/players.php';
         $this->tagsFile    = Yii::getPathOfAlias('accordance') . '/tags.php';
+        $this->tagsFile1    = Yii::getPathOfAlias('accordance') . '/tags1.php';
 
         // сезоны и чемпионаты уже должны быть перенесены
         $cc = new ChampsConverter();

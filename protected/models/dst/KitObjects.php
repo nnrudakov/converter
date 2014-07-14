@@ -40,11 +40,11 @@ class KitObjects extends DestinationModel
     const ENTITY = 'object';
 
     /**
-     * Идентификатор не основной категории.
+     * Родительские категории.
      *
-     * @var integer
+     * @var array
      */
-    public $minorCategoryId = 0;
+    public $parents = [];
 
     /**
      * Порядок в категории.
@@ -168,13 +168,12 @@ class KitObjects extends DestinationModel
         }
 
         $link_class = ucfirst($this->module->name) . 'CategoryObjects';
-        $categories = [$this->main_category_id];
 
-        if ($this->minorCategoryId && $this->minorCategoryId != $this->main_category_id) {
-            $categories[] = $this->minorCategoryId;
+        if (!$this->parents) {
+            $this->parents[] = $this->main_category_id;
         }
 
-        foreach ($categories as $category_id) {
+        foreach ($this->parents as $category_id) {
             /* @var KitCategoryObjects $link */
             $link = call_user_func($link_class  . '::model');
             $link = $link->findByPk(['category_id' => $category_id, 'object_id' => $this->object_id]);

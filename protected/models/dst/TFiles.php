@@ -39,9 +39,11 @@ trait TFiles {
             }
 
             $name = preg_replace('/.+?\//', '', $name);
+            $ext = substr($name, -3);
+            $thumb_name = substr($name, 0, -strlen('.' . $ext)) . '_t%d.' . $ext;
             list($size, $content) = $remote_file;
             $attributes = [
-                'ext'        => substr($name, -3),
+                'ext'        => $ext,
                 'size'       => $size,
                 'descr'      => $params['descr'],
                 'video_time' => $params['video_time']
@@ -51,6 +53,14 @@ trait TFiles {
             $file->setAttributes($attributes, false);
             $file->path = $filepath;
             $file->name = $name;
+
+            // превью
+            if ($params['thumbs']) {
+                for ($i = 1; $i <= $params['thumbs']; $i++) {
+                    $file->{'thumb' . $i} = sprintf($thumb_name, $i);
+                }
+            }
+
             $exist_file = Files::model()->find(
                 new CDbCriteria(['condition' => 'name LIKE :name', 'params' => [':name' => '%' . $name]])
             );
