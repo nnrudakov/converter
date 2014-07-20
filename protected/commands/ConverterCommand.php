@@ -290,7 +290,7 @@ EOD;
         }
         fclose($fh);*/
 
-        $teams = [[
+        /*$teams = [[
             'id' => 'Ид команды',
             'title' => 'Название',
             'region' => 'Город'
@@ -319,7 +319,18 @@ EOD;
         foreach ($teams as $team) {
             fwrite($fh, implode(';', array_values($team)) . "\n");
         }
-        fclose($fh);
+        fclose($fh);*/
+
+        $players_csv = file(Yii::getPathOfAlias('accordance') . '/exclude_players.csv');
+        $players = [];
+        foreach ($players_csv as $line) {
+            list($id,,,,,,,,,,,,$del) = explode(';', $line);
+            if (mb_strpos($del, 'рохать')) {
+                $players[] = (int) $id;
+            }
+        }
+        sort($players);
+        file_put_contents(Yii::getPathOfAlias('accordance') . '/exclude_players.php', sprintf("<?php\n\nreturn %s;\n", var_export($players, true)));
     }
 
     protected function beforeAction($action, $params)

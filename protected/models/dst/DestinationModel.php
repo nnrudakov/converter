@@ -203,6 +203,23 @@ class DestinationModel extends BaseFcModel
     {
         return (int) $this->dbConnection->createCommand(
             'SELECT
+                `ml`.`entity_id`
+            FROM
+                `fc__core__multilang_link` AS `ml`
+                JOIN `fc__core__multilang` AS `m`
+                    ON `m`.`id`=`ml`.`multilang_id`
+                    AND `m`.`id`=:id
+                    AND `ml`.`lang_id`=:lang_id'
+        )->queryScalar([':id' => $this->getMultilangId(), ':lang_id' => BaseFcModel::LANG_EN]);
+    }
+
+    /**
+     * @return integer
+     */
+    public function getMultilangId()
+    {
+        return (int) $this->dbConnection->createCommand(
+            'SELECT
                 `m`.`id` AS `id`
             FROM
                 `fc__core__multilang` AS `m`

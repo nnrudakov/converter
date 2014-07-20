@@ -18,11 +18,21 @@ class ChampsConverter implements IConverter
     private $seasons = [];
 
     /**
+     * @var array
+     */
+    private $seasonsM = [];
+
+    /**
      * Соотвествие чемпионатов.
      *
      * @var array
      */
     private $champs = [];
+
+    /**
+     * @var array
+     */
+    private $champsM = [];
 
     /**
      * Соотвествие этапов.
@@ -32,11 +42,21 @@ class ChampsConverter implements IConverter
     private $stages = [];
 
     /**
+     * @var array
+     */
+    private $stagesM = [];
+
+    /**
      * Файл соответствий текущих идентификаторов сезонов новым.
      *
      * @var string
      */
     private $seasonsFile = '';
+
+    /**
+     * @var string
+     */
+    private $seasonsFileM = '';
 
     /**
      * Файл соответствий текущих идентификаторов чемпионатов новым.
@@ -46,11 +66,21 @@ class ChampsConverter implements IConverter
     private $champsFile = '';
 
     /**
+     * @var string
+     */
+    private $champsFileM = '';
+
+    /**
      * Файл соответствий текущих идентификаторов этапов новым.
      *
      * @var string
      */
     private $stagesFile = '';
+
+    /**
+     * @var array
+     */
+    private $stagesFileM = '';
 
     /**
      * Строка для прогресс-бара.
@@ -81,9 +111,12 @@ class ChampsConverter implements IConverter
      */
     public function __construct()
     {
-        $this->seasonsFile = Yii::getPathOfAlias('accordance') . '/seasons.php';
-        $this->champsFile  = Yii::getPathOfAlias('accordance') . '/champs.php';
-        $this->stagesFile  = Yii::getPathOfAlias('accordance') . '/stages.php';
+        $this->seasonsFile  = Yii::getPathOfAlias('accordance') . '/seasons.php';
+        $this->seasonsFileM = Yii::getPathOfAlias('accordance') . '/seasons_m.php';
+        $this->champsFile   = Yii::getPathOfAlias('accordance') . '/champs.php';
+        $this->champsFileM  = Yii::getPathOfAlias('accordance') . '/champs_m.php';
+        $this->stagesFile   = Yii::getPathOfAlias('accordance') . '/stages.php';
+        $this->stagesFileM  = Yii::getPathOfAlias('accordance') . '/stages_m.php';
     }
 
     /**
@@ -94,14 +127,20 @@ class ChampsConverter implements IConverter
         $this->progress();
         $this->seasons = $this->getSeasons();
         $this->convertSeasons();
-        //$this->convertChamps();
+        $this->convertChamps();
 
-        ksort($this->seasons);
-        /*ksort($this->champs);
+        /*ksort($this->seasons);
+        ksort($this->champs);
         ksort($this->stages);*/
-        file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
-        /*file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
+        ksort($this->seasonsM);
+        ksort($this->champsM);
+        ksort($this->stagesM);
+        /*file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
+        file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
         file_put_contents($this->stagesFile, sprintf(self::FILE_ACCORDANCE, var_export($this->stages, true)));*/
+        file_put_contents($this->seasonsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->seasonsM, true)));
+        file_put_contents($this->champsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->champsM, true)));
+        file_put_contents($this->stagesFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->stagesM, true)));
     }
 
     /**
@@ -115,11 +154,12 @@ class ChampsConverter implements IConverter
         $src_seasons = new Seasons();
 
         foreach ($src_seasons->findAll($criteria) as $s) {
-            $exists_season = FcSeason::model()->exists(
+            $exists_season = FcSeason::model()->find(
                 new CDbCriteria(['condition' => 'title=:title', 'params' => [':title' => $s->title]])
             );
 
             if ($exists_season) {
+                $this->seasonsM[$s->id] = $exists_season->getMultilangId();
                 continue;
             }
 
@@ -165,21 +205,36 @@ class ChampsConverter implements IConverter
             $champ->fullTitle = $t->title;
             $champ->sponsor = $t->sponsor;
 
-            if (!$champ->save()) {
-                throw new CException(
-                    'Championship not created.' . "\n" .
-                    var_export($champ->getErrors(), true) . "\n" .
-                    $t . "\n"
-                );
+            $exists_champ = FcChampionship::model()->find(
+                new CDbCriteria(
+                    [
+                        'condition' => 'title=:title AND fullTitle=:full_title',
+                        'params' => [':title' => $champ->title, ':full_title' => $champ->fullTitle],
+                        'order' => 'id'
+                    ]
+                )
+            );
+
+            if ($exists_champ) {
+                $this->champsM[$t->id] = $exists_champ->getMultilangId();
+                $champ_ru = $exists_champ->getId();
+            } else {
+                if (!$champ->save()) {
+                    throw new CException(
+                        'Championship not created.' . "\n" .
+                        var_export($champ->getErrors(), true) . "\n" .
+                        $t . "\n"
+                    );
+                }
+
+                $this->champs[$t->id][$champ->lang] = $champ_ru = (int) $champ->id;
+                $champ->setNew(true);
+                $champ->save();
+                $this->champs[$t->id][$champ->lang] = $champ_en = (int) $champ->id;
+
+                $this->doneChamps++;
+                $this->progress();
             }
-
-            $this->champs[$t->id][$champ->lang] = $champ_ru = (int) $champ->id;
-            $champ->setNew(true);
-            $champ->save();
-            $this->champs[$t->id][$champ->lang] = $champ_en = (int) $champ->id;
-
-            $this->doneChamps++;
-            $this->progress();
 
             /* @var Stages $s */
             foreach ($t->stages as $s) {
@@ -190,6 +245,20 @@ class ChampsConverter implements IConverter
                 $stage->fullTitle = $s->title ?: $t->title;
                 $stage->style = $s->isCap() ? FcStage::STYLE_CUP : FcStage::STYLE_ROUND;
                 $stage->reglament = $s->reglamentar;
+
+                $exists_stage = FcStage::model()->find(
+                    new CDbCriteria(
+                        [
+                            'condition' => 'championship_id=:champ_id AND fullTitle=:full_title',
+                            'params' => [':champ_id' => $champ_ru, ':full_title' => $stage->fullTitle]
+                        ]
+                    )
+                );
+
+                if ($exists_stage) {
+                    $this->stagesM[$s->id] = $exists_stage->getMultilangId();
+                    continue;
+                }
 
                 if (!$stage->save()) {
                     throw new CException(
@@ -223,6 +292,21 @@ class ChampsConverter implements IConverter
     public function getStages()
     {
         return file_exists($this->stagesFile) ? include $this->stagesFile : [];
+    }
+
+    public function getSeasonsM()
+    {
+        return file_exists($this->seasonsFileM) ? include $this->seasonsFileM : [];
+    }
+
+    public function getChampsM()
+    {
+        return file_exists($this->champsFileM) ? include $this->champsFileM : [];
+    }
+
+    public function getStagesM()
+    {
+        return file_exists($this->stagesFileM) ? include $this->stagesFileM : [];
     }
 
     private function progress()
