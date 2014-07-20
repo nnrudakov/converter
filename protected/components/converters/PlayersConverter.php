@@ -185,11 +185,26 @@ class PlayersConverter implements IConverter
     private $teams = [];
 
     /**
+     * @var array
+     */
+    private $teamsM = [];
+
+    /**
      * Соотвествие игроков.
      *
      * @var array
      */
     private $players = [];
+
+    /**
+     * @var array
+     */
+    private $playersM = [];
+
+    /**
+     * @varr array
+     */
+    private $excludePlayers = [];
 
     /**
      * Сезоны для статистики.
@@ -225,11 +240,21 @@ class PlayersConverter implements IConverter
     private $playersFile = '';
 
     /**
+     * @var string
+     */
+    private $playersFileM = '';
+
+    /**
      * Файл соответствий текущих идентификаторов команд новым.
      *
      * @var string
      */
     private $teamsFile = '';
+
+    /**
+     * @var string
+     */
+    private $teamsFileM = '';
 
     /**
      * @var array
@@ -241,7 +266,7 @@ class PlayersConverter implements IConverter
      *
      * @var string
      */
-    private $progressFormat = "\rTeams: %d (%d). Players: %d (%d). Contracts: %d (%d). Players statistics: %d (%d). Teams statistics: %d (%d). Teams tags: %d (%d). Players tags: %d (%d).";
+    private $progressFormat = "\rTeams: %d (%d). Players: %d (%d). Contracts: %d. Players statistics: %d. Teams statistics: %d. Teams tags: %d (%d). Players tags: %d (%d).";
 
     /**
      * @var integer
@@ -283,19 +308,21 @@ class PlayersConverter implements IConverter
      */
     public function __construct()
     {
-        $this->teamsFile   = Yii::getPathOfAlias('accordance') . '/teams.php';
-        $this->playersFile = Yii::getPathOfAlias('accordance') . '/players.php';
-        $this->tagsFile    = Yii::getPathOfAlias('accordance') . '/tags.php';
-        $this->tagsFile1    = Yii::getPathOfAlias('accordance') . '/tags1.php';
+        $this->teamsFile    = Yii::getPathOfAlias('accordance') . '/teams.php';
+        $this->teamsFileM   = Yii::getPathOfAlias('accordance') . '/teams_m.php';
+        $this->playersFile  = Yii::getPathOfAlias('accordance') . '/players.php';
+        $this->playersFileM = Yii::getPathOfAlias('accordance') . '/players_m.php';
+        $this->tagsFile     = Yii::getPathOfAlias('accordance') . '/tags.php';
+        $this->excludePlayers = include Yii::getPathOfAlias('accordance') . '/exclude_players.php';
 
         // сезоны и чемпионаты уже должны быть перенесены
         $cc = new ChampsConverter();
-        $this->seasons = $cc->getSeasons();
-        $this->champs  = $cc->getChamps();
-        $this->stages  = $cc->getStages();
-        $this->players = $this->getPlayers();
-        $this->teams   = $this->getTeams();
-        $this->tags    = $this->getTags();
+        $this->seasons = $cc->getSeasonsM();
+        $this->champs  = $cc->getChampsM();
+        $this->stages  = $cc->getStagesM();
+        //$this->players = $this->getPlayers();
+        //$this->teams   = $this->getTeams();
+        //$this->tags    = $this->getTags();
     }
 
     /**
@@ -305,26 +332,26 @@ class PlayersConverter implements IConverter
     {
         $this->progress();
         $this->tags = [self::TAGS_TEAM => [], self::TAGS_PLAYER => [], MatchesConverter::TAGS_MATCH => []];
-        $criteria = new CDbCriteria(
-            [
-                'select' => ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'],
-                'with'   => ['playerTeam', 'playerPlayer'],
-                'order'  => 't.player'
-            ]
-        );
+        $criteria = new CDbCriteria();
+        $criteria->select = ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'];
+        $criteria->with = ['playerTeam', 'playerPlayer'];
+        $criteria->order = 't.player';
         $src_contracts = new PlayersContracts();
 
         // игроки, у которых есть контракты
         foreach ($src_contracts->findAll($criteria) as $c) {
-            $players = $this->savePlayer(
+            if (in_array($c->playerPlayer->id, $this->excludePlayers)) {
+                continue;
+            }
+            $player_id = $this->savePlayer(
                 $c->playerPlayer,
                 isset(self::$ampluas[$c->playerPlayer->amplua]) ? self::$ampluas[$c->playerPlayer->amplua] : null
             );
-            $teams = $this->saveTeam($c->playerTeam, $c->staff ? FcTeams::JUNIOR : FcTeams::MAIN);
+            $team_id = $this->saveTeam($c->playerTeam, $c->staff ? FcTeams::JUNIOR : FcTeams::MAIN);
 
             $contract = new FcContracts();
-            $contract->team_id   = $teams[BaseFcModel::LANG_RU];
-            $contract->person_id = $players[BaseFcModel::LANG_RU];
+            $contract->team_id   = $team_id;
+            $contract->person_id = $player_id;
             $contract->fromtime  = date('Y-m-d', strtotime($c->date_from));
             $contract->untiltime = date('Y-m-d', strtotime($c->date_to));
             $contract->number    = $c->number;
@@ -357,10 +384,10 @@ class PlayersConverter implements IConverter
                 );
             }
 
-            $contract->setNew();
+            /*$contract->setNew();
             $contract->team_id = $teams[BaseFcModel::LANG_EN];
             $contract->person_id = $players[BaseFcModel::LANG_EN];
-            $contract->save();
+            $contract->save();*/
 
             $this->doneContracts++;
             $this->progress();
@@ -375,22 +402,51 @@ class PlayersConverter implements IConverter
         $this->savePlayerStat();
 
         ksort($this->teams);
+        ksort($this->teamsM);
         ksort($this->players);
+        ksort($this->playersM);
         file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
+        file_put_contents($this->teamsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->teamsM, true)));
         file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
+        file_put_contents($this->playersFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->playersM, true)));
         file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
     }
 
+    /**
+     * @return array
+     */
     public function getTeams()
     {
         return file_exists($this->teamsFile) ? include $this->teamsFile : [];
     }
 
+    /**
+     * @return array
+     */
+    public function getTeamsM()
+    {
+        return file_exists($this->teamsFileM) ? include $this->teamsFileM : [];
+    }
+
+    /**
+     * @return array
+     */
     public function getPlayers()
     {
         return file_exists($this->playersFile) ? include $this->playersFile : [];
     }
 
+    /**
+     * @return array
+     */
+    public function getPlayersM()
+    {
+        return file_exists($this->playersFileM) ? include $this->playersFileM : [];
+    }
+
+    /**
+     * @return array|mixed
+     */
     public function getTags()
     {
         return file_exists($this->tagsFile) ? include $this->tagsFile : [];
@@ -410,9 +466,12 @@ class PlayersConverter implements IConverter
         $prev = '';
 
         foreach ($src_players->findAll($criteria) as $mp) {
+            if (in_array($mp->player, $this->excludePlayers)) {
+                continue;
+            }
             $p = Players::model()->findByPk($mp->player);
             if ($p && $prev != $mp->player . $mp->team . $mp->number) {
-                $players = $this->savePlayer(
+                $player_id = $this->savePlayer(
                     $p,
                     isset(self::$positions[$mp->position]) ? self::$positions[$mp->position] : null
                 );
@@ -422,10 +481,10 @@ class PlayersConverter implements IConverter
                 if ($sch = $match->sch) {
                     /* @var Tournaments $champ */
                     $champ = $sch->champ;
-                    $teams = $this->getTrueTeam($mp->team, $champ->id);
+                    $team_id = $this->teamsM[$mp->team];
                     $contract = new FcContracts();
-                    $contract->team_id   = $teams[BaseFcModel::LANG_RU];
-                    $contract->person_id = $players[BaseFcModel::LANG_RU];
+                    $contract->team_id   = $team_id;
+                    $contract->person_id = $player_id;
                     $contract->number    = $mp->number;
 
                     if (!FcContracts::model()->findByAttributes($contract->getAttributes())) {
@@ -438,8 +497,8 @@ class PlayersConverter implements IConverter
                         }
 
                         $contract->setNew();
-                        $contract->team_id = $teams[BaseFcModel::LANG_EN];
-                        $contract->person_id = $players[BaseFcModel::LANG_EN];
+                        $contract->team_id = $team_id;
+                        $contract->person_id = $player_id;
                         $contract->save();
 
                         $this->doneContracts++;
@@ -460,14 +519,15 @@ class PlayersConverter implements IConverter
      * @param Players $p
      * @param string  $amplua
      *
-     * @return array
+     * @return integer
      *
      * @throws CException
      */
     private function savePlayer($p, $amplua = null)
     {
         if (isset($this->players[$p->id])) {
-            return $this->players[$p->id];
+            $player = FcPerson::model()->findByPk($this->players[$p->id][BaseFcModel::LANG_RU]);
+            return $player->getMultilangId();
         }
 
         $player = new FcPerson();
@@ -499,8 +559,9 @@ class PlayersConverter implements IConverter
 
             $ids = [BaseFcModel::LANG_RU => $exists_player->getId(), BaseFcModel::LANG_EN => $player->getPairId()];
             $this->players[$p->id] = $ids;
+            $this->playersM[$p->id] = $player->getMultilangId();
 
-            return $ids;
+            return $player->getMultilangId();
         }
 
         $player->citizenship = $p->citizenship;
@@ -521,6 +582,8 @@ class PlayersConverter implements IConverter
                 $p . "\n"
             );
         }
+
+        $this->playersM[$p->id] = $player->getMultilangId();
 
         $this->players[$p->id][BaseFcModel::LANG_RU] = $ru_id = (int) $player->id;
         $player->setNew();
@@ -548,7 +611,7 @@ class PlayersConverter implements IConverter
             )
         );
 
-        return $ids;
+        return $player->getMultilangId();
     }
 
     /**
@@ -557,14 +620,15 @@ class PlayersConverter implements IConverter
      * @param Teams  $t
      * @param string $staff
      *
-     * @return array
+     * @return integer
      *
      * @throws CException                                                                                 `
      */
     private function saveTeam($t, $staff)
     {
         if (!empty($this->teams[$t->id][$staff])) {
-            return $this->teams[$t->id][$staff];
+            $team = FcTeams::model()->findByPk($this->teams[$t->id][$staff][BaseFcModel::LANG_RU]);
+            return $team->getMultilangId();
         }
 
         $team = new FcTeams();
@@ -592,8 +656,9 @@ class PlayersConverter implements IConverter
 
             $ids = [BaseFcModel::LANG_RU => $exists_team->getId(), BaseFcModel::LANG_EN => $team->getPairId()];
             $this->teams[$t->id][$staff] = $ids;
+            $this->teamsM[$t->id] = $team->getMultilangId();
 
-            return $ids;
+            return $team->getMultilangId();
         }
         $team->info    = Utils::clearText($t->info);
         $team->country = $t->country;
@@ -606,6 +671,8 @@ class PlayersConverter implements IConverter
                 $t . "\n"
             );
         }
+
+        $this->teamsM[$t->id] = $team->getMultilangId();
 
         $ru_id = (int) $team->id;
         $team->setNew();
@@ -630,7 +697,7 @@ class PlayersConverter implements IConverter
             implode(' ', [$team->title, $team->staff, '(' . $team->city . ')'])
         );
 
-        return $this->teams[$t->id][$staff];
+        return $team->getMultilangId();
     }
 
     /**
@@ -686,10 +753,10 @@ class PlayersConverter implements IConverter
     private function savePlayerStat()
     {
         $that = $this;
-        $save_stat = function ($s, $teamId, $playerId, $langId) use ($that) {
+        $save_stat = function ($s, $teamId, $playerId) use ($that) {
             // пропускаем отсуствующие сезоны
-            if (empty($that->seasons[$s->season][$langId])    ||
-                empty($that->champs[$s->tournament][$langId])) {
+            if (empty($that->seasons[$s->season])    ||
+                empty($that->champs[$s->tournament])) {
                 return false;
             }
 
@@ -702,8 +769,8 @@ class PlayersConverter implements IConverter
                         'params' => [
                             ':player_id' => $playerId,
                             ':team_id'   => $teamId,
-                            ':season_id' => $that->seasons[$s->season][$langId],
-                            ':champ_id'  => $that->champs[$s->tournament][$langId]
+                            ':season_id' => $that->seasons[$s->season],
+                            ':champ_id'  => $that->champs[$s->tournament]
                         ]
                     ]
                 )
@@ -716,8 +783,8 @@ class PlayersConverter implements IConverter
             $stat = new FcPersonstat();
             $stat->person_id        = $playerId;
             $stat->team_id          = $teamId;
-            $stat->season_id        = $this->seasons[$s->season][$langId];
-            $stat->championship_id  = $this->champs[$s->tournament][$langId];
+            $stat->season_id        = $this->seasons[$s->season];
+            $stat->championship_id  = $this->champs[$s->tournament];
             $stat->gamecount        = $s->played;
             $stat->startcount       = $s->begined;
             $stat->benchcount       = $s->wentin;
@@ -743,9 +810,9 @@ class PlayersConverter implements IConverter
             $p = Players::model()->findByPk($p_id);
 
             foreach ($p->stat as $s) {
-                $teams = $this->getTrueTeam($s->team, $s->tournament);
-                $saved = $save_stat($s, $teams[BaseFcModel::LANG_RU], $players[BaseFcModel::LANG_RU], BaseFcModel::LANG_RU);
-                $save_stat($s, $teams[BaseFcModel::LANG_EN], $players[BaseFcModel::LANG_EN], BaseFcModel::LANG_EN);
+                //$teams = $this->getTrueTeam($s->team, $s->tournament);
+                $saved = $save_stat($s, $this->teamsM[$s->team], $this->playersM[$p_id]);
+                //$save_stat($s, $teams[BaseFcModel::LANG_EN], $players[BaseFcModel::LANG_EN], BaseFcModel::LANG_EN);
 
                 if ($saved) {
                     $this->donePlayerStats++;
@@ -763,7 +830,7 @@ class PlayersConverter implements IConverter
     private function saveTeamStat()
     {
         $that = $this;
-        $save_stat = function ($s, $teamId, $langId) use ($that) {
+        $save_stat = function ($s, $teamId) use ($that) {
             // пропускаем левую статистику
             $stat = FcTeamstat::model()->exists(
                 new CDbCriteria(
@@ -771,8 +838,8 @@ class PlayersConverter implements IConverter
                         'condition' => 'team_id=:team_id AND season_id=:season_id AND stage_id=:stage_id',
                         'params' => [
                             ':team_id'   => $teamId,
-                            ':season_id' => $that->seasons[$s->season][$langId],
-                            ':stage_id'  => $that->stages[$s->stage][$langId],
+                            ':season_id' => $that->seasons[$s->season],
+                            ':stage_id'  => $that->stages[$s->stage],
                         ]
                     ]
                 )
@@ -784,8 +851,8 @@ class PlayersConverter implements IConverter
 
             $stat = new FcTeamstat();
             $stat->team_id       = $teamId;
-            $stat->season_id     = $this->seasons[$s->season][$langId];
-            $stat->stage_id      = $this->stages[$s->stage][$langId];
+            $stat->season_id     = $this->seasons[$s->season];
+            $stat->stage_id      = $this->stages[$s->stage];
             $stat->gamecount     = $s->played;
             $stat->wincount      = $s->won;
             $stat->drawcount     = $s->drawn;
@@ -817,9 +884,9 @@ class PlayersConverter implements IConverter
                     continue;
                 }
 
-                $teams = $this->getTrueTeam($s->team, $s->tournament);
-                $saved = $save_stat($s, $teams[BaseFcModel::LANG_RU], BaseFcModel::LANG_RU);
-                $save_stat($s, $teams[BaseFcModel::LANG_EN], BaseFcModel::LANG_EN);
+                //$teams = $this->getTrueTeam($s->team, $s->tournament);
+                $saved = $save_stat($s, $this->teamsM[$s->team]);
+                //$save_stat($s, $teams[BaseFcModel::LANG_EN], BaseFcModel::LANG_EN);
 
                 if ($saved) {
                     $this->doneTeamStats++;
@@ -844,7 +911,7 @@ class PlayersConverter implements IConverter
         $tag = new Tags();
         $tag->category_id = $categoryId;
         $tag->name = substr(preg_replace('/(?!-)[\W]+/', '_', Utils::rus2lat($title)), 0, 255);
-        $tag->title = $title . '_' .BaseFcModel::LANG_RU . '_' . rand(0, 500);
+        $tag->title = $title . '_' .BaseFcModel::LANG_RU;
         $tag->publish = 1;
         $tag->priority = 0;
 
@@ -855,7 +922,7 @@ class PlayersConverter implements IConverter
         $ru_id = $tag->getId();
         $this->saveTagLinks($ru_id, $newEntities[BaseFcModel::LANG_RU]);
         $tag->setNew();
-        $tag->title = $title . '_' .BaseFcModel::LANG_EN . '_' . rand(0, 500);
+        $tag->title = $title . '_' .BaseFcModel::LANG_EN;
         $tag->save();
         $en_id = $tag->getId();
         $this->saveTagLinks($en_id, $newEntities[BaseFcModel::LANG_EN]);
@@ -915,11 +982,8 @@ class PlayersConverter implements IConverter
             $this->donePlayers,
             $this->donePlayers * 2,
             $this->doneContracts,
-            $this->doneContracts * 2,
             $this->donePlayerStats,
-            $this->donePlayerStats * 2,
             $this->doneTeamStats,
-            $this->doneTeamStats * 2,
             $this->doneTeamTags,
             $this->doneTeamTags * 2,
             $this->donePlayerTags,

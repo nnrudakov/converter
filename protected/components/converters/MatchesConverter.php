@@ -282,7 +282,7 @@ class MatchesConverter implements IConverter
             $players = $this->players[$e->player];
 
             $event = new FcEvent();
-            $event->importId = $e->id;
+            //$event->importId = $e->id;
             $event->match_id = $matches[BaseFcModel::LANG_RU];
             $event->team_id = $teams[BaseFcModel::LANG_RU];
             $event->person_id = $players[BaseFcModel::LANG_RU];
