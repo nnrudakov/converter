@@ -155,6 +155,9 @@ class NewsConverter implements IConverter
             'metakeywords', 'priority', 'tags'
         ];
         $criteria->addCondition('title!=\'\'');
+        //$criteria->addCondition('XMLSERIALIZE(CONTENT(tags) AS text)!=\'\'');
+        //$criteria->addCondition('XMLSERIALIZE(CONTENT(tags) AS text)!=\'<tags />\'');
+        //$criteria->addCondition('id=58098');
         $criteria->order = 'id';
         $news = News::model()->findAll($criteria);
 
@@ -221,7 +224,7 @@ class NewsConverter implements IConverter
         $object->lang_id = $langId;
         $object->name    = Utils::nameString($oldObject->title);
 
-        $exists_news = NewsObjects::model()->exists(
+        $exists_news = NewsObjects::model()->find(
             new CDbCriteria(
                 [
                     'condition' => 'main_category_id=:category_id AND name=:name AND lang_id=:lang_id',
@@ -235,27 +238,27 @@ class NewsConverter implements IConverter
         );
 
         if ($exists_news) {
-            return true;
+            $object->object_id = $exists_news->getId();
+        } else {
+            $object->title            = $oldObject->title;
+            $object->announce         = Utils::clearText($oldObject->message);
+            $object->content          = Utils::clearText($oldObject->details);
+            $object->important        = (int) $oldObject->priority;
+            $object->publish          = 1;
+            $object->publish_date_on  = $oldObject->date ?: null;
+            $object->created          = date('Y-m-d H:i:s');
+            $object->meta_title       = $oldObject->metatitle;
+            $object->meta_description = $oldObject->metadescription;
+            $object->meta_keywords    = $oldObject->metakeywords;
+            $object->sort             = $sort;
+
+            if (!$object->save()) {
+                throw new CException($object->getErrorMsg('Object is not created.', $oldObject));
+            }
+
+            $this->doneNews++;
+            $this->progress();
         }
-
-        $object->title            = $oldObject->title;
-        $object->announce         = Utils::clearText($oldObject->message);
-        $object->content          = Utils::clearText($oldObject->details);
-        $object->important        = (int) $oldObject->priority;
-        $object->publish          = 1;
-        $object->publish_date_on  = $oldObject->date ?: null;
-        $object->created          = date('Y-m-d H:i:s');
-        $object->meta_title       = $oldObject->metatitle;
-        $object->meta_description = $oldObject->metadescription;
-        $object->meta_keywords    = $oldObject->metakeywords;
-        $object->sort             = $sort;
-
-        if (!$object->save()) {
-            throw new CException($object->getErrorMsg('Object is not created.', $oldObject));
-        }
-
-        $this->doneNews++;
-        $this->progress();
 
         if ($oldObject->tags) {
             $this->saveObjectTags($oldObject->tags, $object->getId(), $langId);
@@ -330,6 +333,8 @@ class NewsConverter implements IConverter
      * @param integer $langId
      *
      * @return bool
+     *
+     * @throws CException
      */
     private function saveObjectTags($tags, $objectId, $langId)
     {
@@ -347,6 +352,10 @@ class NewsConverter implements IConverter
                 continue;
             }
 
+            if ($type == PlayersConverter::TAGS_PLAYER_FC) {
+                $type = PlayersConverter::TAGS_PLAYER;
+            }
+
             $id = (int) $tag->getAttribute('id');
             if (isset($this->tags[$type][$id])) {
                 $attrs = ['tag_id' => $this->tags[$type][$id][$langId], 'module_id' => BaseFcModel::NEWS_MODULE_ID];
@@ -359,14 +368,22 @@ class NewsConverter implements IConverter
                     $module_link->is_default = 0;
                     $module_link->save();
                 }
-                $object_link = new TagsObjects();
-                $object_link->link_id = $module_link->link_id;
-                $object_link->object_id = $objectId;
-                $object_link->publish = 1;
-                $object_link->save();
 
-                $this->doneTags++;
-                $this->progress();
+                $attrs = ['link_id' => $module_link->link_id, 'object_id' => $objectId];
+                $object_link = TagsObjects::model()->findByPk($attrs);
+
+                if (!$object_link) {
+                    $object_link = new TagsObjects();
+                    $object_link->setAttributes($attrs);
+                    $object_link->publish = 1;
+
+                    if (!$object_link->save()) {
+                        throw new CException($object_link->getErrorMsg('Tag link is not created.', $object_link));
+                    }
+
+                    $this->doneTags++;
+                    $this->progress();
+                }
             }
         }
 
