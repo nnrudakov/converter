@@ -23,11 +23,21 @@ class MatchesConverter implements IConverter
     private $teams = [];
 
     /**
+     * @var array
+     */
+    private $teamsM = [];
+
+    /**
      * Игроки.
      *
      * @var array
      */
     private $players = [];
+
+    /**
+     * @var array
+     */
+    private $playersM = [];
 
     /**
      * Сезоны.
@@ -58,6 +68,11 @@ class MatchesConverter implements IConverter
     /**
      * @var array
      */
+    private $matches = [];
+
+    /**
+     * @var array
+     */
     private $tagsFile = '';
 
     /**
@@ -65,7 +80,7 @@ class MatchesConverter implements IConverter
      *
      * @var string
      */
-    private $progressFormat = "\rMatches: %d (%d). Events: %d (%d). Placements: %d (%d). Tags: %d (%d)";
+    private $progressFormat = "\rMatches: %d (%d). Events: %d (%d). Placements: %d. Tags: %d (%d)";
 
     /**
      * @var integer
@@ -115,9 +130,11 @@ class MatchesConverter implements IConverter
 
         // команды и игрока уже должны быть перенесены
         $pc = new PlayersConverter();
-        $this->teams   = $pc->getTeams();
-        $this->players = $pc->getPlayers();
-        $this->tags    = $pc->getTags();
+        $this->teams    = $pc->getTeams();
+        $this->teamsM   = $pc->getTeamsM();
+        $this->players  = $pc->getPlayers();
+        $this->playersM = $pc->getPlayersM();
+        $this->tags     = $pc->getTags();
 
         // сезоны и чемпионаты уже должны быть пересены
         $cc = new ChampsConverter();
@@ -182,7 +199,7 @@ class MatchesConverter implements IConverter
             $match->guest_team_id   = $guest_team[BaseFcModel::LANG_RU];
 
             // переносили уже
-            $exists_match = FcMatch::model()->exists(
+            $exists_match = FcMatch::model()->find(
                 new CDbCriteria(
                     [
                         'condition' => 'season_id=:season_id AND stage_id=:stage_id AND home_team_id=:home_team_id ' .
@@ -212,7 +229,7 @@ class MatchesConverter implements IConverter
             $match->delegate            = $m->delegate;
             $match->inspector           = $m->inspector;
             $match->weather             = $m->weather;
-            $match->held                = $m->state > 1 ? 1 : $m->state;
+            $match->held                = $m->state > 1 ? 1 : (int) $m->state;
             $match->matchtime           = $m->date;
             preg_match_all('/>(\d+)/', $m->summary, $score);
 
@@ -229,6 +246,8 @@ class MatchesConverter implements IConverter
                 );
             }
 
+            $this->matches[$m->id] = $match->getMultilangId();
+
             $matches[BaseFcModel::LANG_RU] = $match->id;
             $match->setNew();
             $match->championship_id     = $this->champs[$s->tournament][BaseFcModel::LANG_EN];
@@ -243,7 +262,7 @@ class MatchesConverter implements IConverter
             $this->progress();
 
             $this->saveMatchEvents($m->events, $matches, $s->tournament);
-            $this->saveMatchPlaces($m->players, $matches, $s->tournament);
+            $this->saveMatchPlaces($m->players, $match->getMultilangId());
             $this->saveTags(
                 $m->id,
                 $matches,
@@ -321,25 +340,21 @@ class MatchesConverter implements IConverter
      * Сохранение расстановки матча.
      *
      * @param Matchplayers[] $matchPlayers
-     * @param array $matches
-     * @param integer $champId
+     * @param integer $matchId
      *
      * @throws CException
      */
-    private function saveMatchPlaces($matchPlayers, $matches, $champId)
+    private function saveMatchPlaces($matchPlayers, $matchId)
     {
         foreach ($matchPlayers as $p) {
-            if (!isset($this->teams[$p->team]) || !isset($this->players[$p->player])) {
+            if (!isset($this->teamsM[$p->team]) || !isset($this->playersM[$p->player])) {
                 continue;
             }
 
-            $teams = $this->getTrueTeam($p->team, $champId);
-            $players = $this->players[$p->player];
-
             $placement = new FcPlacement();
-            $placement->match_id  = $matches[BaseFcModel::LANG_RU];
-            $placement->team_id   = $teams[BaseFcModel::LANG_RU];
-            $placement->person_id = $players[BaseFcModel::LANG_RU];
+            $placement->match_id  = $matchId;
+            $placement->team_id   = $this->teamsM[$p->team];
+            $placement->person_id = $this->playersM[$p->player];
             $placement->captain   = (int) $p->captain;
             $placement->xpos      = (int) $p->schemaleft;
             $placement->ypos      = (int) $p->schematop;
@@ -353,11 +368,11 @@ class MatchesConverter implements IConverter
                 );
             }
 
-            $placement->setNew();
+            /*$placement->setNew();
             $placement->match_id  = $matches[BaseFcModel::LANG_EN];
             $placement->team_id   = $teams[BaseFcModel::LANG_EN];
             $placement->person_id = $players[BaseFcModel::LANG_EN];
-            $placement->save();
+            $placement->save();*/
 
             $this->donePlacements++;
             $this->progress();
@@ -390,7 +405,7 @@ class MatchesConverter implements IConverter
         $tag = new Tags();
         $tag->category_id = TagsCategories::MATCHES;
         $tag->name = substr(preg_replace('/(?!-)[\W]+/', '_', Utils::rus2lat($title)), 0, 50);
-        $tag->title = $title . '_' .BaseFcModel::LANG_RU . '_' . rand(0, 100);
+        $tag->title = $title . '_' . $entityId . BaseFcModel::LANG_RU;
         $tag->publish = 1;
         $tag->priority = 0;
 
@@ -401,7 +416,7 @@ class MatchesConverter implements IConverter
         $ru_id = $tag->getId();
         $this->saveTagLinks($ru_id, $newEntities[BaseFcModel::LANG_RU]);
         $tag->setNew();
-        $tag->title = $title . '_' .BaseFcModel::LANG_EN . '_' . rand(0, 100);
+        $tag->title = $title . '_' . $entityId . BaseFcModel::LANG_EN;
         $tag->save();
         $en_id = $tag->getId();
         $this->saveTagLinks($en_id, $newEntities[BaseFcModel::LANG_EN]);
@@ -448,7 +463,6 @@ class MatchesConverter implements IConverter
             $this->doneEvents,
             $this->doneEvents * 2,
             $this->donePlacements,
-            $this->donePlacements * 2,
             $this->doneTags,
             $this->doneTags * 2
         );
