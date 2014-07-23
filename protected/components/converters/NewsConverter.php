@@ -129,7 +129,7 @@ class NewsConverter implements IConverter
             $category_en = $nc->findByAttributes(['parent_id' => $newParentEn, 'name' => $name]);
             if (is_null($category_en)) {
                 $category_en = $save_cat($newParentEn, BaseFcModel::LANG_EN, $category_ru->multilangId);
-            } else {
+            } elseif (!$category_en->getMultilangId()) {
                 $category_en->multilangId = $category_ru->multilangId;
                 $category_en->lang = BaseFcModel::LANG_EN;
                 $category_en->save();
