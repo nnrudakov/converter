@@ -81,7 +81,7 @@ EOD;
             $writeFiles = explode(',', $writeFiles);
         }
 
-        print "Action 'champs'.\n";
+        /*print "Action 'champs'.\n";
         $start = microtime(true);
         $this->actionChamps();
         $this->showTime($start);
@@ -92,7 +92,7 @@ EOD;
         $writeFiles = is_bool($writeFiles) ? $writeFiles : in_array('persons', $writeFiles);
         $this->actionPersons($writeFiles);
         $this->showTime($start);
-        print "\n";
+        print "\n";*/
 
         print "Action 'players'\n";
         $start = microtime(true);

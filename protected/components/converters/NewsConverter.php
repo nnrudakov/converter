@@ -61,7 +61,7 @@ class NewsConverter implements IConverter
         // категории и связанные с ними объекты
         $this->saveCategories(0, NewsCategories::CAT_NEWS_CAT_RU, NewsCategories::CAT_NEWS_CAT_EN);
         // объекты без категорий
-        $this->saveObjects();
+        //$this->saveObjects();
     }
 
     /**
@@ -122,11 +122,17 @@ class NewsConverter implements IConverter
             $category_ru = $nc->findByAttributes(['parent_id' => $newParentRu, 'name' => $name]);
             if (is_null($category_ru)) {
                 $category_ru = $save_cat($newParentRu, BaseFcModel::LANG_RU);
+            } elseif (!$category_ru->getMultilangId()) {
+                $category_ru->save();
             }
             /* @var NewsCategories $category_en */
             $category_en = $nc->findByAttributes(['parent_id' => $newParentEn, 'name' => $name]);
             if (is_null($category_en)) {
                 $category_en = $save_cat($newParentEn, BaseFcModel::LANG_EN, $category_ru->multilangId);
+            } else {
+                $category_en->multilangId = $category_ru->multilangId;
+                $category_en->lang = BaseFcModel::LANG_EN;
+                $category_en->save();
             }
 
             //$this->saveObjects($cat, $category_ru->getId(), $category_en->getId());

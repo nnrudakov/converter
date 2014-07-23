@@ -105,7 +105,7 @@ class FilesConverter implements IConverter
     {
         $this->files = Files::model();
         $this->image = new Image();
-        //$this->watermark = $this->image->load(self::WATERMARK);
+        $this->watermark = $this->image->load(self::WATERMARK);
 
         foreach (CoreModules::model()->findAll() as $module) {
             $this->modules[$module->module_id] = $module;
@@ -118,9 +118,10 @@ class FilesConverter implements IConverter
     public function convert()
     {
         $this->progress();
-        /*$this->chooseFiles(self::SRC_PERSONS_NEWS_DIR);
+        $this->chooseFiles(self::SRC_PERSONS_NEWS_DIR);
         $this->chooseFiles(self::SRC_PLAYERS_TEAMS_DIR);
-        $this->chooseFiles(self::SRC_NEWS_PHOTO_DIR);*/
+        $this->chooseFiles(self::SRC_NEWS_PHOTO_DIR);
+        $this->chooseFiles(self::DST_DIR . 'branches');
         $this->onlyPaths();
     }
 
@@ -214,47 +215,50 @@ class FilesConverter implements IConverter
     {
         $name = preg_replace('/.+?\//', '', $file->name);
         $module = $this->modules[$link->module_id];
-        $path = $module->name . '/';
+        $path = $dst_dir = '';
 
-        switch ($module->name) {
-            case 'news':
-                $path .= NewsObjects::ENTITY . '/';
-                break;
-            case 'fc':
-                if (false !== strpos($name, 'players')) {
-                    $path .= FcPerson::ENTITY . '/';
-                } elseif (false !== strpos($name, 'teams')) {
-                    $path .= FcTeams::ENTITY . '/';
-                } else {
+        if (false === strpos($srcFile, 'branches')) {
+            $path = $module->name . '/';
+            switch ($module->name) {
+                case 'news':
+                    $path .= NewsObjects::ENTITY . '/';
+                    break;
+                case 'fc':
+                    if (false !== strpos($name, 'players')) {
+                        $path .= FcPerson::ENTITY . '/';
+                    } elseif (false !== strpos($name, 'teams')) {
+                        $path .= FcTeams::ENTITY . '/';
+                    } else {
+                        $path = '';
+                    }
+                    break;
+                case 'persons':
+                    $path .= PersonsObjects::ENTITY . '/';
+
+                    break;
+                default:
                     $path = '';
-                }
-                break;
-            case 'persons':
-                $path .= PersonsObjects::ENTITY . '/';
+                    break;
+            }
 
-                break;
-            default:
-                $path = '';
-                break;
+            if (!$path) {
+                return false;
+            }
+
+            $path .= $link->object_id . '/';
+            $dst_dir = self::DST_DIR . $path;
+            $dst_file = $dst_dir . $name;
+            Utils::makeDir($dst_dir);
+            //file_put_contents(self::CRASH_SRC_FILE, $srcFile);
+
+            if (!file_exists($dst_file) || filesize($srcFile) != filesize($dst_file)) {
+                copy($srcFile, $dst_file);
+            }
         }
 
-        if (!$path) {
-            return false;
-        }
-
-        $path .= $link->object_id . '/';
-        $dst_dir = self::DST_DIR . $path;
-        $dst_file = $dst_dir . $name;
-        Utils::makeDir($dst_dir);
-        //file_put_contents(self::CRASH_SRC_FILE, $srcFile);
-
-        if (!file_exists($dst_file) || filesize($srcFile) != filesize($dst_file)) {
-            copy($srcFile, $dst_file);
-        }
-
-        $file->path = $path;
+        $file->path = $path ?: $file->path;
         $file->name = $name;
-        $thumbs = $this->makeThumbs($file, $dst_dir, $module->name);
+        $this->makeThumbs($file, $dst_dir ?: self::DST_DIR . $file->path, $module->name);
         $file->save(false);
 
         $this->doneFiles++;

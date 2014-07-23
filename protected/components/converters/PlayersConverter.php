@@ -481,9 +481,8 @@ class PlayersConverter implements IConverter
                 if ($sch = $match->sch) {
                     /* @var Tournaments $champ */
                     $champ = $sch->champ;
-                    $team_id = $this->teamsM[$mp->team];
                     $contract = new FcContracts();
-                    $contract->team_id   = $team_id;
+                    $contract->team_id   = $this->getTrueTeam($mp->team, $champ->id);
                     $contract->person_id = $player_id;
                     $contract->number    = $mp->number;
 
@@ -496,10 +495,10 @@ class PlayersConverter implements IConverter
                             );
                         }
 
-                        $contract->setNew();
+                        /*$contract->setNew();
                         $contract->team_id = $team_id;
                         $contract->person_id = $player_id;
-                        $contract->save();
+                        $contract->save();*/
 
                         $this->doneContracts++;
                         $this->progress();
@@ -656,7 +655,7 @@ class PlayersConverter implements IConverter
 
             $ids = [BaseFcModel::LANG_RU => $exists_team->getId(), BaseFcModel::LANG_EN => $team->getPairId()];
             $this->teams[$t->id][$staff] = $ids;
-            $this->teamsM[$t->id] = $team->getMultilangId();
+            $this->teamsM[$t->id][$staff] = $team->getMultilangId();
 
             return $team->getMultilangId();
         }
@@ -672,7 +671,7 @@ class PlayersConverter implements IConverter
             );
         }
 
-        $this->teamsM[$t->id] = $team->getMultilangId();
+        $this->teamsM[$t->id][$staff] = $team->getMultilangId();
 
         $ru_id = (int) $team->id;
         $team->setNew();
@@ -810,8 +809,8 @@ class PlayersConverter implements IConverter
             $p = Players::model()->findByPk($p_id);
 
             foreach ($p->stat as $s) {
-                //$teams = $this->getTrueTeam($s->team, $s->tournament);
-                $saved = $save_stat($s, $this->teamsM[$s->team], $this->playersM[$p_id]);
+                $team_id = $this->getTrueTeam($s->team, $s->tournament);
+                $saved = $save_stat($s, $team_id, $this->playersM[$p_id]);
                 //$save_stat($s, $teams[BaseFcModel::LANG_EN], $players[BaseFcModel::LANG_EN], BaseFcModel::LANG_EN);
 
                 if ($saved) {
@@ -884,8 +883,8 @@ class PlayersConverter implements IConverter
                     continue;
                 }
 
-                //$teams = $this->getTrueTeam($s->team, $s->tournament);
-                $saved = $save_stat($s, $this->teamsM[$s->team]);
+                $team_id = $this->getTrueTeam($s->team, $s->tournament);
+                $saved = $save_stat($s, $team_id);
                 //$save_stat($s, $teams[BaseFcModel::LANG_EN], BaseFcModel::LANG_EN);
 
                 if ($saved) {
@@ -966,11 +965,11 @@ class PlayersConverter implements IConverter
      *
      * @return integer
      */
-    private function getTrueTeam ($teamId, $champId)
+    private function getTrueTeam($teamId, $champId)
     {
         return Tournaments::isJunior($champId)
-            ? $this->teams[$teamId][FcTeams::JUNIOR]
-            : $this->teams[$teamId][FcTeams::MAIN];
+            ? $this->teamsM[$teamId][FcTeams::JUNIOR]
+            : $this->teamsM[$teamId][FcTeams::MAIN];
     }
 
     private function progress()

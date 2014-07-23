@@ -92,7 +92,7 @@ class FcEvent extends DestinationModel
     /**
      * @var string
      */
-    const TYPE_CAMEOFFBANCH = 'came-off-the-bench';
+    const TYPE_CAMEOFFBENCH = 'came-off-the-bench';
 
     /**
      * @var string

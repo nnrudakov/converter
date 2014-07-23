@@ -19,7 +19,7 @@ FROM
 	fc__core__multilang AS m
 	LEFT JOIN fc__core__multilang_link AS ml
 		ON ml.multilang_id=m.id
-WHERE m.module_id=27;
+WHERE m.module_id=27 AND m.entity='object';
 TRUNCATE TABLE fc__fc__contracts;
 TRUNCATE TABLE fc__fc__event;
 TRUNCATE TABLE fc__fc__match;
