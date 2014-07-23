@@ -61,7 +61,7 @@ class NewsConverter implements IConverter
         // категории и связанные с ними объекты
         $this->saveCategories(0, NewsCategories::CAT_NEWS_CAT_RU, NewsCategories::CAT_NEWS_CAT_EN);
         // объекты без категорий
-        //$this->saveObjects();
+        $this->saveObjects();
     }
 
     /**
