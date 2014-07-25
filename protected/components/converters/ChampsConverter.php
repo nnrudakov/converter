@@ -125,22 +125,23 @@ class ChampsConverter implements IConverter
     public function convert()
     {
         $this->progress();
-        $this->seasons = $this->getSeasons();
+        $this->seasons  = $this->getSeasons();
+        $this->seasonsM = $this->getSeasonsM();
         $this->convertSeasons();
-        $this->convertChamps();
+        //$this->convertChamps();
 
-        /*ksort($this->seasons);
-        ksort($this->champs);
+        ksort($this->seasons);
+        /*ksort($this->champs);
         ksort($this->stages);*/
         ksort($this->seasonsM);
-        ksort($this->champsM);
-        ksort($this->stagesM);
-        /*file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
-        file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
+        /*ksort($this->champsM);
+        ksort($this->stagesM);*/
+        file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
+        /*file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
         file_put_contents($this->stagesFile, sprintf(self::FILE_ACCORDANCE, var_export($this->stages, true)));*/
         file_put_contents($this->seasonsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->seasonsM, true)));
-        file_put_contents($this->champsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->champsM, true)));
-        file_put_contents($this->stagesFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->stagesM, true)));
+        /*file_put_contents($this->champsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->champsM, true)));
+        file_put_contents($this->stagesFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->stagesM, true)));*/
     }
 
     /**
