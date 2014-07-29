@@ -417,10 +417,12 @@ class MatchesConverter implements IConverter
      */
     private function saveTags($entityId, $newEntities, $title)
     {
+        $name = substr(preg_replace('/(?!-)[\W]+/', '_', Utils::rus2lat($title)), 0, 250) . '_';
+        $title .= '_' . $entityId . '_';
         $tag = new Tags();
         $tag->category_id = TagsCategories::MATCHES;
-        $tag->name = substr(preg_replace('/(?!-)[\W]+/', '_', Utils::rus2lat($title)), 0, 50);
-        $tag->title = $title . '_' . $entityId . BaseFcModel::LANG_RU;
+        $tag->name = $name . BaseFcModel::LANG_RU;
+        $tag->title = $title . BaseFcModel::LANG_RU;
         $tag->publish = 1;
         $tag->priority = 0;
 
@@ -431,7 +433,8 @@ class MatchesConverter implements IConverter
         $ru_id = $tag->getId();
         $this->saveTagLinks($ru_id, $newEntities[BaseFcModel::LANG_RU]);
         $tag->setNew();
-        $tag->title = $title . '_' . $entityId . BaseFcModel::LANG_EN;
+        $tag->name = $name . BaseFcModel::LANG_EN;
+        $tag->title = $title . BaseFcModel::LANG_EN;
         $tag->save();
         $en_id = $tag->getId();
         $this->saveTagLinks($en_id, $newEntities[BaseFcModel::LANG_EN]);

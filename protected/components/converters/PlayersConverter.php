@@ -317,12 +317,14 @@ class PlayersConverter implements IConverter
 
         // сезоны и чемпионаты уже должны быть перенесены
         $cc = new ChampsConverter();
-        $this->seasons = $cc->getSeasonsM();
-        $this->champs  = $cc->getChampsM();
-        $this->stages  = $cc->getStagesM();
-        //$this->players = $this->getPlayers();
-        //$this->teams   = $this->getTeams();
-        //$this->tags    = $this->getTags();
+        $this->seasons  = $cc->getSeasonsM();
+        $this->champs   = $cc->getChampsM();
+        $this->stages   = $cc->getStagesM();
+        $this->players  = $this->getPlayers();
+        $this->playersM = $this->getPlayersM();
+        $this->teams    = $this->getTeams();
+        $this->teamsM   = $this->getTeamsM();
+        $this->tags     = $this->getTags();
     }
 
     /**
