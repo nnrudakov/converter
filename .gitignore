@@ -18,4 +18,6 @@ stages_m.php
 seasons.php
 seasons_m.php
 tags.php
+countries.php
 *.sql
+*.txt

@@ -333,6 +333,25 @@ EOD;
         file_put_contents(Yii::getPathOfAlias('accordance') . '/exclude_players.php', sprintf("<?php\n\nreturn %s;\n", var_export($players, true)));
     }
 
+    public function actionCountries()
+    {
+        $countries_ru = $countries_en = [];
+        $lines = file(__DIR__ . '../../../tmp/countries.txt');
+        foreach ($lines as $line) {
+            list($name, , $english, $alpha2, , , ,) = explode("\t", $line);
+            if ($name == 'name') {
+                continue;
+            }
+            $alpha2 = strtolower($alpha2);
+            $countries_ru[$alpha2] = $name;
+            $countries_en[$alpha2] = $english;
+        }
+        file_put_contents(
+            __DIR__ . '../../../tmp/countries.php',
+            var_export($countries_ru, true) . "\n\n" . var_export($countries_en, true)
+        );
+    }
+
     protected function beforeAction($action, $params)
     {
         $this->ensureDirectory(Yii::getPathOfAlias('accordance'));
