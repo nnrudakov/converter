@@ -343,8 +343,8 @@ EOD;
                 continue;
             }
             $alpha2 = strtolower($alpha2);
-            $countries_ru[$alpha2] = $name;
-            $countries_en[$alpha2] = $english;
+            $countries_ru[] = ['label' => $name, 'value' => $alpha2];
+            $countries_en[] = ['label' => $english, 'value' => $alpha2];
         }
         file_put_contents(
             __DIR__ . '../../../tmp/countries.php',
