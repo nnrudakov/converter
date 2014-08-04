@@ -13,17 +13,17 @@ class FilesConverter implements IConverter
     /**
      * @va string
      */
-    const SRC_NEWS_PHOTO_DIR = '/var/www/html/media.fckrasnodar.ru/www/res/galleries';
+    const SRC_NEWS_PHOTO_DIR = '/var/www/html/old_site/sites/krasnodar-media/www/res/galleries';
 
     /**
      * @va string
      */
-    const SRC_PLAYERS_TEAMS_DIR = '/var/www/html/media.fckrasnodar.ru/krasnodar/www/app/mods/tsi/res/images';
+    const SRC_PLAYERS_TEAMS_DIR = '/var/www/html/old_site/sites/krasnodar/www/app/mods/tsi/res/images';
 
     /**
      * @va string
      */
-    const SRC_PERSONS_NEWS_DIR = '/var/www/html/media.fckrasnodar.ru/krasnodar/www/app/mods/info_store/res/images';
+    const SRC_PERSONS_NEWS_DIR = '/var/www/html/old_site/sites/krasnodar/www/app/mods/info_store/res/images';
 
     /**
      * @va string
