@@ -422,7 +422,7 @@ class MatchesConverter implements IConverter
         $tag = new Tags();
         $tag->category_id = TagsCategories::MATCHES;
         $tag->name = $name . BaseFcModel::LANG_RU;
-        $tag->title = $title . BaseFcModel::LANG_RU;
+        $tag->title = $title . $newEntities[BaseFcModel::LANG_RU] . '_' . BaseFcModel::LANG_RU;
         $tag->publish = 1;
         $tag->priority = 0;
 
@@ -434,7 +434,7 @@ class MatchesConverter implements IConverter
         $this->saveTagLinks($ru_id, $newEntities[BaseFcModel::LANG_RU]);
         $tag->setNew();
         $tag->name = $name . BaseFcModel::LANG_EN;
-        $tag->title = $title . BaseFcModel::LANG_EN;
+        $tag->title = $title . $newEntities[BaseFcModel::LANG_EN] . '_' . BaseFcModel::LANG_EN;
         $tag->save();
         $en_id = $tag->getId();
         $this->saveTagLinks($en_id, $newEntities[BaseFcModel::LANG_EN]);
