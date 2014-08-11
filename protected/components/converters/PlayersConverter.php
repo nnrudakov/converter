@@ -334,7 +334,7 @@ class PlayersConverter implements IConverter
     {
         $this->progress();
         $this->tags = [self::TAGS_TEAM => [], self::TAGS_PLAYER => [], MatchesConverter::TAGS_MATCH => []];
-        $criteria = new CDbCriteria();
+        /*$criteria = new CDbCriteria();
         $criteria->select = ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'];
         $criteria->with = ['playerTeam', 'playerPlayer'];
         $criteria->order = 't.player';
@@ -389,18 +389,18 @@ class PlayersConverter implements IConverter
             /*$contract->setNew();
             $contract->team_id = $teams[BaseFcModel::LANG_EN];
             $contract->person_id = $players[BaseFcModel::LANG_EN];
-            $contract->save();*/
+            $contract->save();
 
             $this->doneContracts++;
             $this->progress();
         }
 
         // оставшиеся команды без связок с игроками
-        $this->saveTeams();
+        $this->saveTeams();*/
         $this->saveTeamStat();
 
         // игроки, для которых нет контрактов, но они участвовали в матчах
-        $this->saveMatchPlayers();
+        /*$this->saveMatchPlayers();
         $this->savePlayerStat();
 
         ksort($this->teams);
@@ -411,7 +411,7 @@ class PlayersConverter implements IConverter
         file_put_contents($this->teamsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->teamsM, true)));
         file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
         file_put_contents($this->playersFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->playersM, true)));
-        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
+        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));*/
     }
 
     /**
@@ -830,17 +830,21 @@ class PlayersConverter implements IConverter
      */
     private function saveTeamStat()
     {
-        $that = $this;
-        $save_stat = function ($s, $teamId) use ($that) {
+        $criteria = new CDbCriteria();
+        $criteria->order = 'id';
+        $src_teamstats = new Teamstats();
+
+        foreach ($src_teamstats->findAll($criteria) as $ts) {
+            $team_id = $this->getTrueTeam($ts->team, $ts->tournament);
             // пропускаем левую статистику
             $stat = FcTeamstat::model()->exists(
                 new CDbCriteria(
                     [
                         'condition' => 'team_id=:team_id AND season_id=:season_id AND stage_id=:stage_id',
                         'params' => [
-                            ':team_id'   => $teamId,
-                            ':season_id' => $that->seasons[$s->season],
-                            ':stage_id'  => $that->stages[$s->stage],
+                            ':team_id'   => $team_id,
+                            ':season_id' => $this->seasons[$ts->season],
+                            ':stage_id'  => $this->stages[$ts->stage],
                         ]
                     ]
                 )
@@ -851,50 +855,31 @@ class PlayersConverter implements IConverter
             }
 
             $stat = new FcTeamstat();
-            $stat->team_id       = $teamId;
-            $stat->season_id     = $this->seasons[$s->season];
-            $stat->stage_id      = $this->stages[$s->stage];
-            $stat->gamecount     = $s->played;
-            $stat->wincount      = $s->won;
-            $stat->drawcount     = $s->drawn;
-            $stat->losscount     = $s->lost;
-            $stat->goalsconceded = $s->goalsfor;
-            $stat->goals         = $s->goalsagainst;
-            $stat->score         = $s->points;
-            $stat->place         = (int) $s->ord;
+            $stat->team_id       = $team_id;
+            $stat->season_id     = $this->seasons[$ts->season];
+            $stat->stage_id      = $this->stages[$ts->stage];
+            $stat->gamecount     = $ts->played;
+            $stat->wincount      = $ts->won;
+            $stat->drawcount     = $ts->drawn;
+            $stat->losscount     = $ts->lost;
+            $stat->goalsconceded = $ts->goalsfor;
+            $stat->goals         = $ts->goalsagainst;
+            $stat->score         = $ts->points;
+            $stat->place         = (int) $ts->ord;
 
             if (!$stat->save()) {
                 throw new CException(
                     'Team statistic not created.' . "\n" .
                     var_export($stat->getErrors(), true) . "\n" .
-                    $s . "\n"
+                    $ts . "\n"
                 );
             }
 
-            return true;
-        };
-
-        foreach ($this->teams as $t_id => $team_id) {
-            $t = Teams::model()->findByPk($t_id);
-
-            foreach ($t->stat as $s) {
-                // пропускаем отсуствующие сезоны
-                if (empty($this->seasons[$s->season])    ||
-                    empty($this->champs[$s->tournament]) ||
-                    empty($this->stages[$s->stage])) {
-                    continue;
-                }
-
-                $team_id = $this->getTrueTeam($s->team, $s->tournament);
-                $saved = $save_stat($s, $team_id);
-                //$save_stat($s, $teams[BaseFcModel::LANG_EN], BaseFcModel::LANG_EN);
-
-                if ($saved) {
-                    $this->doneTeamStats++;
-                    $this->progress();
-                }
-            }
+            $this->doneTeamStats++;
+            $this->progress();
         }
+
+        return true;
     }
 
     /**
