@@ -185,6 +185,29 @@ class MatchesConverter implements IConverter
         $criteria->order = $criteria->alias . '.id';
         $src_matches = new Schedule();
 
+        $get_score = function ($score) {
+            $home = $guest = 0;
+
+            $doc = new DOMDocument();
+            $doc->loadXML($score);
+            /* @var DomElement $tag */
+            foreach ($doc->documentElement->childNodes as $tag) {
+                if ($tag->nodeType != XML_ELEMENT_NODE) {
+                    continue;
+                }
+
+                $value = (int) $tag->nodeValue;
+
+                if ($tag->nodeName == 'goals1') {
+                    $home = $value;
+                } else {
+                    $guest = $value;
+                }
+            }
+
+            return [$home, $guest];
+        };
+
         foreach ($src_matches->findAll($criteria) as $s) {
             $home_team = $this->getTrueTeam($s->team1, $s->tournament);
             $guest_team = $this->getTrueTeam($s->team2, $s->tournament);
@@ -215,6 +238,17 @@ class MatchesConverter implements IConverter
             );
 
             if ($exists_match) {
+                /*if ($m->summary) {
+                    list($exists_match->home_score, $exists_match->guest_score) = $get_score($m->summary);
+                    $exists_match->save(false);
+                    // сохраняем счет для англ версии если она есть
+                    if ($exists_match_en = FcMatch::model()->findByPk($exists_match->getId() + 1)) {
+                        list($exists_match_en->home_score, $exists_match_en->guest_score) = [
+                            $exists_match->home_score, $exists_match->guest_score
+                        ];
+                        $exists_match_en->save(false);
+                    }
+                }*/
                 continue;
             }
 
@@ -231,11 +265,9 @@ class MatchesConverter implements IConverter
             $match->weather             = $m->weather;
             $match->held                = $m->state > 1 ? 1 : (int) $m->state;
             $match->matchtime           = $m->date;
-            preg_match_all('/>(\d+)/', $m->summary, $score);
 
-            if (isset($score[1]) && isset($score[1][0]) && isset($score[1][1])) {
-                $match->home_score  = (int) $score[1][0];
-                $match->guest_score = (int) $score[1][1];
+            if ($m->summary) {
+                list($match->home_score, $match->guest_score) = $get_score($m->summary);
             }
 
             if (!$match->save()) {
