@@ -55,9 +55,10 @@ class FilesConverter implements IConverter
      */
     private static $watermarkSettings = [
         'news' => [
-            ['width' => 120, 'height' => 80,   'crop' => 'center'],
-            ['width' => 180, 'height' => 120,  'crop' => 'center'],
-            ['width' => 620, 'height' => 0,    'crop' => 'proportionally']
+            ['width' => 120, 'height' => 80,  'crop' => 'center'],
+            ['width' => 180, 'height' => 120, 'crop' => 'center'],
+            ['width' => 620, 'height' => 413, 'crop' => 'center'],
+            ['width' => 140, 'height' => 140, 'crop' => 'center']
         ],
         'branches' => [
             ['width' => 120, 'height' => 80,   'crop' => 'center'],
@@ -118,11 +119,11 @@ class FilesConverter implements IConverter
     public function convert()
     {
         $this->progress();
-        //$this->chooseFiles(self::SRC_PERSONS_NEWS_DIR);
+        $this->chooseFiles(self::SRC_PERSONS_NEWS_DIR);
         $this->chooseFiles(self::SRC_PLAYERS_TEAMS_DIR);
         $this->chooseFiles(self::SRC_NEWS_PHOTO_DIR);
         //$this->chooseFiles(self::DST_DIR . 'branches');
-        $this->onlyPaths();
+        //$this->onlyPaths();
     }
 
     private function chooseFiles($dir)
@@ -135,6 +136,9 @@ class FilesConverter implements IConverter
                         $this->chooseFiles($dir_name);
                     } else {
                         $name = preg_replace('/.+?\//', '', $dir_name);
+                        if (false !== strpos($name, 'persons')) {
+                            continue;
+                        }
                         $criteria = new CDbCriteria();
                         $criteria->addSearchCondition('name', $name);
                         $file = $this->files->find($criteria);
@@ -290,52 +294,52 @@ class FilesConverter implements IConverter
             $i = 1;
             foreach (self::$watermarkSettings[$moduleName] as $settings) {
                 $thumb_name = substr($file->name, 0, -strlen('.' . $file->ext)) . '_t' . $i . '.' . $file->ext;
-                if (!file_exists($thumb_name)) {
-                    if ('proportionally' == $settings['crop']) {
-                        if (!$settings['width']) {
-                            $settings['width'] = null;
-                        }
-                        if (!$settings['height']) {
-                            $settings['height'] = null;
-                        }
-                        $thumb = $base_image->resize($settings['width'], $settings['height'], 'height', 'down');
+                //if (!file_exists($thumb_name)) {
+                if ('proportionally' == $settings['crop']) {
+                    if (!$settings['width']) {
+                        $settings['width'] = null;
+                    }
+                    if (!$settings['height']) {
+                        $settings['height'] = null;
+                    }
+                    $thumb = $base_image->resize($settings['width'], $settings['height'], 'height', 'down');
+                } else {
+                    $iw = $base_image->getWidth();
+                    $ih = $base_image->getHeight();
+                    if (!$settings['width']) {
+                        $settings['width'] = $iw;
+                    }
+                    if (!$settings['height']) {
+                        $settings['height'] = $ih;
+                    }
+                    // ресайз до конечных размеров по ширине
+                    $resized_image = $base_image->resize($settings['width'], null, 'exact');
+                    /*
+                     * если после ресайза какая-либо из сторон меньше той, что
+                     * должна получится, меняем направление ресайза оригинала
+                     */
+                    if ($resized_image->getWidth() < $settings['width'] ||
+                        $resized_image->getHeight() < $settings['height']) {
+                        $resized_image = $base_image->resize(null, $settings['height'], 'exact');
+                    }
+
+                    if ('center' == $settings['crop']) {
+                        $left = $top = 'center';
                     } else {
-                        $iw = $base_image->getWidth();
-                        $ih = $base_image->getHeight();
-                        if (!$settings['width']) {
-                            $settings['width'] = $iw;
-                        }
-                        if (!$settings['height']) {
-                            $settings['height'] = $ih;
-                        }
-                        // ресайз до конечных размеров по ширине
-                        $resized_image = $base_image->resize($settings['width'], null, 'exact');
-                        /*
-                         * если после ресайза какая-либо из сторон меньше той, что
-                         * должна получится, меняем направление ресайза оригинала
-                         */
-                        if ($resized_image->getWidth() < $settings['width'] ||
-                            $resized_image->getHeight() < $settings['height']) {
-                            $resized_image = $base_image->resize(null, $settings['height'], 'exact');
-                        }
-
-                        if ('center' == $settings['crop']) {
-                            $left = $top = 'center';
-                        } else {
-                            $left = 'center';
-                            $top  = 'top';
-                        }
-
-                        $thumb = $resized_image->crop($left, $top, $settings['width'], $settings['height']);
+                        $left = 'center';
+                        $top  = 'top';
                     }
 
-                    // поставить водяной знак
-                    if (isset($settings['watermark'])) {
-                        $thumb = $thumb->watermark($this->watermark);
-                    }
-
-                    $thumb->save($dirname . $thumb_name, self::$quality[$file->ext]);
+                    $thumb = $resized_image->crop($left, $top, $settings['width'], $settings['height']);
                 }
+
+                // поставить водяной знак
+                if (isset($settings['watermark'])) {
+                    $thumb = $thumb->watermark($this->watermark);
+                }
+
+                $thumb->save($dirname . $thumb_name, self::$quality[$file->ext]);
+                //}
                 $file->{'thumb' . $i} = $thumb_name;
                 $i++;
             }
