@@ -132,17 +132,17 @@ class ChampsConverter implements IConverter
         $this->stages   = $this->getStages();
         $this->stagesM  = $this->getStagesM();
 
-        $this->convertSeasons();
+        //$this->convertSeasons();
         $this->convertChamps();
 
-        ksort($this->seasons);
-        ksort($this->seasonsM);
+        /*ksort($this->seasons);
+        ksort($this->seasonsM);*/
         ksort($this->champs);
         ksort($this->champsM);
         ksort($this->stages);
         ksort($this->stagesM);
-        file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
-        file_put_contents($this->seasonsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->seasonsM, true)));
+        /*file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
+        file_put_contents($this->seasonsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->seasonsM, true)));*/
         file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
         file_put_contents($this->champsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->champsM, true)));
         file_put_contents($this->stagesFile, sprintf(self::FILE_ACCORDANCE, var_export($this->stages, true)));
@@ -166,6 +166,18 @@ class ChampsConverter implements IConverter
 
             if ($exists_season) {
                 $this->seasonsM[$s->id] = $exists_season->getMultilangId();
+                $season = new FcSeason();
+                $season->setAttributes($exists_season->getAttributes());
+                $season->multilangId = $exists_season->getMultilangId();
+                $season->lang = BaseFcModel::LANG_ES;
+                if (!$season->save()) {
+                    throw new CException(
+                        'Season not created.' . "\n" .
+                        var_export($season->getErrors(), true) . "\n" .
+                        $s . "\n"
+                    );
+                }
+                $this->seasons[$s->id][BaseFcModel::LANG_ES] = (int) $season->id;
                 continue;
             }
 
@@ -185,7 +197,10 @@ class ChampsConverter implements IConverter
             }
 
             $this->seasons[$s->id][$season->lang] = (int) $season->id;
-            $season->setNew(true);
+            $season->setNew();
+            $season->save();
+            $this->seasons[$s->id][$season->lang] = (int) $season->id;
+            $season->setNew(BaseFcModel::LANG_ES);
             $season->save();
             $this->seasons[$s->id][$season->lang] = (int) $season->id;
 
@@ -224,6 +239,12 @@ class ChampsConverter implements IConverter
             if ($exists_champ) {
                 $this->champsM[$t->id] = $exists_champ->getMultilangId();
                 $champ_ru = $exists_champ->getId();
+                $ch_es = new FcChampionship();
+                $ch_es->setAttributes($exists_champ->getAttributes());
+                $ch_es->multilangId = $exists_champ->getMultilangId();
+                $ch_es->setNew(BaseFcModel::LANG_ES);
+                $ch_es->save();
+                $this->champs[$t->id][$ch_es->lang] = $champ_es = (int) $ch_es->id;
             } else {
                 if (!$champ->save()) {
                     throw new CException(
@@ -234,9 +255,12 @@ class ChampsConverter implements IConverter
                 }
 
                 $this->champs[$t->id][$champ->lang] = $champ_ru = (int) $champ->id;
-                $champ->setNew(true);
+                $champ->setNew();
                 $champ->save();
                 $this->champs[$t->id][$champ->lang] = $champ_en = (int) $champ->id;
+                $champ->setNew(BaseFcModel::LANG_ES);
+                $champ->save();
+                $this->champs[$t->id][$champ->lang] = $champ_es = (int) $champ->id;
 
                 $this->doneChamps++;
                 $this->progress();
@@ -263,6 +287,12 @@ class ChampsConverter implements IConverter
 
                 if ($exists_stage) {
                     $this->stagesM[$s->id] = $exists_stage->getMultilangId();
+                    $st = new FcStage();
+                    $st->setAttributes($exists_stage->getAttributes());
+                    $st->multilangId = $exists_stage->getMultilangId();
+                    $st->setNew(BaseFcModel::LANG_ES);
+                    $st->save();
+                    $this->stages[$s->id][$st->lang] = (int) $st->id;
                     continue;
                 }
 
@@ -275,7 +305,10 @@ class ChampsConverter implements IConverter
                 }
 
                 $this->stages[$s->id][$stage->lang] = (int) $stage->id;
-                $stage->setNew(true);
+                $stage->setNew();
+                $stage->save();
+                $this->stages[$s->id][$stage->lang] = (int) $stage->id;
+                $stage->setNew(BaseFcModel::LANG_ES);
                 $stage->save();
                 $this->stages[$s->id][$stage->lang] = (int) $stage->id;
 

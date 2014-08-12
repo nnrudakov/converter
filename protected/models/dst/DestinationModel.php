@@ -178,13 +178,15 @@ class DestinationModel extends BaseFcModel
     /**
      * Установка новой записи.
      *
+     * @param integer $lang
+     *
      * @return bool
      */
-    public function setNew()
+    public function setNew($lang = self::LANG_EN)
     {
         $this->setIsNewRecord(true);
         $this->id = null;
-        $this->lang = self::LANG_EN;
+        $this->lang = $lang;
     }
 
     /**

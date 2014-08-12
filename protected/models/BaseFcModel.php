@@ -25,6 +25,13 @@ class BaseFcModel extends CActiveRecord
     const LANG_EN = 2;
 
     /**
+     * Испанский.
+     *
+     * @var integer
+     */
+    const LANG_ES = 3;
+
+    /**
      * @var integer
      */
     const FC_MODULE_ID = 26;
