@@ -119,9 +119,9 @@ class FilesConverter implements IConverter
     public function convert()
     {
         $this->progress();
-        $this->chooseFiles(self::SRC_PERSONS_NEWS_DIR);
+        //$this->chooseFiles(self::SRC_PERSONS_NEWS_DIR);
         $this->chooseFiles(self::SRC_PLAYERS_TEAMS_DIR);
-        $this->chooseFiles(self::SRC_NEWS_PHOTO_DIR);
+        //$this->chooseFiles(self::SRC_NEWS_PHOTO_DIR);
         //$this->chooseFiles(self::DST_DIR . 'branches');
         //$this->onlyPaths();
     }

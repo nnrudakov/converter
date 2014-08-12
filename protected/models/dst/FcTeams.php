@@ -11,6 +11,7 @@
  * @property string  $city    Город.
  * @property string  $staff   Состав.
  * @property string  $country Страна.
+ * @property string  $site    Сайт команды.
  *
  * Доступные отношения:
  * @property FcContracts[] $contracts
@@ -133,9 +134,10 @@ class FcTeams extends DestinationModel
         return [
             ['title', 'required'],
             ['title, city, country', 'length', 'max'=>128],
+            ['site', 'length', 'max'=>255],
             ['staff', 'length', 'max'=>20],
             ['info', 'safe'],
-            ['id, title, info, city, staff, country', 'safe', 'on'=>'search'],
+            ['id, title, info, city, staff, country, site', 'safe', 'on'=>'search'],
         ];
     }
 

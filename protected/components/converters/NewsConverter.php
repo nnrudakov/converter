@@ -186,7 +186,6 @@ class NewsConverter implements IConverter
             };
             $pn_ru = array_unique($get_pn($pn, BaseFcModel::LANG_RU));
             $pn_en = array_unique($get_pn($pn, BaseFcModel::LANG_EN));
-
             $multilang_id = $this->saveObject($n, $pn_ru, $i + 1, BaseFcModel::LANG_RU);
             if ($multilang_id !== true) {
                 $this->saveObject($n, $pn_en, $i + 1, BaseFcModel::LANG_EN, $multilang_id);
@@ -246,7 +245,7 @@ class NewsConverter implements IConverter
         if ($exists_news) {
             $object->object_id = $exists_news->getId();
         } else {
-            $object->title            = $oldObject->title;
+            /*$object->title            = $oldObject->title;
             $object->announce         = Utils::clearText($oldObject->message);
             $object->content          = Utils::clearText($oldObject->details);
             $object->important        = (int) $oldObject->priority;
@@ -260,7 +259,7 @@ class NewsConverter implements IConverter
 
             if (!$object->save()) {
                 throw new CException($object->getErrorMsg('Object is not created.', $oldObject));
-            }
+            }*/
 
             $this->doneNews++;
             $this->progress();
@@ -354,21 +353,35 @@ class NewsConverter implements IConverter
 
             $type = $tag->getAttribute('type');
 
-            if (!in_array($type, [PlayersConverter::TAGS_TEAM, PlayersConverter::TAGS_PLAYER_FC, MatchesConverter::TAGS_MATCH])) {
+            /*if (!in_array($type, [PlayersConverter::TAGS_TEAM, PlayersConverter::TAGS_PLAYER_FC, MatchesConverter::TAGS_MATCH])) {
+                continue;
+            }*/
+
+            if ($type != MatchesConverter::TAGS_MATCH) {
                 continue;
             }
 
-            if ($type == PlayersConverter::TAGS_PLAYER_FC) {
+            /*if ($type == PlayersConverter::TAGS_PLAYER_FC) {
                 $type = PlayersConverter::TAGS_PLAYER;
-            }
+            }*/
 
             $id = (int) $tag->getAttribute('id');
-            if (isset($this->tags[$type][$id])) {
-                $attrs = ['tag_id' => $this->tags[$type][$id][$langId], 'module_id' => BaseFcModel::NEWS_MODULE_ID];
+            $tag_id = Tags::model()->getDbConnection()->createCommand(
+                'SELECT
+                    `t`.`tag_id`
+                FROM `fc__tags` AS `t`
+	                JOIN `fc__tags__categories` AS `tc` ON `tc`.`category_id`=`t`.`category_id`
+		                AND `tc`.`category_id`=5
+                WHERE
+	                `t`.`title` LIKE :title'
+            )->queryScalar([':title' => '%' . $id . '_' . '%']);
+
+            if ($tag_id) {
+                $attrs = ['tag_id' => $tag_id, 'module_id' => BaseFcModel::NEWS_MODULE_ID];
                 $module_link = TagsModules::model()->findByAttributes($attrs);
                 if (!$module_link) {
                     $module_link = new TagsModules();
-                    $module_link->tag_id = $this->tags[$type][$id][$langId];
+                    $module_link->tag_id = $tag_id;
                     $module_link->module_id = BaseFcModel::NEWS_MODULE_ID;
                     $module_link->publish = 1;
                     $module_link->is_default = 0;
