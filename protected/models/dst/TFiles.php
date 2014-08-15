@@ -99,9 +99,7 @@ trait TFiles {
                 $main = 0;
             }
 
-            if (!$exist_file) {
-                $this->setFile($dir . $filepath . $name, $file->ext, $content);
-            }
+            $this->setFile($dir . (!$exist_file ? $filepath : $exist_file->path). $name, $file->ext, $content);
         }
 
         $this->fileParams = [];
@@ -169,11 +167,11 @@ trait TFiles {
         file_put_contents($filename, $content);
 
         // пишем тумбочку для админки если файл не видео
-        if ($ext != 'mp4') {
+        /*if ($ext != 'mp4') {
             $admin_name = str_replace('.' . $ext, '', $filename);
             $admin_name .= '_admin.' . $ext;
             file_put_contents($admin_name, $content);
-        }
+        }*/
 
         return true;
     }

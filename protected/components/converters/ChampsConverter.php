@@ -132,17 +132,17 @@ class ChampsConverter implements IConverter
         $this->stages   = $this->getStages();
         $this->stagesM  = $this->getStagesM();
 
-        //$this->convertSeasons();
+        $this->convertSeasons();
         $this->convertChamps();
 
-        /*ksort($this->seasons);
-        ksort($this->seasonsM);*/
+        ksort($this->seasons);
+        ksort($this->seasonsM);
         ksort($this->champs);
         ksort($this->champsM);
         ksort($this->stages);
         ksort($this->stagesM);
-        /*file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
-        file_put_contents($this->seasonsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->seasonsM, true)));*/
+        file_put_contents($this->seasonsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->seasons, true)));
+        file_put_contents($this->seasonsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->seasonsM, true)));
         file_put_contents($this->champsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->champs, true)));
         file_put_contents($this->champsFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->champsM, true)));
         file_put_contents($this->stagesFile, sprintf(self::FILE_ACCORDANCE, var_export($this->stages, true)));

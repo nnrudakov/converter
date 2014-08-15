@@ -134,7 +134,7 @@ class MatchesConverter implements IConverter
         $this->teamsM   = $pc->getTeamsM();
         $this->players  = $pc->getPlayers();
         $this->playersM = $pc->getPlayersM();
-        $this->tags     = $pc->getTags();
+        //$this->tags     = $pc->getTags();
 
         // сезоны и чемпионаты уже должны быть пересены
         $cc = new ChampsConverter();
@@ -164,7 +164,7 @@ class MatchesConverter implements IConverter
         $criteria = new CDbCriteria();
         $criteria->alias = 'sch';
         $criteria->select = [
-            'id', 'season', 'tournament', 'stage', 'circle', 'team1', 'team2', 'region', 'stadium',
+            'id', 'season', 'tournament', 'stage', 'circle', 'team1', 'team2', 'date', 'region', 'stadium',
             'country'
         ];
         $criteria->addCondition(
@@ -174,14 +174,14 @@ class MatchesConverter implements IConverter
         $criteria->addInCondition($criteria->alias . '.season', array_keys($this->seasons));
         $criteria->addInCondition($criteria->alias . '.tournament', array_keys($this->champs));
         $criteria->addInCondition($criteria->alias . '.stage', array_keys($this->stages));
-        $criteria->with = [
+        /*$criteria->with = [
             'match' => [
                 'select' => [
                     'audience', 'mainreferee', 'linereferee1', 'linereferee2', 'sparereferee', 'delegate', 'inspector',
                     'summary', 'weather', 'state', 'date'
                 ]
             ]
-        ];
+        ];*/
         $criteria->order = $criteria->alias . '.id';
         $src_matches = new Schedule();
 
@@ -213,6 +213,14 @@ class MatchesConverter implements IConverter
             $guest_team = $this->getTrueTeam($s->team2, $s->tournament);
             /* @var Matches $m */
             $m = $s->match;
+            if ($m) {
+                $m->id = (int) $m->id;
+            } else {
+                $m = new Matches();
+                $m->id = 0;
+                $m->date = $s->date;
+            }
+
             $match = new FcMatch();
             $match->importId        = $m->id;
             $match->championship_id = $this->champs[$s->tournament][BaseFcModel::LANG_RU];
@@ -238,6 +246,17 @@ class MatchesConverter implements IConverter
             );
 
             if ($exists_match) {
+                if ($m->id) {
+                    $matches = [
+                        BaseFcModel::LANG_RU => $exists_match->getId(),
+                        BaseFcModel::LANG_EN => $exists_match->getPairId()
+                    ];
+                    $multilang = CoreMultilang::model()->findByPk($exists_match->getMultilangId());
+                    $multilang->import_id = $m->id;
+                    $multilang->save();
+                    $this->doneMatches--;
+                    $this->progress();
+                }
                 /*if ($m->summary) {
                     list($exists_match->home_score, $exists_match->guest_score) = $get_score($m->summary);
                     $exists_match->save(false);
@@ -248,69 +267,75 @@ class MatchesConverter implements IConverter
                         ];
                         $exists_match_en->save(false);
                     }
+                    $this->doneMatches--;
+                    $this->progress();
                 }*/
-                continue;
+                //continue;
+            } else {
+                $match->tour                = $s->circle;
+                $match->city                = $s->region;
+                $match->stadium             = $s->stadium;
+                $match->viewers             = $m->audience;
+                $match->referee_main        = $m->mainreferee;
+                $match->referee_line_1      = $m->linereferee1;
+                $match->referee_line_2      = $m->linereferee2;
+                $match->referee_main_helper = $m->sparereferee;
+                $match->delegate            = $m->delegate;
+                $match->inspector           = $m->inspector;
+                $match->weather             = $m->weather;
+                $match->held                = $m->state > 1 ? 1 : (int) $m->state;
+                $match->matchtime           = $m->date;
+
+                if ($m->summary) {
+                    list($match->home_score, $match->guest_score) = $get_score($m->summary);
+                }
+
+                if (!$match->save()) {
+                    throw new CException(
+                        'Match not created.' . "\n" .
+                        var_export($match->getErrors(), true) . "\n" .
+                        $s . "\n" . $m . "\n"
+                    );
+                }
+
+                $this->matches[$m->id] = $match->getMultilangId();
+
+                $matches[BaseFcModel::LANG_RU] = $match->id;
+                $match->setNew();
+                $match->championship_id     = $this->champs[$s->tournament][BaseFcModel::LANG_EN];
+                $match->season_id           = $this->seasons[$s->season][BaseFcModel::LANG_EN];
+                $match->stage_id            = $this->stages[$s->stage][BaseFcModel::LANG_EN];
+                $match->home_team_id        = $home_team[BaseFcModel::LANG_EN];
+                $match->guest_team_id       = $guest_team[BaseFcModel::LANG_EN];
+                $match->save();
+                $matches[BaseFcModel::LANG_EN] = $match->id;
+
+                $this->doneMatches++;
+                $this->progress();
             }
 
-            $match->tour                = $s->circle;
-            $match->city                = $s->region;
-            $match->stadium             = $s->stadium;
-            $match->viewers             = $m->audience;
-            $match->referee_main        = $m->mainreferee;
-            $match->referee_line_1      = $m->linereferee1;
-            $match->referee_line_2      = $m->linereferee2;
-            $match->referee_main_helper = $m->sparereferee;
-            $match->delegate            = $m->delegate;
-            $match->inspector           = $m->inspector;
-            $match->weather             = $m->weather;
-            $match->held                = $m->state > 1 ? 1 : (int) $m->state;
-            $match->matchtime           = $m->date;
-
-            if ($m->summary) {
-                list($match->home_score, $match->guest_score) = $get_score($m->summary);
-            }
-
-            if (!$match->save()) {
-                throw new CException(
-                    'Match not created.' . "\n" .
-                    var_export($match->getErrors(), true) . "\n" .
-                    $s . "\n" . $m . "\n"
+            if ($m->id) {
+                if (!$exists_match) {
+                    $this->saveMatchEvents($m->events, $matches, $s->tournament);
+                    $this->saveMatchPlaces($m->players, $match->getMultilangId(), $s->tournament);
+                }
+                $this->saveTags(
+                    $m->id,
+                    $matches,
+                    implode(
+                        ' ',
+                        [
+                            $s->champ->title,
+                            $s->s->title,
+                            ($s->st ? $s->st->title : ''),
+                            $s->homeTeam->title . ':' . $s->guestTeam->title
+                        ]
+                    )
                 );
             }
-
-            $this->matches[$m->id] = $match->getMultilangId();
-
-            $matches[BaseFcModel::LANG_RU] = $match->id;
-            $match->setNew();
-            $match->championship_id     = $this->champs[$s->tournament][BaseFcModel::LANG_EN];
-            $match->season_id           = $this->seasons[$s->season][BaseFcModel::LANG_EN];
-            $match->stage_id            = $this->stages[$s->stage][BaseFcModel::LANG_EN];
-            $match->home_team_id        = $home_team[BaseFcModel::LANG_EN];
-            $match->guest_team_id       = $guest_team[BaseFcModel::LANG_EN];
-            $match->save();
-            $matches[BaseFcModel::LANG_EN] = $match->id;
-
-            $this->doneMatches++;
-            $this->progress();
-
-            $this->saveMatchEvents($m->events, $matches, $s->tournament);
-            $this->saveMatchPlaces($m->players, $match->getMultilangId(), $s->tournament);
-            $this->saveTags(
-                $m->id,
-                $matches,
-                implode(
-                    ' ',
-                    [
-                        $s->champ->title,
-                        $s->s->title,
-                        ($s->st ? $s->st->title : ''),
-                        $s->homeTeam->title . ':' . $s->guestTeam->title
-                    ]
-                )
-            );
         }
 
-        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
+        //file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
     }
 
     /**
@@ -455,6 +480,21 @@ class MatchesConverter implements IConverter
         $tag->category_id = TagsCategories::MATCHES;
         $tag->name = $name . BaseFcModel::LANG_RU;
         $tag->title = $title . $newEntities[BaseFcModel::LANG_RU] . '_' . BaseFcModel::LANG_RU;
+
+        // переносили уже
+        $exists_tag = Tags::model()->find(
+            new CDbCriteria(
+                [
+                    'condition' => 'title=:title',
+                    'params' => [':title' => $tag->title]
+                ]
+            )
+        );
+
+        if ($exists_tag) {
+            return true;
+        }
+
         $tag->publish = 1;
         $tag->priority = 0;
 
@@ -462,16 +502,16 @@ class MatchesConverter implements IConverter
             throw new CException('Tag not created.' . "\n" . var_export($tag->getErrors(), true) . "\n");
         }
 
-        $ru_id = $tag->getId();
+        $ru_id = (int) $tag->getId();
         $this->saveTagLinks($ru_id, $newEntities[BaseFcModel::LANG_RU]);
         $tag->setNew();
         $tag->name = $name . BaseFcModel::LANG_EN;
         $tag->title = $title . $newEntities[BaseFcModel::LANG_EN] . '_' . BaseFcModel::LANG_EN;
         $tag->save();
-        $en_id = $tag->getId();
+        $en_id = (int) $tag->getId();
         $this->saveTagLinks($en_id, $newEntities[BaseFcModel::LANG_EN]);
 
-        $this->tags[self::TAGS_MATCH][$entityId] = [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id];
+        //$this->tags[self::TAGS_MATCH][$entityId] = [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id];
 
         $this->doneTags++;
         $this->progress();
