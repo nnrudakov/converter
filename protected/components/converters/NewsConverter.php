@@ -28,11 +28,21 @@ class NewsConverter implements IConverter
     private $tags = [];
 
     /**
+     * @var string
+     */
+    private $newsFile = '';
+
+    /**
+     * @var array
+     */
+    private $news = [];
+
+    /**
      * Строка для прогресс-бара.
      *
      * @var string
      */
-    private $progressFormat = "\rCategories: %d. News: %d. Tags links: %d.";
+    private $progressFormat = "\rCategories: %d. News total: %d. News: %d. Tags links: %d.";
 
     /**
      * @var integer
@@ -47,21 +57,39 @@ class NewsConverter implements IConverter
     /**
      * @var integer
      */
+    private $doneAll = 0;
+
+    /**
+     * @var integer
+     */
     private $doneTags = 0;
+
+    /**
+     * Инициализация.
+     */
+    public function __construct()
+    {
+        $this->newsFile = Yii::getPathOfAlias('accordance') . '/news.php';
+        $this->news = $this->getNews();
+        if (!$this->news) {
+            $this->news = [News::TYPE_TEXT => [], News::TYPE_PHOTO => [], News::TYPE_VIDEO => []];
+        }
+    }
 
     /**
      * Запуск преобразований.
      */
     public function convert()
     {
-        $pc = new PlayersConverter();
+        $this->removeEn();
+        /*$pc = new PlayersConverter();
         $this->tags = $pc->getTags();
 
         $this->progress();
         // категории и связанные с ними объекты
         $this->saveCategories(0, NewsCategories::CAT_NEWS_CAT_RU, NewsCategories::CAT_NEWS_CAT_EN);
         // объекты без категорий
-        $this->saveObjects();
+        $this->saveObjects();*/
     }
 
     /**
@@ -69,13 +97,12 @@ class NewsConverter implements IConverter
      *
      * @param integer $oldParent   Идентификатор старого родителя.
      * @param integer $newParentRu Идентификатор нового родителя.
-     * @param integer $newParentEn Идентификатор нового родителя.
      *
      * @return bool
      *
      * @throws CException
      */
-    private function saveCategories($oldParent, $newParentRu, $newParentEn)
+    private function saveCategories($oldParent, $newParentRu)
     {
         $criteria = new CDbCriteria();
         $criteria->select = ['id', 'name', 'description'];
@@ -125,24 +152,11 @@ class NewsConverter implements IConverter
             } elseif (!$category_ru->getMultilangId()) {
                 $category_ru->save();
             }
-            /* @var NewsCategories $category_en */
-            /*$category_en = $nc->findByAttributes(['parent_id' => $newParentEn, 'name' => $name]);
-            if (is_null($category_en)) {
-                $category_en = $save_cat($newParentEn, BaseFcModel::LANG_EN, $category_ru->multilangId);
-            } elseif (!$category_en->getMultilangId()) {
-                $category_en->multilangId = $category_ru->multilangId;
-                $category_en->lang = BaseFcModel::LANG_EN;
-                $category_en->save();
-            }*/
-
-            //$this->saveObjects($cat, $category_ru->getId(), $category_en->getId());
             if (!isset($this->categories[$cat->id])) {
-                $this->categories[$cat->id] = [
-                    BaseFcModel::LANG_RU => $category_ru->getId(), BaseFcModel::LANG_EN => 0
-                ];
+                $this->categories[$cat->id] = $category_ru->getId();
             }
 
-            $this->saveCategories($cat->id, $category_ru->getId(), null);
+            $this->saveCategories($cat->id, $category_ru->getId());
         }
 
         return true;
@@ -161,15 +175,21 @@ class NewsConverter implements IConverter
             'metakeywords', 'priority', 'tags'
         ];
         $criteria->addCondition('title!=\'\'');
-        $criteria->addCondition('date>\'2014-08-15 05:00:00.0\'');
+        $criteria->addCondition('id>63400');
+        $criteria->with = ['links'];
+        //$criteria->addCondition('type=\'video\'');
+        //$criteria->addCondition('date>\'2014-08-14 05:00:00.0\'');
         //$criteria->addCondition('XMLSERIALIZE(CONTENT(tags) AS text)!=\'\'');
         //$criteria->addCondition('XMLSERIALIZE(CONTENT(tags) AS text)!=\'<tags />\'');
         //$criteria->addCondition('id=58098');
         $criteria->order = 'id';
+        //$criteria->limit = 20;
         $news = News::model()->findAll($criteria);
 
         /* @var News $n */
         foreach ($news as $i => $n) {
+            $this->doneAll++;
+            $this->progress();
             $pn = array_map(
                 function ($l) {
                     /* @var NewsLinks $l */
@@ -180,14 +200,15 @@ class NewsConverter implements IConverter
             $get_pn = function ($ids, $langId) {
                 return array_map(
                     function ($id) use ($langId) {
-                        return isset($this->categories[$id]) ? $this->categories[$id][$langId] : 0;
+                        return isset($this->categories[$id]) ? $this->categories[$id] : 0;
                     },
                     $ids
                 );
             };
-            $pn_ru = array_unique($get_pn($pn, BaseFcModel::LANG_RU));
-            //$pn_en = array_unique($get_pn($pn, BaseFcModel::LANG_EN));
-            $multilang_id = $this->saveObject($n, $pn_ru, $i + 1, BaseFcModel::LANG_RU);
+            //if ($n->links) {
+                $pn_ru = array_unique($get_pn($pn, BaseFcModel::LANG_RU));
+                $this->saveObject($n, $pn_ru, $i + 1, BaseFcModel::LANG_RU);
+            //}
             /*if ($multilang_id !== true) {
                 $this->saveObject($n, $pn_en, $i + 1, BaseFcModel::LANG_EN, $multilang_id);
             }*/
@@ -203,19 +224,20 @@ class NewsConverter implements IConverter
      * @param array $parents  Идентификатор категории.
      * @param integer $sort        Порядк в категории.
      * @param integer $langId      Язык.
-     * @param integer $multilangId
      *
      * @return integer|bool
      *
      * @throws CException
      */
-    private function saveObject(News $oldObject, $parents, $sort, $langId, $multilangId = 0)
+    private function saveObject(News $oldObject, $parents, $sort, $langId)
     {
-        $object = new NewsObjects();
-        if ($multilangId) {
-            $object->setNew();
-            $object->multilangId = $multilangId;
+        if (isset($this->news[$oldObject->getType()][$oldObject->id])) {
+            return true;
         }
+
+        $this->news[$oldObject->getType()][$oldObject->id] = ['new_id' => 0, 'files'  => []];
+
+        $object = new NewsObjects();
         $object->importId   = $oldObject->id;
         $object->writeFiles = $this->writeFiles;
         $object->parents = $parents;
@@ -244,15 +266,13 @@ class NewsConverter implements IConverter
         );
 
         if ($exists_news) {
-            /*$exists_news->fileParams = $object->fileParams;
-            $exists_news->writeFiles = $this->writeFiles;
-            $exists_news->filesUrl   = $object->filesUrl;
-            $exists_news->setOwner   = $exists_news->setMultilang = false;
+            $exists_news->fileParams = $object->fileParams;
+            $exists_news->setOwner = $exists_news->setMultilang = $exists_news->setParents = false;
+            $exists_news->announce = Utils::clearText($oldObject->message);
+            $exists_news->content  = Utils::clearText($oldObject->details);
             $exists_news->save(false);
-            $this->doneNews++;
-            $this->progress();*/
-
-            //$object->fileParams = [];
+            $this->news[$oldObject->getType()][$oldObject->id]['new_id'] = (int) $exists_news->getId();
+            $this->news[$oldObject->getType()][$oldObject->id]['files']  = $exists_news->savedFiles;
             $object->object_id = $exists_news->getId();
         } else {
             $object->title            = $oldObject->title;
@@ -270,19 +290,26 @@ class NewsConverter implements IConverter
                 throw new CException($object->getErrorMsg('Object is not created.', $oldObject));
             }
 
+            $this->news[$oldObject->getType()][$oldObject->id]['new_id'] = (int) $object->getId();
+            $this->news[$oldObject->getType()][$oldObject->id]['files']  = $object->savedFiles;
+
             $this->doneNews++;
             $this->progress();
         }
 
-        if (str_replace('<tags />', '', trim($oldObject->tags))) {
-            $this->saveObjectTags($oldObject->tags, $object->getId(), $langId);
+        $object->savedFiles = [];
+
+        if ($tag = str_replace('<tags />', '', trim($oldObject->tags))) {
+            $this->saveObjectTags([$oldObject->tags], $object->getId(), $langId);
         }
 
         if ($tags) {
             $this->saveObjectTags($tags, $object->getId(), $langId);
         }
 
-        return $object->multilangId;
+        file_put_contents($this->newsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->news, true)));
+
+        return true;
     }
 
     /**
@@ -291,12 +318,84 @@ class NewsConverter implements IConverter
      * @param News        $oldObject Старый объект.
      * @param NewsObjects $object    Новый объект.
      *
-     * @return string
+     * @return array
      */
     private function setFilesParams($oldObject, $object)
     {
-        $tags = '';
-        $object->filesUrl = $oldObject->isText()
+        $tags = [];
+
+        if ($oldObject->isText()) {
+            $sort = 1;
+            $object->setFileParams(
+                $oldObject->id,
+                sprintf(NewsObjects::FILE, $oldObject->id),
+                0,
+                NewsObjects::FILE_FIELD,
+                '',
+                $sort,
+                0,
+                4,
+                FilesConverter::SRC_PERSONS_NEWS_DIR
+            );
+
+            preg_match_all('/<img .*?src="(.*?)"/', $oldObject->details, $m);
+            if (isset($m[1])) {
+                foreach ($m[1] as $file) {
+                    $object->setFileParams(
+                        $oldObject->id,
+                        preg_replace('/.+?\//', '', $file),
+                        0,
+                        NewsObjects::FILE_FIELD,
+                        '',
+                        ++$sort,
+                        0,
+                        4,
+                        FilesConverter::SRC_DATA_MEDIA . str_replace('/data/media', '', $file)
+                    );
+                }
+            }
+        } elseif ($gallery_id = $oldObject->getGalleryId()) {// есть ли галерея
+            if ($gallery = Gallery::model()->findByPk($gallery_id)) {
+                if ($tag = str_replace('<tags />', '', trim($gallery->tags))) {
+                    $tags[] = $tag;
+                }
+                // собираем каждый файл галерии
+                foreach ($gallery->files as $file) {
+                    // тумбочка для видео
+                    if ($oldObject->isVideo()) {
+                        $object->setFileParams(
+                            $oldObject->id,
+                            sprintf(NewsObjects::FILE_VIDEO_THUMB, $file->id),
+                            0,
+                            NewsObjects::FILE_FIELD,
+                            $file->caption,
+                            $file->ord ?: 1,
+                            0,
+                            4,
+                            FilesConverter::SRC_NEWS_PHOTO_DIR . str_replace('/res/galleries', '', $gallery->location)
+                        );
+                    }
+                    $object->setFileParams(
+                        $oldObject->id,
+                        sprintf($oldObject->isPhoto() ? NewsObjects::FILE_PHOTO : NewsObjects::FILE_VIDEO, $file->id),
+                        0,
+                        NewsObjects::FILE_FIELD,
+                        $file->caption,
+                        $file->ord ?: 1,
+                        $oldObject->isVideo() ? $file->duration : 0,
+                        $oldObject->isVideo() ? 0 : 4,
+                        FilesConverter::SRC_NEWS_PHOTO_DIR . str_replace('/res/galleries', '', $gallery->location)
+                    );
+
+                    if ($tag = str_replace('<tags />', '', trim($file->tags))) {
+                        $tags[] = $tag;
+                    }
+                }
+            }
+        }
+
+        return $tags;
+        /*$object->filesUrl = $oldObject->isText()
             ? News::TEXT_URL
             : ($oldObject->isPhoto() ? News::PHOTO_URL : News::VIDEO_URL);
 
@@ -305,7 +404,9 @@ class NewsConverter implements IConverter
             $object->setFileParams($oldObject->id, null, 0, null, '', 1, 0, 4);
         } elseif ($gallery_id = $oldObject->getGalleryId()) {// есть ли галерея
             if ($gallery = Gallery::model()->findByPk($gallery_id)) {
-                $tags = str_replace('<tags />', '', trim($gallery->tags));
+                if ($tag = str_replace('<tags />', '', trim($gallery->tags))) {
+                    $tags[] = $tag;
+                }
                 $filename = $oldObject->isPhoto() ? NewsObjects::FILE_PHOTO : NewsObjects::FILE_VIDEO;
                 $filename = str_replace(['{path}', '/res/'], [$gallery->location, ''], $filename);
                 // собираем каждый файл галерии
@@ -322,9 +423,6 @@ class NewsConverter implements IConverter
                             0,
                             4
                         );
-                        if (!$tags) {
-                            $tags = str_replace('<tags />', '', trim($file->tags));
-                        }
                     }
 
                     $object->setFileParams(
@@ -337,15 +435,19 @@ class NewsConverter implements IConverter
                         $oldObject->isVideo() ? $file->duration : 0,
                         $oldObject->isVideo() ? 0 : 4
                     );
+
+                    if ($tag = str_replace('<tags />', '', trim($file->tags))) {
+                        $tags[] = $tag;
+                    }
                 }
             }
         }
 
-        return $tags;
+        return $tags;*/
     }
 
     /**
-     * @param string $tags
+     * @param array $tags
      * @param integer $objectId
      * @param integer $langId
      *
@@ -356,69 +458,72 @@ class NewsConverter implements IConverter
     private function saveObjectTags($tags, $objectId, $langId)
     {
         $doc = new DOMDocument();
-        $doc->loadXML($tags);
-        /* @var DomElement $tag */
-        foreach ($doc->documentElement->childNodes as $tag) {
-            if ($tag->nodeType != XML_ELEMENT_NODE) {
-                continue;
-            }
 
-            $type = $tag->getAttribute('type');
-
-            if (!in_array($type, [PlayersConverter::TAGS_TEAM, PlayersConverter::TAGS_PLAYER_FC, MatchesConverter::TAGS_MATCH])) {
-                continue;
-            }
-
-            /*if ($type != MatchesConverter::TAGS_MATCH) {
-                continue;
-            }*/
-
-            if ($type == PlayersConverter::TAGS_PLAYER_FC) {
-                $type = PlayersConverter::TAGS_PLAYER;
-            }
-
-            $id = (int) $tag->getAttribute('id');
-
-            if ($type == MatchesConverter::TAGS_MATCH) {
-                $tag_id = Tags::model()->getDbConnection()->createCommand(
-                    'SELECT
-                        `t`.`tag_id`
-                    FROM `fc__tags` AS `t`
-                        JOIN `fc__tags__categories` AS `tc` ON `tc`.`category_id`=`t`.`category_id`
-                            AND `tc`.`category_id`=5
-                    WHERE
-                        `t`.`title` LIKE :title'
-                )->queryScalar([':title' => '%' . $id . '_' . '%']);
-            } else {
-                $tag_id = isset($this->tags[$type][$id]) ? (int) $this->tags[$type][$id] : 0;
-            }
-
-            if ($tag_id) {
-                $attrs = ['tag_id' => $tag_id, 'module_id' => BaseFcModel::NEWS_MODULE_ID];
-                $module_link = TagsModules::model()->findByAttributes($attrs);
-                if (!$module_link) {
-                    $module_link = new TagsModules();
-                    $module_link->tag_id = $tag_id;
-                    $module_link->module_id = BaseFcModel::NEWS_MODULE_ID;
-                    $module_link->publish = 1;
-                    $module_link->is_default = 0;
-                    $module_link->save();
+        foreach ($tags as $text) {
+            $doc->loadXML($text);
+            /* @var DomElement $tag */
+            foreach ($doc->documentElement->childNodes as $tag) {
+                if ($tag->nodeType != XML_ELEMENT_NODE) {
+                    continue;
                 }
 
-                $attrs = ['link_id' => $module_link->link_id, 'object_id' => $objectId];
-                $object_link = TagsObjects::model()->findByPk($attrs);
+                $type = $tag->getAttribute('type');
 
-                if (!$object_link) {
-                    $object_link = new TagsObjects();
-                    $object_link->setAttributes($attrs);
-                    $object_link->publish = 1;
+                if (!in_array($type, [PlayersConverter::TAGS_TEAM, PlayersConverter::TAGS_PLAYER_FC, MatchesConverter::TAGS_MATCH])) {
+                    continue;
+                }
 
-                    if (!$object_link->save()) {
-                        throw new CException($object_link->getErrorMsg('Tag link is not created.', $object_link));
+                /*if ($type != MatchesConverter::TAGS_MATCH) {
+                    continue;
+                }*/
+
+                if ($type == PlayersConverter::TAGS_PLAYER_FC) {
+                    $type = PlayersConverter::TAGS_PLAYER;
+                }
+
+                $id = (int) $tag->getAttribute('id');
+
+                if ($type == MatchesConverter::TAGS_MATCH) {
+                    $tag_id = Tags::model()->getDbConnection()->createCommand(
+                        'SELECT
+                            `t`.`tag_id`
+                        FROM `fc__tags` AS `t`
+                            JOIN `fc__tags__categories` AS `tc` ON `tc`.`category_id`=`t`.`category_id`
+                                AND `tc`.`category_id`=5
+                        WHERE
+                            `t`.`title` LIKE :title'
+                    )->queryScalar([':title' => '%' . $id . '_' . '%']);
+                } else {
+                    $tag_id = isset($this->tags[$type][$id]) ? (int) $this->tags[$type][$id] : 0;
+                }
+
+                if ($tag_id) {
+                    $attrs = ['tag_id' => $tag_id, 'module_id' => BaseFcModel::NEWS_MODULE_ID];
+                    $module_link = TagsModules::model()->findByAttributes($attrs);
+                    if (!$module_link) {
+                        $module_link = new TagsModules();
+                        $module_link->tag_id = $tag_id;
+                        $module_link->module_id = BaseFcModel::NEWS_MODULE_ID;
+                        $module_link->publish = 1;
+                        $module_link->is_default = 0;
+                        $module_link->save();
                     }
 
-                    $this->doneTags++;
-                    $this->progress();
+                    $attrs = ['link_id' => $module_link->link_id, 'object_id' => $objectId];
+                    $object_link = TagsObjects::model()->findByPk($attrs);
+
+                    if (!$object_link) {
+                        $object_link = new TagsObjects();
+                        $object_link->setAttributes($attrs);
+                        $object_link->publish = 1;
+
+                        if (!$object_link->save()) {
+                            throw new CException($object_link->getErrorMsg('Tag link is not created.', $object_link));
+                        }
+
+                        $this->doneTags++;
+                        $this->progress();
+                    }
                 }
             }
         }
@@ -426,8 +531,102 @@ class NewsConverter implements IConverter
         return true;
     }
 
+    /**
+     * @return bool
+     */
+    private function removeEn()
+    {
+        $criteria = new CDbCriteria();
+        $criteria->addCondition('lang_id=:lang_id');
+        $criteria->params = [':lang_id' => BaseFcModel::LANG_EN];
+        $criteria->order = 'publish_date_on DESC';
+        $criteria->limit = 100;
+        $news = NewsObjects::model()->findAll($criteria);
+
+        /* @var NewsObjects $n */
+        foreach ($news as $n) {
+            $object_id = (int) $n->getId();
+            // владелец
+            AdminUsersOwners::model()->deleteByPk(
+                [
+                    'module_id' => BaseFcModel::NEWS_MODULE_ID,
+                    'object_id' => $object_id,
+                    'extend_id' => '',
+                    'user_id'   => NewsObjects::ADMIN_ID
+                ]
+            );
+            // многоязычность
+            $criteria = new CDbCriteria();
+            $criteria->addCondition('multilang_id=:multi');
+            $criteria->addCondition('entity_id=:entity_id');
+            $criteria->addCondition('lang_id=:lang_id');
+            $criteria->params = [
+                ':multi' => $n->getMultilangId(),
+                ':entity_id' => $object_id,
+                ':lang_id' => BaseFcModel::LANG_EN
+            ];
+            CoreMultilangLink::model()->deleteAll($criteria);
+            // теги
+            NewsObjects::model()->dbConnection->createCommand(
+                'DELETE
+                    `m`, `o`
+                FROM
+                    `fc__tags__modules` AS `m`
+                    LEFT JOIN `fc__tags__objects` AS `o`
+                        ON `o`.`link_id`=`m`.`link_id`
+                WHERE
+                    `m`.`module_id`=:module_id AND `o`.`object_id`=:object_id'
+            )->execute([':module_id' => BaseFcModel::NEWS_MODULE_ID, ':object_id' => $object_id]);
+            // файлы
+            $criteria = new CDbCriteria();
+            $criteria->addCondition('module_id=:module_id');
+            $criteria->addCondition('category_id=:category_id');
+            $criteria->addCondition('object_id=:object_id');
+            $criteria->params = [
+                ':module_id' => BaseFcModel::NEWS_MODULE_ID,
+                ':category_id' => 0,
+                ':object_id' => $object_id
+            ];
+            $files = [];
+            foreach (FilesLink::model()->findAll($criteria) as $link) {
+                if (!in_array($link->file_id, $files)) {
+                    $files[] = $link->file_id;
+                }
+                $link->delete();
+            }
+            foreach ($files as $file_id) {
+                if (0 == (int) FilesLink::model()->countByAttributes(['file_id' => $file_id])) {
+                    $file = Files::model()->findByPk($file_id);
+                    foreach (['name', 'thumb1', 'thumb2', 'thumb3', 'thumb4'] as $name) {
+                        $path = FilesConverter::DST_DIR . $file->path . $file->$name;
+                        if (file_exists($path)) {
+                            unlink($path);
+                        }
+                    }
+                    $file->delete();
+                }
+            }
+            // сами обекты
+            NewsCategoryObjects::model()->deleteAllByAttributes(['object_id' => $n->getId()]);
+            $n->delete();
+
+            $this->doneNews++;
+            $this->progress();
+        }
+
+        return true;
+    }
+
     private function progress()
     {
-        printf($this->progressFormat, $this->doneCats, $this->doneNews, $this->doneTags);
+        printf($this->progressFormat, $this->doneCats, $this->doneAll, $this->doneNews, $this->doneTags);
+    }
+
+    /**
+     * @return array
+     */
+    public function getNews()
+    {
+        return file_exists($this->newsFile) ? include $this->newsFile : [];
     }
 }

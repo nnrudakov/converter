@@ -21,6 +21,10 @@ trait TFiles {
             return false;
         }
 
+        if ($this instanceof NewsObjects) {
+            return $this->saveNewsFile();
+        }
+
         $const_file = get_class($this) . '::FILE';
         $const_field = get_class($this) . '::FILE_FIELD';
         $const_entity = $this->getEntityName();
@@ -103,6 +107,89 @@ trait TFiles {
         }
 
         $this->fileParams = [];
+    }
+
+    protected function saveNewsFile()
+    {
+        /* @var NewsObjects $this */
+        if (!$this->fileParams) {
+            return false;
+        }
+
+        $const_file = get_class($this) . '::FILE';
+        $const_field = get_class($this) . '::FILE_FIELD';
+        $const_entity = $this->getEntityName();
+        $main = 1;
+        $path = $this->module->name . '/' . $const_entity . ($const_entity ? '/' : '');
+
+        foreach ($this->fileParams as $params) {
+            $filepath = $path . $this->getId() . '/';
+            $name = isset($params['name']) ? $params['name'] : constant($const_file);
+            $ext = substr($name, -3);
+            $thumb_name = substr($name, 0, -strlen('.' . $ext)) . '_t%d.' . $ext;
+            $attributes = [
+                'ext'        => $ext,
+                'descr'      => $params['descr'],
+                'video_time' => $params['video_time']
+            ];
+
+            $file = new Files();
+            $file->setAttributes($attributes, false);
+            $file->path = $filepath;
+            $file->name = $name;
+
+            // превью
+            if ($params['thumbs']) {
+                for ($i = 1; $i <= $params['thumbs']; $i++) {
+                    $file->{'thumb' . $i} = sprintf($thumb_name, $i);
+                }
+            }
+
+            $exist_file = Files::model()->find(
+                new CDbCriteria(['condition' => 'name=:name', 'params' => [':name' => $name]])
+            );
+
+            // Если файл такой есть, берем айдишник и создаем только новую связку
+            if ($exist_file) {
+                $file->file_id = $exist_file->file_id;
+                $file->setIsNewRecord(false);
+            }
+            if (!$file->save()) {
+                throw new CException('Files not created.' . "\n" . var_export($file->getErrors(), true) . "\n");
+            }
+
+            $field_id = isset($params['field_id']) ? $params['field_id'] : constant($const_field);
+            $link_attributes = [
+                'file_id'     => $file->file_id,
+                'module_id'   => $this->module->module_id,
+                'category_id' => $params['category_id'],
+                'object_id'   => $this->getId(),
+                'field_id'    => $field_id
+            ];
+
+            // проверяем связку
+            if (!$exist_link = FilesLink::model()->findByPk($link_attributes)) {
+                $link = new FilesLink();
+                $link->setAttributes($link_attributes);
+                $link->main = $main;
+                $link->sort = $params['sort'];
+
+                if (!$link->save()) {
+                    throw new CException('Link not created.' . "\n" . var_export($link->getErrors(), true) . "\n");
+                }
+            }
+
+            if ($main) {
+                $main = 0;
+            }
+
+            $this->savedFiles[$file->getId()] = rtrim($params['path'], '/') .
+                (false !== strpos($params['path'], '/data/media') ? '' : '/' . $file->name);
+        }
+
+        $this->fileParams = [];
+
+        return true;
     }
 
     /**

@@ -28,6 +28,11 @@ class FilesConverter implements IConverter
     /**
      * @var string
      */
+    const SRC_DATA_MEDIA = '/var/www/html/old_sites/krasnodar/www/data/media';
+
+    /**
+     * @var string
+     */
     const SRC_FILES = '/home/rudnik/www/fc/files/news/object';
 
     /**
@@ -121,13 +126,13 @@ class FilesConverter implements IConverter
     {
         $this->files = Files::model();
         $this->image = new Image();
-        $this->watermark = $this->image->load(self::WATERMARK);
+        //$this->watermark = $this->image->load(self::WATERMARK);
 
         foreach (CoreModules::model()->findAll() as $module) {
             $this->modules[$module->module_id] = $module;
         }
 
-        $this->fileIds = $this->files->getDbConnection()->createCommand(
+        /*$this->fileIds = $this->files->getDbConnection()->createCommand(
             'SELECT
                 `file_id`
             FROM
@@ -146,7 +151,7 @@ class FilesConverter implements IConverter
             ]
         );
         sort($this->fileIds);
-        $this->fileIds = implode(',', $this->fileIds);
+        $this->fileIds = implode(',', $this->fileIds);*/
     }
 
     /**
@@ -155,9 +160,10 @@ class FilesConverter implements IConverter
     public function convert()
     {
         $this->progress();
-        $this->chooseFiles(self::SRC_PERSONS_NEWS_DIR);
+        $this->chooseFromFile();
+        //$this->chooseFiles(self::SRC_PERSONS_NEWS_DIR);
         //$this->chooseFiles(self::SRC_PLAYERS_TEAMS_DIR);
-        $this->chooseFiles(self::SRC_NEWS_PHOTO_DIR);
+        //$this->chooseFiles(self::SRC_NEWS_PHOTO_DIR);
         //$this->chooseFiles(self::DST_DIR . 'branches');
         //$this->onlyPaths();
         //$this->chooseFiles(self::SRC_FILES, true);
@@ -208,6 +214,30 @@ class FilesConverter implements IConverter
 
             closedir($dh);
         }
+    }
+
+    private function chooseFromFile()
+    {
+        $n = new NewsConverter();
+        $news = $n->getNews();
+        foreach ($news['text'][63333]['files'] as $file_id => $orig_path) {
+            $file = Files::model()->findByPk($file_id);
+            $link = new FilesLink();
+            $link->module_id = BaseFcModel::NEWS_MODULE_ID;
+            $this->moveFile($file, $link, $orig_path);
+        }
+        /*foreach ($news as $t) {
+            foreach ($t as $data) {
+                foreach ($data['files'] as $file_id => $orig_path) {
+                    if (file_exists($orig_path)) {
+                        $file = Files::model()->findByPk($file_id);
+                        $link = new FilesLink();
+                        $link->module_id = BaseFcModel::NEWS_MODULE_ID;
+                        $this->moveFile($file, $link, $orig_path);
+                    }
+                }
+            }
+        }*/
     }
 
     private function onlyPaths()
@@ -395,7 +425,7 @@ class FilesConverter implements IConverter
                         $thumb = $thumb->watermark($this->watermark);
                     }
                     //echo $dirname . $thumb_name, self::$quality[$file->ext]."\n";
-                    $thumb->save($dirname . $thumb_name, self::$quality[$file->ext]);
+                    $thumb->save($dirname . $thumb_name, self::$quality[strtolower($file->ext)]);
                 }
                 //$file->{'thumb' . $i} = $thumb_name;
                 $i++;

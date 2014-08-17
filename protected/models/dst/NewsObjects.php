@@ -5,7 +5,7 @@
  *
  * Доступные поля таблицы "fc__news__objects":
  *
- * @property string  $object_id        Идентификатор объекта.
+ * @property integer $object_id        Идентификатор объекта.
  * @property string  $main_category_id Идентификатор главной категории.
  * @property string  $name             Имя объекта для URL.
  * @property integer $lang_id          Идентификатор языка.
@@ -47,7 +47,7 @@ class NewsObjects extends KitObjects
      *
      * @var string
      */
-    const FILE = 'images/news.orig.%d.jpg';
+    const FILE = 'news.orig.%d.jpg';
 
     /**
      * Имя поля связки файла.
@@ -61,21 +61,21 @@ class NewsObjects extends KitObjects
      *
      * @var string
      */
-    const FILE_PHOTO = '{path}image.orig.%d.jpg';
+    const FILE_PHOTO = 'image.orig.%d.jpg';
 
     /**
      * Имя файла оригинала видеорепортажа.
      *
      * @var string
      */
-    const FILE_VIDEO = '{path}image.orig.%d.mp4';
+    const FILE_VIDEO = 'image.orig.%d.mp4';
 
     /**
      * Имя файла превью видеорепортажа.
      *
      * @var string
      */
-    const FILE_VIDEO_THUMB = '{path}image.%d.611x360.jpg';
+    const FILE_VIDEO_THUMB = 'image.%d.611x360.jpg';
 
     /**
      * @return string Таблица модели

@@ -59,6 +59,21 @@ class News extends SourceModel
     const VIDEO_URL = 'http://media.fckrasnodar.ru/res/';
 
     /**
+     * @var string
+     */
+    const TYPE_TEXT = 'text';
+
+    /**
+     * @var string
+     */
+    const TYPE_VIDEO = 'video';
+
+    /**
+     * @var string
+     */
+    const TYPE_PHOTO = 'photo';
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()
@@ -92,7 +107,7 @@ class News extends SourceModel
     public function relations()
     {
         return [
-            'links' => [self::HAS_MANY, 'NewsLinks', 'news']
+            'links' => [self::HAS_MANY, 'NewsLinks', 'news', 'joinType' => 'INNER JOIN']
         ];
     }
 
@@ -198,6 +213,14 @@ class News extends SourceModel
     public function isVideo()
     {
         return $this->type == 'video' || $this->type == 'blog' || $this->type == 'link';
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->isText() ? self::TYPE_TEXT : ($this->isPhoto() ? self::TYPE_PHOTO : self::TYPE_VIDEO);
     }
 
     /**

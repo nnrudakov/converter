@@ -83,6 +83,11 @@ class DestinationModel extends BaseFcModel
     public $setMultilang = true;
 
     /**
+     * @var bool
+     */
+    public $setParents = true;
+
+    /**
      * Получение свойств.
      *
      * @param string $name Имя.
@@ -160,8 +165,9 @@ class DestinationModel extends BaseFcModel
      * @param integer $sort
      * @param integer $videoTime
      * @param integer $thumbs
+     * @param string  $path
      */
-    public function setFileParams($oldId, $name = null, $categoryId = 0, $fieldId = null, $descr = '', $sort = 1, $videoTime = 0, $thumbs = 0)
+    public function setFileParams($oldId, $name = null, $categoryId = 0, $fieldId = null, $descr = '', $sort = 1, $videoTime = 0, $thumbs = 0, $path = '')
     {
         $this->fileParams[] = [
             'old_id'      => $oldId,
@@ -171,7 +177,8 @@ class DestinationModel extends BaseFcModel
             'descr'       => $descr,
             'sort'        => $sort,
             'video_time'  => $videoTime,
-            'thumbs'      => $thumbs
+            'thumbs'      => $thumbs,
+            'path'        => $path
         ];
     }
 

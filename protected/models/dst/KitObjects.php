@@ -5,7 +5,7 @@
  *
  * Доступные поля таблиц:
  *
- * @property string  $object_id        Идентификатор объекта.
+ * @property integer  $object_id        Идентификатор объекта.
  * @property string  $main_category_id Идентификатор главной категории.
  * @property string  $name             Имя объекта для URL.
  * @property integer $lang_id          Идентификатор языка.
@@ -45,6 +45,11 @@ class KitObjects extends DestinationModel
      * @var array
      */
     public $parents = [];
+
+    /**
+     * @var array
+     */
+    public $savedFiles = [];
 
     /**
      * Порядок в категории.
@@ -167,22 +172,24 @@ class KitObjects extends DestinationModel
             }
         }
 
-        $link_class = ucfirst($this->module->name) . 'CategoryObjects';
+        if ($this->setParents) {
+            $link_class = ucfirst($this->module->name) . 'CategoryObjects';
 
-        if (!$this->parents) {
-            $this->parents[] = $this->main_category_id;
-        }
+            if (!$this->parents) {
+                $this->parents[] = $this->main_category_id;
+            }
 
-        foreach ($this->parents as $category_id) {
-            /* @var KitCategoryObjects $link */
-            $link = call_user_func($link_class  . '::model');
-            $link = $link->findByPk(['category_id' => $category_id, 'object_id' => $this->object_id]);
-            $link = $link ?: new $link_class();
-            $link->category_id = $category_id;
-            $link->object_id   = $this->object_id;
-            $link->sort        = $this->sort;
-            if (!$link->save()) {
-                throw new CException($link->getErrorMsg('Can\'t save ' . $this->module->name . ' object link.', $this));
+            foreach ($this->parents as $category_id) {
+                /* @var KitCategoryObjects $link */
+                $link = call_user_func($link_class  . '::model');
+                $link = $link->findByPk(['category_id' => $category_id, 'object_id' => $this->object_id]);
+                $link = $link ?: new $link_class();
+                $link->category_id = $category_id;
+                $link->object_id   = $this->object_id;
+                $link->sort        = $this->sort;
+                if (!$link->save()) {
+                    throw new CException($link->getErrorMsg('Can\'t save ' . $this->module->name . ' object link.', $this));
+                }
             }
         }
 

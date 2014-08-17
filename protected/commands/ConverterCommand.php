@@ -352,6 +352,59 @@ EOD;
         );
     }
 
+    public function actionDataNews()
+    {
+        $news = [[
+            'object_id' => 'Ид новости в админке',
+            'multilang_id' => 'Многоязычны ид',
+            'import_id' => 'Ид импорта',
+            'lang' => 'Язык',
+            'date' => 'Дата',
+            'title' => 'Заголовок',
+            'content' => 'Содержание',
+            'categories' => 'Категории',
+        ]];
+        $db = NewsObjects::model()->dbConnection;
+        $command = $db->createCommand(
+            'SELECT n.object_id, ml.multilang_id, m.import_id, IF(ml.lang_id = 1, \'ru\', \'en\') AS lang,
+    n.title, n.publish_date_on AS date, n.content
+FROM fc__news__objects AS n
+    JOIN fc__core__multilang_link AS ml ON ml.entity_id=n.object_id
+    JOIN fc__core__multilang AS m ON m.id=ml.multilang_id AND m.module_id=27 AND m.entity=\'object\'
+ORDER BY n.publish_date_on DESC'
+        )->queryAll();
+
+        foreach ($command as $row) {
+            $categories = [];
+            $cat_command = $db->createCommand(
+                'SELECT c.category_id, c.title
+    FROM fc__news__categories AS c
+        JOIN fc__news__category_objects AS co ON co.category_id=c.category_id AND co.object_id='.$row['object_id']
+            )->queryAll();
+
+            foreach ($cat_command as $cat_row) {
+                $categories[] = $cat_row['title'] . ' (' . $cat_row['category_id'] . ')';
+            }
+
+            $news[] = [
+                'object_id' => $row['object_id'],
+                'multilang_id' => $row['multilang_id'],
+                'import_id' => $row['import_id'],
+                'lang' => $row['lang'],
+                'date' => $row['date'],
+                'title' => $row['title'],
+                'content' => substr(strip_tags(str_replace("\t", '', $row['content'])), 0, 200),
+                'categories' => implode(', ', $categories)
+            ];
+        }
+        print_r($news);die;
+        $fh = fopen(__DIR__ . '/news.csv', 'w');
+        foreach ($news as $n) {
+            fwrite($fh, implode("\t", array_values($n)) . "\n");
+        }
+        fclose($fh);
+    }
+
     protected function beforeAction($action, $params)
     {
         $this->ensureDirectory(Yii::getPathOfAlias('accordance'));
