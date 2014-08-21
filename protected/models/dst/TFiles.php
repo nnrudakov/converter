@@ -124,8 +124,9 @@ trait TFiles {
 
         foreach ($this->fileParams as $params) {
             $filepath = $path . $this->getId() . '/';
-            $name = isset($params['name']) ? $params['name'] : constant($const_file);
+            $name = strtolower(isset($params['name']) ? $params['name'] : constant($const_file));
             $ext = substr($name, -3);
+            $ext = 'peg' == $ext ? 'jpeg' : $ext;
             $thumb_name = substr($name, 0, -strlen('.' . $ext)) . '_t%d.' . $ext;
             $attributes = [
                 'ext'        => $ext,
@@ -183,8 +184,13 @@ trait TFiles {
                 $main = 0;
             }
 
-            $this->savedFiles[$file->getId()] = rtrim($params['path'], '/') .
-                (false !== strpos($params['path'], '/data/media') ? '' : '/' . $file->name);
+            $this->savedFiles[$file->getId()] = [
+                'name' => $name,
+                'ext' => $ext,
+                'src' => rtrim($params['path'], '/') .
+                    (false !== strpos($params['path'], '/data/media') ? '' : '/' . $file->name),
+                'dst' => $file->path
+            ];
         }
 
         $this->fileParams = [];

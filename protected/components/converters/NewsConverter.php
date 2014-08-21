@@ -81,15 +81,17 @@ class NewsConverter implements IConverter
      */
     public function convert()
     {
-        $this->removeEn();
-        /*$pc = new PlayersConverter();
+        //$this->removeEn();
+        //$this->removeDouble();
+        $this->removeOld();
+        $pc = new PlayersConverter();
         $this->tags = $pc->getTags();
 
         $this->progress();
         // категории и связанные с ними объекты
         $this->saveCategories(0, NewsCategories::CAT_NEWS_CAT_RU, NewsCategories::CAT_NEWS_CAT_EN);
         // объекты без категорий
-        $this->saveObjects();*/
+        $this->saveObjects();
     }
 
     /**
@@ -175,12 +177,12 @@ class NewsConverter implements IConverter
             'metakeywords', 'priority', 'tags'
         ];
         $criteria->addCondition('title!=\'\'');
-        $criteria->addCondition('id>63400');
+        //$criteria->addCondition('id>63400');
         $criteria->with = ['links'];
         //$criteria->addCondition('type=\'video\'');
         //$criteria->addCondition('date>\'2014-08-14 05:00:00.0\'');
         //$criteria->addCondition('XMLSERIALIZE(CONTENT(tags) AS text)!=\'\'');
-        //$criteria->addCondition('XMLSERIALIZE(CONTENT(tags) AS text)!=\'<tags />\'');
+        //$criteria->addCondition('XMLSERIALIZE(CONTENT(tags) AS text)!=\'<tags />\'                                                                                                                                                                                                                                                                                    ');
         //$criteria->addCondition('id=58098');
         $criteria->order = 'id';
         //$criteria->limit = 20;
@@ -250,7 +252,7 @@ class NewsConverter implements IConverter
         $object->name    = rtrim(Utils::nameString($oldObject->title), '-');
         $object->publish_date_on = $oldObject->date ?: null;
 
-        $exists_news = NewsObjects::model()->find(
+        $exists_news = null;/*NewsObjects::model()->find(
             new CDbCriteria(
                 [
                     'condition' => 'main_category_id=:category_id AND name=:name AND lang_id=:lang_id ' .
@@ -263,17 +265,18 @@ class NewsConverter implements IConverter
                     ]
                 ]
             )
-        );
+        );*/
 
         if ($exists_news) {
-            $exists_news->fileParams = $object->fileParams;
+            /*$exists_news->fileParams = $object->fileParams;
             $exists_news->setOwner = $exists_news->setMultilang = $exists_news->setParents = false;
             $exists_news->announce = Utils::clearText($oldObject->message);
             $exists_news->content  = Utils::clearText($oldObject->details);
             $exists_news->save(false);
             $this->news[$oldObject->getType()][$oldObject->id]['new_id'] = (int) $exists_news->getId();
-            $this->news[$oldObject->getType()][$oldObject->id]['files']  = $exists_news->savedFiles;
+            $this->news[$oldObject->getType()][$oldObject->id]['files']  = $exists_news->savedFiles;*/
             $object->object_id = $exists_news->getId();
+            $object->multilangId = $exists_news->getMultilangId();
         } else {
             $object->title            = $oldObject->title;
             $object->announce         = Utils::clearText($oldObject->message);
@@ -300,11 +303,11 @@ class NewsConverter implements IConverter
         $object->savedFiles = [];
 
         if ($tag = str_replace('<tags />', '', trim($oldObject->tags))) {
-            $this->saveObjectTags([$oldObject->tags], $object->getId(), $langId);
+            $this->saveObjectTags([$oldObject->tags], $object->getMultilangId(), $langId);
         }
 
         if ($tags) {
-            $this->saveObjectTags($tags, $object->getId(), $langId);
+            $this->saveObjectTags($tags, $object->getMultilangId(), $langId);
         }
 
         file_put_contents($this->newsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->news, true)));
@@ -483,7 +486,7 @@ class NewsConverter implements IConverter
 
                 $id = (int) $tag->getAttribute('id');
 
-                if ($type == MatchesConverter::TAGS_MATCH) {
+                /*if ($type == MatchesConverter::TAGS_MATCH) {
                     $tag_id = Tags::model()->getDbConnection()->createCommand(
                         'SELECT
                             `t`.`tag_id`
@@ -495,7 +498,8 @@ class NewsConverter implements IConverter
                     )->queryScalar([':title' => '%' . $id . '_' . '%']);
                 } else {
                     $tag_id = isset($this->tags[$type][$id]) ? (int) $this->tags[$type][$id] : 0;
-                }
+                }*/
+                $tag_id = isset($this->tags[$type][$id]) ? (int) $this->tags[$type][$id][BaseFcModel::LANG_RU] : 0;
 
                 if ($tag_id) {
                     $attrs = ['tag_id' => $tag_id, 'module_id' => BaseFcModel::NEWS_MODULE_ID];
@@ -569,7 +573,7 @@ class NewsConverter implements IConverter
             // теги
             NewsObjects::model()->dbConnection->createCommand(
                 'DELETE
-                    `m`, `o`
+                    `o`
                 FROM
                     `fc__tags__modules` AS `m`
                     LEFT JOIN `fc__tags__objects` AS `o`
@@ -615,6 +619,142 @@ class NewsConverter implements IConverter
         }
 
         return true;
+    }
+
+    public function removeDouble()
+    {
+        $db = NewsObjects::model()->dbConnection;
+        $news = $db->createCommand(
+            'SELECT o.object_id, COUNT(co.category_id) AS cnt
+	FROM fc__news__objects AS o
+	JOIN fc__news__category_objects AS co ON co.object_id=o.object_id
+	GROUP BY o.object_id
+	HAVING cnt=1'
+        )->queryColumn();
+
+        foreach ($news as $object_id) {
+            $n = NewsObjects::model()->findByPk($object_id);
+            // владелец
+            AdminUsersOwners::model()->deleteByPk(
+                [
+                    'module_id' => BaseFcModel::NEWS_MODULE_ID,
+                    'object_id' => $object_id,
+                    'extend_id' => '',
+                    'user_id'   => NewsObjects::ADMIN_ID
+                ]
+            );
+            // многоязычность
+            $criteria = new CDbCriteria();
+            $criteria->addCondition('multilang_id=:multi');
+            $criteria->addCondition('entity_id=:entity_id');
+            $criteria->params = [
+                ':multi' => $n->getMultilangId(),
+                ':entity_id' => $object_id
+            ];
+            CoreMultilangLink::model()->deleteAll($criteria);
+            // теги
+            NewsObjects::model()->dbConnection->createCommand(
+                'DELETE
+                    `o`
+                FROM
+                    `fc__tags__modules` AS `m`
+                    LEFT JOIN `fc__tags__objects` AS `o`
+                        ON `o`.`link_id`=`m`.`link_id`
+                WHERE
+                    `m`.`module_id`=:module_id AND `o`.`object_id`=:object_id'
+            )->execute([':module_id' => BaseFcModel::NEWS_MODULE_ID, ':object_id' => $object_id]);
+            // файлы
+            $criteria = new CDbCriteria();
+            $criteria->addCondition('module_id=:module_id');
+            $criteria->addCondition('category_id=:category_id');
+            $criteria->addCondition('object_id=:object_id');
+            $criteria->params = [
+                ':module_id' => BaseFcModel::NEWS_MODULE_ID,
+                ':category_id' => 0,
+                ':object_id' => $object_id
+            ];
+            $files = [];
+            foreach (FilesLink::model()->findAll($criteria) as $link) {
+                if (!in_array($link->file_id, $files)) {
+                    $files[] = $link->file_id;
+                }
+                $link->delete();
+            }
+            foreach ($files as $file_id) {
+                if (0 == (int) FilesLink::model()->countByAttributes(['file_id' => $file_id])) {
+                    $file = Files::model()->findByPk($file_id);
+                    foreach (['name', 'thumb1', 'thumb2', 'thumb3', 'thumb4'] as $name) {
+                        $path = FilesConverter::DST_DIR . $file->path . $file->$name;
+                        if (file_exists($path)) {
+                            unlink($path);
+                        }
+                    }
+                    $file->delete();
+                }
+            }
+            // сами обекты
+            NewsCategoryObjects::model()->deleteAllByAttributes(['object_id' => $object_id]);
+            $n->delete();
+
+            $this->doneNews++;
+            $this->progress();
+        }
+
+        return true;
+    }
+
+    private function removeOld()
+    {
+        $db = NewsObjects::model()->dbConnection;
+        //choose
+        $news = $db->createCommand(
+            'SELECT ml.entity_id
+             FROM fc__core__multilang_link AS ml
+JOIN fc__core__multilang AS m ON m.id=ml.multilang_id AND m.module_id=' . BaseFcModel::NEWS_MODULE_ID . ' AND
+m.entity=\'' . NewsObjects::ENTITY . '\' AND m.import_id!=0'
+        )->queryColumn();
+        $news = implode(',', $news);
+        // owners
+        $db->createCommand(
+            'DELETE FROM fc__admin_users__owners WHERE module_id=' . BaseFcModel::NEWS_MODULE_ID . '
+            AND object_id IN (' . $news . ')'
+        )->execute();
+        // multilang
+        $db->createCommand(
+            'DELETE m, ml
+             FROM fc__core__multilang AS m
+JOIN fc__core__multilang_link AS ml ON ml.multilang_id=m.id AND m.module_id=' . BaseFcModel::NEWS_MODULE_ID . ' AND
+m.entity=\'' . NewsObjects::ENTITY . '\' AND m.import_id!=0'
+        )->execute();
+        // tags
+        /*$db->createCommand(
+            'DELETE
+                `m`, `o`
+            FROM
+                `fc__tags__modules` AS `m`
+                LEFT JOIN `fc__tags__objects` AS `o`
+                    ON `o`.`link_id`=`m`.`link_id`
+            WHERE
+                `m`.`module_id`=' . BaseFcModel::NEWS_MODULE_ID . ' AND `o`.`object_id` IN (' . $news . ')'
+        )->execute();*/
+        // files
+        $db->createCommand(
+            'DELETE
+                `f`, `fl`
+            FROM
+                `fc__files` AS `f`
+                LEFT JOIN `fc__files__link` AS `fl`
+                    ON `fl`.`file_id`=`f`.`file_id`
+            WHERE
+                `fl`.`module_id`=' . BaseFcModel::NEWS_MODULE_ID . ' AND `fl`.`object_id` IN (' . $news . ')'
+        )->execute();
+        // objects
+        $db->createCommand(
+            'DELETE FROM fc__news__category_objects WHERE object_id IN (' . $news . ')'
+        )->execute();
+        $db->createCommand(
+            'DELETE FROM fc__news__objects WHERE object_id IN (' . $news . ')'
+        )->execute();
     }
 
     private function progress()

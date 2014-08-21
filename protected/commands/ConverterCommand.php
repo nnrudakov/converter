@@ -361,7 +361,7 @@ EOD;
             'lang' => 'Язык',
             'date' => 'Дата',
             'title' => 'Заголовок',
-            'content' => 'Содержание',
+            //'content' => 'Содержание',
             'categories' => 'Категории',
         ]];
         $db = NewsObjects::model()->dbConnection;
@@ -375,7 +375,7 @@ ORDER BY n.publish_date_on DESC'
         )->queryAll();
 
         foreach ($command as $row) {
-            $categories = [];
+            $categories = '';
             $cat_command = $db->createCommand(
                 'SELECT c.category_id, c.title
     FROM fc__news__categories AS c
@@ -383,7 +383,7 @@ ORDER BY n.publish_date_on DESC'
             )->queryAll();
 
             foreach ($cat_command as $cat_row) {
-                $categories[] = $cat_row['title'] . ' (' . $cat_row['category_id'] . ')';
+                $categories .= $cat_row['title'] . ' (' . $cat_row['category_id'] . ') ';
             }
 
             $news[] = [
@@ -393,16 +393,100 @@ ORDER BY n.publish_date_on DESC'
                 'lang' => $row['lang'],
                 'date' => $row['date'],
                 'title' => $row['title'],
-                'content' => substr(strip_tags(str_replace("\t", '', $row['content'])), 0, 200),
-                'categories' => implode(', ', $categories)
+                //'content' => substr(strip_tags(str_replace("\t", '', $row['content'])), 0, 200),
+                'categories' => $categories
             ];
         }
-        print_r($news);die;
+
         $fh = fopen(__DIR__ . '/news.csv', 'w');
         foreach ($news as $n) {
-            fwrite($fh, implode("\t", array_values($n)) . "\n");
+            fwrite($fh, implode('#', array_values($n)) . "\n");
         }
         fclose($fh);
+    }
+
+    public function actionMoveNews()
+    {
+        $src_db = FilesBranches::model()->dbConnection;
+        $dst_db = NewsObjects::model()->dbConnection;
+        $new_files = [
+            23612 => 35363,
+            23613 => 35364,
+            23616 => 35365,
+            23619 => 35366,
+            23621 => 35367,
+            23622 => 35368,
+            23623 => 35369,
+            23625 => 35370,
+            23628 => 35371,
+            23631 => 35372,
+            23634 => 35373,
+            23635 => 35374,
+            23637 => 35375
+        ];
+        $command = $src_db->createCommand(
+            'SELECT * FROM fc__news__objects WHERE object_id IN (23612, 23613, 23616, 23619, 23621, 23622, 23623, 23625, 23628, 23631, 23634, 23635, 23637)'
+        )->queryAll();
+        $newss = [];
+        foreach ($command as $row) {
+            //print_r($row); continue;
+            $object_id = $row['object_id'];
+            /*unset($row['object_id']);
+            $news = new NewsObjects();
+            $news->setAttributes($row);
+            $news->parents = $src_db->createCommand(
+                'SELECT category_id FROM fc__news__category_objects WHERE object_id=:object_id'
+            )->queryColumn([':object_id' => $object_id]);
+            //print_r($news->getAttributes());
+            if (!$news->save()) {
+                die('dfasdfasdfas');
+            }
+            $newss[$object_id] = $news->getId();*/
+            /*echo '('.$row['publish_date_on'].')';
+            echo $news->getId().'--'.$news->getMultilangId().'--'.$news->publish_date_on.'--';*/
+            $links = $src_db->createCommand('SELECT * FROM fc__files WHERE path=:path')
+            ->queryAll(true, [
+                ':path' => 'news/object/' . $object_id . '/'
+            ]);
+            $main = $sort = 1;
+            foreach ($links as $src_link) {
+                $src_link['file_id'] = null;
+                $src_link['path'] = 'news/object/' . $new_files[$object_id] . '/';
+                $file = new Files();
+                $file->setAttributes($src_link);
+                $file->save();
+
+                echo $file->file_id.'===';
+                $dst_db->createCommand(
+                    'INSERT INTO fc__files__link SET file_id=:file_id, module_id=:module_id, category_id=:category_id,
+                    object_id=:object_id, field_id=:field_id, main=:main, sort=:sort'
+                )->execute(
+                    [
+                        ':file_id' => $file->file_id,
+                        ':module_id' => BaseFcModel::NEWS_MODULE_ID,
+                        ':category_id' => 0,
+                        ':object_id' => $new_files[$object_id],
+                        ':field_id' => 'file',
+                        ':main' => $main,
+                        ':sort' => $sort
+                    ]
+                );
+                /*$link = new FilesLink();
+                $link->file_id = $file->file_id ?: $dst_db->lastInsertID;
+                $link->module_id = BaseFcModel::NEWS_MODULE_ID;
+                $link->category_id = 0;
+                $link->object_id = $new_files[$object_id];
+                $link->file_id = 'file';
+                $link->title = '';
+                $link->descr = '';
+                $link->main = $main;
+                $link->sort = $sort;
+                $link->save();
+                $main = 0;
+                $sort++;*/
+            }
+        }
+        print_r($newss);
     }
 
     protected function beforeAction($action, $params)

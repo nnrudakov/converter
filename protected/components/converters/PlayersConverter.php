@@ -333,6 +333,7 @@ class PlayersConverter implements IConverter
     public function convert()
     {
         $this->progress();
+        $this->resaveTags();
         /*$this->tags = [self::TAGS_TEAM => [], self::TAGS_PLAYER => [], MatchesConverter::TAGS_MATCH => []];
         $criteria = new CDbCriteria();
         $criteria->select = ['id', 'team', 'player', 'date_from', 'date_to', 'staff', 'number'];
@@ -397,14 +398,14 @@ class PlayersConverter implements IConverter
 
         // оставшиеся команды без связок с игроками
         //$this->saveTeams();
-        $this->saveTeamStat();
+        //$this->saveTeamStat();
 
         // игроки, для которых нет контрактов, но они участвовали в матчах
         //$this->saveMatchPlayers();
         //$this->savePlayerStat();
 
-        ksort($this->teams);
-        ksort($this->teamsM);
+        /*ksort($this->teams);
+        ksort($this->teamsM);*/
         /*ksort($this->players);
         ksort($this->playersM);*/
         //file_put_contents($this->teamsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->teams, true)));
@@ -412,6 +413,107 @@ class PlayersConverter implements IConverter
         /*file_put_contents($this->playersFile, sprintf(self::FILE_ACCORDANCE, var_export($this->players, true)));
         file_put_contents($this->playersFileM, sprintf(self::FILE_ACCORDANCE, var_export($this->playersM, true)));*/
         //file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
+    }
+
+    private function resaveTags()
+    {
+        $this->tags[self::TAGS_TEAM] = [];
+        $this->tags[self::TAGS_PLAYER] = [];
+        foreach ($this->teams as $tid => $t) {
+            foreach ($t as $teams) {
+                $multilang_id = null;
+                foreach ($teams as $lang_id => $id) {
+                    if ($team = FcTeams::model()->findByPk($id)) {
+                        list($tag_id, $multilang_id) = $this->resaveTag(
+                            TagsCategories::TEAMS,
+                            $team->getMultilangId(),
+                            $team->title . ' ' . $team->staff,
+                            $lang_id,
+                            $multilang_id
+                        );
+                        $this->tags[self::TAGS_TEAM][$tid][$lang_id] = $tag_id;
+                        $this->doneTeams++;
+                        $this->progress();
+                    }
+                }
+            }
+        }
+        foreach ($this->players as $pid => $p) {
+            foreach ($p as $lang_id => $id) {
+                $multilang_id = null;
+                if ($player = FcPerson::model()->findByPk($id)) {
+                    list($tag_id, $multilang_id) = $this->resaveTag(
+                        TagsCategories::PLAYERS,
+                        $player->getMultilangId(),
+                        implode(
+                            ' ',
+                            [
+                                date('Ymd', strtotime($player->birthday)),
+                                $player->lastname,
+                                $player->firstname,
+                                $player->middlename
+                            ]
+                        ),
+                        $lang_id,
+                        $multilang_id
+                    );
+                    $this->tags[self::TAGS_PLAYER][$pid][$lang_id] = $tag_id;
+                    $this->donePlayers++;
+                    $this->progress();
+                }
+            }
+        }
+        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
+    }
+
+    private function resaveTag($categoryId, $objectId, $title, $langId, $multilangId)
+    {
+        $name = Utils::nameString($title);
+        $title .= ' (' . $langId . ')';
+        $tag = Tags::model()->find(new CDbCriteria(['condition' => 'title=:title', 'params' => [':title' => $title]]));
+        if (!$tag) {
+            $tag = new Tags();
+            $tag->category_id = $categoryId;
+            $tag->name = $name;
+            $tag->title = $title;
+            $tag->publish = 1;
+        }
+        if ($multilangId) {
+            $tag->multilangId = $multilangId;
+        }
+        $tag->lang = $langId;
+        $tag->save();
+        $link = TagsModules::model()->find(
+            new CDbCriteria(
+                [
+                    'condition' => 'tag_id=:tag_id AND module_id=:module_id',
+                    'params' => [':tag_id' => $tag->getId(), ':module_id' => BaseFcModel::FC_MODULE_ID]
+                ]
+            )
+        );
+        if (!$link) {
+            $link = new TagsModules();
+            $link->tag_id = $tag->getId();
+            $link->module_id = BaseFcModel::FC_MODULE_ID;
+            $link->publish = 1;
+            $link->save();
+        }
+        $source = TagsSources::model()->find(
+            new CDbCriteria(
+                [
+                    'condition' => 'link_id=:link_id AND object_id=:object_id',
+                    'params' => [':link_id' => $link->getId(), ':object_id' => $objectId]
+                ]
+            )
+        );
+        if (!$source) {
+            $source = new TagsSources();
+            $source->link_id = $link->getId();
+            $source->object_id = $objectId;
+            $source->save();
+        }
+
+        return [$tag->getId(), $tag->multilangId];
     }
 
     /**

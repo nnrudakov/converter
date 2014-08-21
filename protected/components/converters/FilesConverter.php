@@ -38,7 +38,7 @@ class FilesConverter implements IConverter
     /**
      * @va string
      */
-    const DST_DIR = '/var/www/html/media.fckrasnodar.ru/';
+    const DST_DIR = '/var/www/html/media.fckrasnodar.ru/test/';
 
     /**
      * @var string
@@ -80,7 +80,7 @@ class FilesConverter implements IConverter
     /**
      * @var array
      */
-    private static $quality = ['jpg' => 95 , 'png' => 8];
+    private static $quality = ['jpg' => 95, 'jpeg' => 95, 'png' => 8];
 
     /**
      * Строка для прогресс-бара.
@@ -220,24 +220,32 @@ class FilesConverter implements IConverter
     {
         $n = new NewsConverter();
         $news = $n->getNews();
-        foreach ($news['text'][63333]['files'] as $file_id => $orig_path) {
+        /*foreach ($news['text'][63333]['files'] as $file_id => $orig_path) {
             $file = Files::model()->findByPk($file_id);
             $link = new FilesLink();
             $link->module_id = BaseFcModel::NEWS_MODULE_ID;
             $this->moveFile($file, $link, $orig_path);
-        }
-        /*foreach ($news as $t) {
+        }*/
+        foreach ($news as $t) {
+            krsort($t);
+            //$i = 1;
             foreach ($t as $data) {
-                foreach ($data['files'] as $file_id => $orig_path) {
-                    if (file_exists($orig_path)) {
-                        $file = Files::model()->findByPk($file_id);
+                //if ($i > 100) continue;
+                foreach ($data['files'] as $file_id => $path) {
+                    if (file_exists($path['src'])) {
+                        //$file = Files::model()->findByPk($file_id);
+                        $file = new Files();
+                        $file->ext =         $path['ext'] == 'peg' ? 'jpeg' : $path['ext'];
+                        $file->path = $path['dst'];
+                        $file->name = $path['name'];
                         $link = new FilesLink();
                         $link->module_id = BaseFcModel::NEWS_MODULE_ID;
-                        $this->moveFile($file, $link, $orig_path);
+                        $this->moveFile($file, $link, $path['src']);
                     }
                 }
+                //$i++;
             }
-        }*/
+        }
     }
 
     private function onlyPaths()

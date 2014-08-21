@@ -134,7 +134,8 @@ class MatchesConverter implements IConverter
         $this->teamsM   = $pc->getTeamsM();
         $this->players  = $pc->getPlayers();
         $this->playersM = $pc->getPlayersM();
-        //$this->tags     = $pc->getTags();
+        $this->tags     = $pc->getTags();
+        $this->tags[self::TAGS_MATCH] = [];
 
         // сезоны и чемпионаты уже должны быть пересены
         $cc = new ChampsConverter();
@@ -149,7 +150,80 @@ class MatchesConverter implements IConverter
     public function convert()
     {
         $this->progress();
+        $this->removeMatches();
+        sleep(10);
         $this->saveMatches();
+        //$this->saveMultilang();
+    }
+
+    private function saveMultilang()
+    {
+        $criteria = new CDbCriteria();
+        $criteria->order = 'matchtime DESC, id ASC';
+        $criteria->limit = 40;
+        $src_match = new FcMatch();
+        $en_id = 0;
+
+        /* @var FcMatch $match */
+        foreach ($src_match->findAll($criteria) as $match) {
+            if ($match->getId() == $en_id) {
+                continue;
+            }
+            if (!$match->getMultilangId()) {
+                $multilang = new CoreMultilang();
+                $multilang->module_id = $match->module->module_id;
+                $multilang->entity = FcMatch::ENTITY;
+                $multilang->save();
+                $multilang_link = new CoreMultilangLink();
+                $multilang_link->multilang_id = $multilang->getId();
+                $multilang_link->entity_id = $match->getId();
+                $multilang_link->lang_id = BaseFcModel::LANG_RU;
+                $multilang_link->save();
+                $multilang_link->setIsNewRecord(true);
+                $multilang_link->entity_id = $match->getId() + 1;
+                $multilang_link->lang_id = BaseFcModel::LANG_EN;
+                $multilang_link->save();
+                $en_id = $multilang_link->entity_id;
+                $this->doneMatches++;
+                $this->progress();
+            }
+        }
+    }
+
+    private function removeMatches()
+    {
+        $db = FcMatch::model()->dbConnection;
+        /*$tags = $db->createCommand(
+            'SELECT tag_id FROM fc__tags WHERE category_id=' . TagsCategories::MATCHES
+        )->queryColumn();
+        $tags = implode(',', $tags);
+        $links = $db->createCommand(
+            'SELECT link_id FROM fc__tags__modules WHERE tag_id IN (' . $tags . ')'
+        )->queryColumn();
+        $links = implode(',', $links);
+        $db->createCommand(
+            'DELETE FROM fc__tags__sources WHERE link_id IN (' . $links . ')'
+        )->execute();
+        $db->createCommand(
+            'DELETE FROM fc__tags__objects WHERE link_id IN (' . $links . ')'
+        )->execute();
+        $db->createCommand(
+            'DELETE FROM fc__tags__modules WHERE link_id IN (' . $links . ')'
+        )->execute();
+        $db->createCommand(
+            'DELETE FROM fc__tags WHERE tag_id IN (' . $tags . ')'
+        )->execute();*/
+        $db->createCommand(
+            'DELETE m, ml
+            FROM fc__core__multilang AS m
+            LEFT JOIN fc__core__multilang_link AS ml ON ml.multilang_id=m.id
+            WHERE m.entity=:match OR m.entity=:event'
+        )->execute([':match' => 'match', ':event' => 'event']);
+        $db->createCommand('TRUNCATE TABLE fc__fc__match')->execute();
+        $db->createCommand('TRUNCATE TABLE fc__fc__event')->execute();
+        $db->createCommand('TRUNCATE TABLE fc__fc__placement')->execute();
+
+        return true;
     }
 
     /**
@@ -220,7 +294,6 @@ class MatchesConverter implements IConverter
                 $m->id = 0;
                 $m->date = $s->date;
             }
-
             $match = new FcMatch();
             $match->importId        = $m->id;
             $match->championship_id = $this->champs[$s->tournament][BaseFcModel::LANG_RU];
@@ -246,17 +319,18 @@ class MatchesConverter implements IConverter
             );
 
             if ($exists_match) {
-                if ($m->id) {
-                    $matches = [
+                /*if ($m->id) {  echo 1;
+                    /*$matches = [
                         BaseFcModel::LANG_RU => $exists_match->getId(),
                         BaseFcModel::LANG_EN => $exists_match->getPairId()
                     ];
                     $multilang = CoreMultilang::model()->findByPk($exists_match->getMultilangId());
                     $multilang->import_id = $m->id;
-                    $multilang->save();
+                    $multilang->save();*
+                    $this->saveMatchPlaces($m->players, $exists_match->getMultilangId(), $s->tournament);
                     $this->doneMatches--;
                     $this->progress();
-                }
+                }*/
                 /*if ($m->summary) {
                     list($exists_match->home_score, $exists_match->guest_score) = $get_score($m->summary);
                     $exists_match->save(false);
@@ -270,7 +344,7 @@ class MatchesConverter implements IConverter
                     $this->doneMatches--;
                     $this->progress();
                 }*/
-                //continue;
+                continue;
             } else {
                 $match->tour                = $s->circle;
                 $match->city                = $s->region;
@@ -321,21 +395,22 @@ class MatchesConverter implements IConverter
                 }
                 $this->saveTags(
                     $m->id,
-                    $matches,
+                    $match->getMultilangId(),
                     implode(
                         ' ',
                         [
+                            date('Ymd', strtotime($match->matchtime)),
+                            str_replace(['«', '»'], '', $s->homeTeam->title . ':' . $s->guestTeam->title),
                             $s->champ->title,
                             $s->s->title,
-                            ($s->st ? $s->st->title : ''),
-                            $s->homeTeam->title . ':' . $s->guestTeam->title
+                            ($s->st ? $s->st->title : '')
                         ]
                     )
                 );
             }
         }
 
-        //file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
+        file_put_contents($this->tagsFile, sprintf(self::FILE_ACCORDANCE, var_export($this->tags, true)));
     }
 
     /**
@@ -466,29 +541,24 @@ class MatchesConverter implements IConverter
 
     /**
      * @param integer $entityId
-     * @param array   $newEntities
+     * @param integer $multilangId
      * @param string  $title
      *
      * @return bool
      * @throws CException
      */
-    private function saveTags($entityId, $newEntities, $title)
+    private function saveTags($entityId, $multilangId, $title)
     {
-        $name = substr(preg_replace('/(?!-)[\W]+/', '_', Utils::rus2lat($title)), 0, 250) . '_';
-        $title .= '_' . $entityId . '_';
+        $name = substr(preg_replace('/(?!-)[\W]+/', '_', Utils::rus2lat($title)), 0, 255) . '_';
+        $title .= '_';
         $tag = new Tags();
         $tag->category_id = TagsCategories::MATCHES;
         $tag->name = $name . BaseFcModel::LANG_RU;
-        $tag->title = $title . $newEntities[BaseFcModel::LANG_RU] . '_' . BaseFcModel::LANG_RU;
+        $tag->title = $title . BaseFcModel::LANG_RU;
 
         // переносили уже
         $exists_tag = Tags::model()->find(
-            new CDbCriteria(
-                [
-                    'condition' => 'title=:title',
-                    'params' => [':title' => $tag->title]
-                ]
-            )
+            new CDbCriteria(['condition' => 'title=:title', 'params' => [':title' => $tag->title]])
         );
 
         if ($exists_tag) {
@@ -503,15 +573,15 @@ class MatchesConverter implements IConverter
         }
 
         $ru_id = (int) $tag->getId();
-        $this->saveTagLinks($ru_id, $newEntities[BaseFcModel::LANG_RU]);
+        $this->saveTagLinks($ru_id, $multilangId);
         $tag->setNew();
         $tag->name = $name . BaseFcModel::LANG_EN;
-        $tag->title = $title . $newEntities[BaseFcModel::LANG_EN] . '_' . BaseFcModel::LANG_EN;
+        $tag->title = $title . BaseFcModel::LANG_EN;
         $tag->save();
         $en_id = (int) $tag->getId();
-        $this->saveTagLinks($en_id, $newEntities[BaseFcModel::LANG_EN]);
+        $this->saveTagLinks($en_id, $multilangId);
 
-        //$this->tags[self::TAGS_MATCH][$entityId] = [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id];
+        $this->tags[self::TAGS_MATCH][$entityId] = [BaseFcModel::LANG_RU => $ru_id, BaseFcModel::LANG_EN => $en_id];
 
         $this->doneTags++;
         $this->progress();
