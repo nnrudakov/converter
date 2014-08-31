@@ -150,10 +150,11 @@ class MatchesConverter implements IConverter
     public function convert()
     {
         $this->progress();
-        $this->removeMatches();
+        /*$this->removeMatches();
         sleep(10);
-        $this->saveMatches();
+        $this->saveMatches();*/
         //$this->saveMultilang();
+        $this->missedMatches();
     }
 
     private function saveMultilang()
@@ -612,6 +613,33 @@ class MatchesConverter implements IConverter
         $modules->save();
 
         return true;
+    }
+
+    private function missedMatches()
+    {
+        $criteria = new CDbCriteria();
+        $criteria->order = 'id DESC';
+        $matches = new FcMatch();
+
+        /* @var FcMatch $match */
+        foreach ($matches->findAll($criteria) as $match) {
+            $tag_name = implode(
+                ' ',
+                [
+                    date('Ymd', strtotime($match->matchtime)),
+                    $match->homeTeam->title . ':' . $match->guestTeam->title,
+                    $match->champ->title,
+                    $match->season->title,
+                    ($match->stage ? $match->stage->title : '')
+                ]
+            );
+            $tag_name .= ' _1';
+            echo "$tag_name\n";
+            $tag = Tags::model()->findByAttributes(['title' => $tag_name]);
+            if ($tag) {
+                echo 1;
+            }
+        }
     }
 
     private function progress()

@@ -4,7 +4,8 @@
  * Модель таблицы "{{fc__match}}".
  *
  * Доступные поля таблицы "{{fc__match}}":
- * @property integer $id                  Идентификатор.
+ *
+*@property integer $id                  Идентификатор.
  * @property integer $championship_id     Идентификатор чемпионата.
  * @property integer $season_id           Идентификатор сезона.
  * @property integer $stage_id            Идентификатор стадии чемпионата.
@@ -26,6 +27,12 @@
  * @property string  $matchtime           Время начала.
  * @property integer $home_score          Счет хозяев.
  * @property integer $guest_score         Счет гостей.
+ *
+ * @property FcChampionship $champ
+ * @property FcSeason $season
+ * @property FcStage $stage
+ * @property FcTeams $homeTeam
+ * @property FcTeams $guestTeam
  *
  * @package    converter
  * @subpackage fcmatch
@@ -75,7 +82,13 @@ class FcMatch extends DestinationModel
      */
     public function relations()
     {
-        return [];
+        return [
+            'champ' => [self::BELONGS_TO, 'FcChampionship', 'championship_id'],
+            'season' => [self::BELONGS_TO, 'FcSeason', 'season_id'],
+            'stage' => [self::BELONGS_TO, 'FcStage', 'stage_id'],
+            'homeTeam' => [self::BELONGS_TO, 'FcTeams', 'home_team_id'],
+            'guestTeam' => [self::BELONGS_TO, 'FcTeams', 'guest_team_id']
+        ];
     }
 
     /**
