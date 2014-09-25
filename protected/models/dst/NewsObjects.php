@@ -91,7 +91,7 @@ class NewsObjects extends KitObjects
     public function relations()
     {
         return [
-            'links' => [self::HAS_MANY, 'NewsCategoryObjects', 'object_id']
+            'links' => [self::HAS_MANY, 'NewsCategoryObjects', 'object_id', 'joinType' => 'INNER JOIN']
         ];
     }
 
