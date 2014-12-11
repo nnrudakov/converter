@@ -495,6 +495,18 @@ ORDER BY n.publish_date_on DESC'
         $mn->convert();
     }
 
+    public function actionReverseGoals()
+    {
+        $i = 0;
+        foreach (FcTeamstat::model()->findAll('season_id!=:season_id', [':season_id' => 47089]) as $stat) {
+            $goals = $stat->goalsconceded;
+            $goalsconceded = $stat->goals;
+            $stat->saveAttributes(['goals' => $goals, 'goalsconceded' => $goalsconceded]);
+            $i++;
+            print "\r$i";
+        }
+    }
+
     protected function beforeAction($action, $params)
     {
         $this->ensureDirectory(Yii::getPathOfAlias('accordance'));
