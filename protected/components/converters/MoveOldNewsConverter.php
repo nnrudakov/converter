@@ -45,6 +45,7 @@ class MoveOldNewsConverter implements IConverter
     {
         $criteria = new CDbCriteria();
         $criteria->select = ['publish_date_on', 'type'];
+        //$criteria->condition = 'publish=1';
         $criteria->order = 'publish_date_on, type';
         $objects = new NewsObjects();
         $news = [];
