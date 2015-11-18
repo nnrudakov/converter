@@ -16,6 +16,7 @@
  * @property integer $publish          Флаг публикации.
  * @property string  $publish_date_on  Дата публикации.
  * @property string  $publish_date_off Дата снятия с публикации.
+ * @property string  $type             Тип объекта.
  * @property string  $source           Источник.
  * @property string  $source_link      Ссылка на источник.
  * @property string  $created          Дата создания объекта.

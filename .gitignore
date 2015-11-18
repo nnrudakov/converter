@@ -20,5 +20,6 @@ seasons.php
 seasons_m.php
 tags.php
 countries.php
+count_types.csv
 *.sql
 *.txt

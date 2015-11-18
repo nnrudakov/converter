@@ -507,6 +507,12 @@ ORDER BY n.publish_date_on DESC'
         }
     }
 
+    public function actionMoveOldNews()
+    {
+        $mn = new MoveOldNewsConverter();
+        $mn->convert();
+    }
+
     protected function beforeAction($action, $params)
     {
         $this->ensureDirectory(Yii::getPathOfAlias('accordance'));
