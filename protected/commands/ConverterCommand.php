@@ -513,6 +513,12 @@ ORDER BY n.publish_date_on DESC'
         $mn->convert();
     }
 
+    public function actionKitMultilang()
+    {
+        $k = new KitMultilangConverter();
+        $k->convert();
+    }
+
     protected function beforeAction($action, $params)
     {
         $this->ensureDirectory(Yii::getPathOfAlias('accordance'));

@@ -5,8 +5,9 @@
  *
  * Доступные поля таблиц:
  *
- * @property integer  $object_id        Идентификатор объекта.
+ * @property integer $object_id        Идентификатор объекта.
  * @property string  $main_category_id Идентификатор главной категории.
+ * @property integer $multilang_id     Id.
  * @property string  $name             Имя объекта для URL.
  * @property integer $lang_id          Идентификатор языка.
  * @property string  $title            Заголовок объекта.
@@ -65,7 +66,7 @@ class KitObjects extends DestinationModel
     {
         return [
             ['created', 'required'],
-            ['lang_id, important, publish', 'numerical', 'integerOnly'=>true],
+            ['multilang_id', 'lang_id, important, publish', 'numerical', 'integerOnly'=>true],
             ['main_category_id', 'length', 'max'=>10],
             ['name', 'length', 'max'=>50],
             ['title, source_link, meta_title, meta_description, meta_keywords', 'length', 'max'=>255],

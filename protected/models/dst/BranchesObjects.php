@@ -7,6 +7,7 @@
  *
  * @property string  $object_id        Идентификатор объекта.
  * @property string  $main_category_id Идентификатор главной категории.
+ * @property integer $multilang_id     Id.
  * @property string  $name             Имя объекта для URL.
  * @property integer $lang_id          Идентификатор языка.
  * @property string  $title            Заголовок объекта.

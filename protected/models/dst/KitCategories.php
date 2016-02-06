@@ -7,6 +7,7 @@
  *
  * @property string  $category_id      Идентификатор категории.
  * @property string  $parent_id        Идентификатор родительской категории.
+ * @property integer $multilang_id     Id.
  * @property integer $lang_id          Идентификатор языка.
  * @property string  $name             Имя для URL.
  * @property string  $title            Заголовок категории.
@@ -45,7 +46,7 @@ class KitCategories extends DestinationModel
     public function rules()
     {
         return [
-            ['lang_id, publish, share, sort', 'numerical', 'integerOnly'=>true],
+            ['multilang_id', 'lang_id, publish, share, sort', 'numerical', 'integerOnly'=>true],
             ['parent_id', 'length', 'max'=>10],
             ['name', 'length', 'max'=>40],
             ['title', 'length', 'max'=>50],

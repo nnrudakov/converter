@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Модель таблицы "fc__news__categories".
+ * Модель таблицы "fc__branches__categories".
  *
- * Доступные поля таблицы "fc__news__categories":
+ * Доступные поля таблицы "fc__branches__categories":
  *
  * @property string  $category_id      Идентификатор категории.
  * @property string  $parent_id        Идентификатор родительской категории.
@@ -20,64 +20,28 @@
  * @property string  $meta_keywords    SEO ключевые слова.
  *
  * Доступные отношения:
- * @property NewsCategoryObjects[] $links Связка с объектами.
+ * @property PressCategoryObjects[] $links Связка с объектами.
  *
  * @package    converter
- * @subpackage newscategories
+ * @subpackage presscategories
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class NewsCategories extends KitCategories
+class PressCategories extends KitCategories
 {
     /**
      * Модуль.
      *
      * @var string
      */
-    const MODULE = 'news';
-
-    /**
-     * Категория "чужих" новостей.
-     * "Категории новостей" - news.
-     *
-     * @var integer
-     */
-    const CAT_NEWS_CAT_RU = 2;
-    const CAT_NEWS_CAT_EN = 7;
-
-    /**
-     * Категория новостей.
-     * "Новости" - news.
-     *
-     * @var integer
-     */
-    const CAT_NEWS_RU = 3;
-    const CAT_NEWS_EN = 8;
-
-    /**
-     * Категория фоторепортажей.
-     * "Фоторепортаж" - photo.
-     *
-     * @var integer
-     */
-    const CAT_PHOTO_RU = 4;
-    const CAT_PHOTO_EN = 9;
-
-    /**
-     * Категория видеорепортажей.
-     * "Видеорепортаж" - video.
-     *
-     * @var integer
-     */
-    const CAT_VIDEO_RU = 5;
-    const CAT_VIDEO_EN = 10;
+    const MODULE = 'press';
 
     /**
      * @return string Таблица модели
      */
     public function tableName()
     {
-        return '{{news__categories}}';
+        return '{{press__categories}}';
     }
 
     /**
@@ -86,7 +50,7 @@ class NewsCategories extends KitCategories
     public function relations()
     {
         return [
-            'links' => [self::HAS_MANY, 'NewsCategoryObjects', 'category_id']
+            'links' => [self::HAS_MANY, 'PressCategoryObjects', 'category_id']
         ];
     }
 }

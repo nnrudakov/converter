@@ -7,6 +7,7 @@
  *
  * @property string  $category_id      Идентификатор категории.
  * @property string  $parent_id        Идентификатор родительской категории.
+ * @property integer $multilang_id     Id.
  * @property integer $lang_id          Идентификатор языка.
  * @property string  $name             Имя для URL.
  * @property string  $title            Заголовок категории.

@@ -1,13 +1,12 @@
 <?php
 
 /**
- * Модель таблицы "fc__persons__objects".
+ * Модель таблицы "fc__branches__objects".
  *
- * Доступные поля таблицы "fc__persons__objects":
+ * Доступные поля таблицы "fc__branches__objects":
  *
  * @property string  $object_id        Идентификатор объекта.
  * @property string  $main_category_id Идентификатор главной категории.
- * @property integer $multilang_id     Id.
  * @property string  $name             Имя объекта для URL.
  * @property integer $lang_id          Идентификатор языка.
  * @property string  $title            Заголовок объекта.
@@ -27,72 +26,34 @@
  * @property integer $sort             Порядок в категории.
  *
  * Доступные отношения:
- * @property PersonsCategoryObjects[] $links Связка с категориями.
- * @property PersonsObjectSets        $set   Набор свойств.
- * @property PersonsObjectData[]      $data  Данные.
+ * @property BannersCategoryObjects $catLink Связка с категориями.
+ * @property FilesLink               $fileLink
  *
  * @package    converter
- * @subpackage newsobjects
+ * @subpackage bannersobjects
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
-class PersonsObjects extends KitObjects
+class BannersObjects extends KitObjects
 {
     /**
      * Модуль.
      *
      * @var string
      */
-    const MODULE = 'persons';
+    const MODULE = 'banners';
 
     /**
-     * Имя файла персоны на его странице.
-     *
-     * @var string
+     * @var integer
      */
-    const FILE = 'images/persons.%d.653x291.jpg';
-
-    /**
-     * Имя файла персоны hуководства на его странице.
-     *
-     * @var string
-     */
-    const FILE_LEADER = 'images/persons.%d.653x291.png';
-
-    /**
-     * Имя файла персоны в списке.
-     *
-     * @var string
-     */
-    const FILE_LIST = 'images/persons.%d.168x168.jpg';
-
-    /**
-     * Имя файла персоны руководства в списке.
-     *
-     * @var string
-     */
-    const FILE_LEADER_LIST = 'images/persons.%d.118x118.png';
-
-    /**
-     * Имя поля связки файла на странице.
-     *
-     * @param string
-     */
-    const FILE_FIELD = 'file';
-
-    /**
-     * Имя поля связки файла в списке.
-     *
-     * @param string
-     */
-    const FILE_FIELD_LIST = 'person_list';
+    const MODULE_ID = 30;
 
     /**
      * @return string Таблица модели
      */
     public function tableName()
     {
-        return '{{persons__objects}}';
+        return '{{banners__objects}}';
     }
 
     /**
@@ -101,9 +62,11 @@ class PersonsObjects extends KitObjects
     public function relations()
     {
         return [
-            'links' => [self::HAS_ONE,  'PersonsCategoryObjects', 'object_id'],
-            'set'   => [self::HAS_ONE,  'PersonsObjectSets',      'object_id'],
-            'data'  => [self::HAS_MANY, 'PersonsObjectData',      'object_id']
+            'catLink'  => [self::BELONGS_TO, 'BannersCategoryObjects', 'object_id'],
+            'fileLink' => [self::BELONGS_TO, 'FilesLink',              'object_id',
+                'condition' => 'module_id=:module_id',
+                'params'    => [':module_id' => self::MODULE_ID]
+            ]
         ];
     }
 
