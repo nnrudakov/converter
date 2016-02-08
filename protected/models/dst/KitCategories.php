@@ -34,6 +34,11 @@ class KitCategories extends DestinationModel
     const ENTITY = 'category';
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 11;
+
+    /**
      * Без привязки к категории.
      *
      * @var integer

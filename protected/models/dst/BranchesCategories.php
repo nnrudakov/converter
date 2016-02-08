@@ -37,6 +37,11 @@ class BranchesCategories extends KitCategories
     const MODULE = 'branches';
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 29;
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

@@ -15,7 +15,7 @@ class KitMultilangConverter implements IConverter
      *
      * @var string
      */
-    private $progressFormat = "\rKit: %d. Banners: %d. Branches. News: %d. Persons: %d. Press: %d";
+    private $progressFormat = "\rKit: %d. Banners: %d. Branches: %d. News: %d. Persons: %d. Press: %d";
 
     /**
      * @var integer
@@ -48,19 +48,40 @@ class KitMultilangConverter implements IConverter
     private $donePress = 0;
 
     /**
-     * @var integer
-     */
-    private $doneMonths = 0;
-
-    /**
      * Запуск преобразований.
      */
     public function convert()
     {
         $this->progress();
 
-        // выборка по месяцам количества типов новостей
-        $this->countNewsTypes();
+        $criteria = new CDbCriteria();
+        $criteria->select = ['module_id', 'name'];
+        $criteria->addCondition('name=:name');
+        $criteria->addCondition('is_kit=:is_kit', 'OR');
+        $criteria->order = 'is_kit, name';
+        $criteria->params = [':name' => 'kit', ':is_kit' => 1];
+        $modules = CoreModules::model()->findAll($criteria);
+        echo  "\n";
+        foreach ($modules as $module) {
+            $criteria = new CDbCriteria();
+            $criteria->select = ['id', 'entity', 'import_id'];
+            $criteria->addCondition('module_id=:module_id');
+            $criteria->params = [':module_id' => $module->module_id];
+            //$criteria->with = 'entities';
+            /* @var CoreMultilang[] $multilangs */
+            $multilangs = CoreMultilang::model()->find($criteria);
+            if (!$multilangs) {
+                continue;
+            }
+            foreach ($multilangs as $multilang) {
+                echo "id: {$multilang->id}, import_id: {$multilang->import_id}\n";
+                $entities = $multilang->entities;
+                foreach ($entities as $entity) {
+                    echo "id: {$multilang->id}, import_id: {$multilang->import_id}, entity_id: {$entity->entity_id}, ".
+                        "lang_id: {$entity->lang_id}\n";
+                }
+            }
+        }
     }
 
     /**
@@ -68,14 +89,14 @@ class KitMultilangConverter implements IConverter
      */
     private function countNewsTypes()
     {
-        $criteria = new CDbCriteria();
+        /*$criteria = new CDbCriteria();
         $criteria->select = ['publish_date_on', 'type'];
         //$criteria->condition = 'publish=1';
         $criteria->order = 'publish_date_on, type';
         $objects = new NewsObjects();
         $news = [];
 
-        /* @var NewsObjects $n */
+        /* @var NewsObjects $n /
         foreach ($objects->findAll($criteria) as $n) {
             $date = new \DateTime($n->publish_date_on);
             $key = $date->format('Y-m') . '|' . $n->type;
@@ -99,11 +120,19 @@ class KitMultilangConverter implements IConverter
         }
         fclose($fp);
 
-        return true;
+        return true;*/
     }
 
     private function progress()
     {
-        printf($this->progressFormat, $this->doneNews, $this->doneMonths);
+        printf(
+            $this->progressFormat,
+            $this->doneKit,
+            $this->doneBanners,
+            $this->doneBranches,
+            $this->doneNews,
+            $this->donePersons,
+            $this->donePress
+        );
     }
 }

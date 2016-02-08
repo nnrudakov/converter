@@ -5,7 +5,7 @@
  *
  * Доступные поля таблицы "fc__core__modules":
  *
- * @property string  $module_id Идентификатор модуля.
+ * @property integer $module_id Идентификатор модуля.
  * @property string  $name      Имя модуля.
  * @property integer $is_show   Показывать в навигации.
  * @property integer $is_kit    Подмодуль.

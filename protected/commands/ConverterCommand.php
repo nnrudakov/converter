@@ -131,7 +131,7 @@ EOD;
      *
      * @param bool $writeFiles Сохранить файлы на диск.
      */
-    public function actionPersons ($writeFiles = false)
+    public function actionPersons($writeFiles = false)
     {
         $p = new PersonsConverter();
         $p->writeFiles = $writeFiles;
@@ -154,7 +154,7 @@ EOD;
      *
      * @throws CException
      */
-    public function actionPlayers ($writeFiles = false)
+    public function actionPlayers($writeFiles = false)
     {
         $c = new PlayersConverter();
         $c->writeFiles = $writeFiles;
