@@ -49,6 +49,8 @@ class KitMultilangConverter implements IConverter
 
     /**
      * Запуск преобразований.
+     *
+     * @throws CDbException
      */
     public function convert()
     {
@@ -61,25 +63,55 @@ class KitMultilangConverter implements IConverter
         $criteria->order = 'is_kit, name';
         $criteria->params = [':name' => 'kit', ':is_kit' => 1];
         $modules = CoreModules::model()->findAll($criteria);
-        echo  "\n";
+
         foreach ($modules as $module) {
+            $cmodel = ucfirst($module->name) . 'Categories';
+            /* @var KitCategories $category */
+            $category = new $cmodel;
+            $omodel = ucfirst($module->name) . 'Objects';
+            /* @var KitObjects $object */
+            $object = new $omodel;
             $criteria = new CDbCriteria();
             $criteria->select = ['id', 'entity', 'import_id'];
             $criteria->addCondition('module_id=:module_id');
             $criteria->params = [':module_id' => $module->module_id];
-            //$criteria->with = 'entities';
+            $criteria->with = 'entities';
             /* @var CoreMultilang[] $multilangs */
-            $multilangs = CoreMultilang::model()->find($criteria);
-            if (!$multilangs) {
-                continue;
-            }
+            $multilangs = CoreMultilang::model()->findAll($criteria);
             foreach ($multilangs as $multilang) {
-                echo "id: {$multilang->id}, import_id: {$multilang->import_id}\n";
+                $multilang_id = $multilang->import_id ?: $multilang->id;
                 $entities = $multilang->entities;
                 foreach ($entities as $entity) {
-                    echo "id: {$multilang->id}, import_id: {$multilang->import_id}, entity_id: {$entity->entity_id}, ".
-                        "lang_id: {$entity->lang_id}\n";
+                    if ($multilang->entity === 'category') {
+                        $category->updateByPk(
+                            $entity->entity_id,
+                            ['multilang_id' => $multilang_id],
+                            'lang_id=:lang_id',
+                            [':lang_id' => $entity->lang_id]
+                        );
+                    } else {
+                        $object->updateByPk(
+                            $entity->entity_id,
+                            ['multilang_id' => $multilang_id],
+                            'lang_id=:lang_id',
+                            [':lang_id' => $entity->lang_id]
+                        );
+                    }
+                    $entity->delete();
+
+                    switch ($module->name) {
+                        case 'banners':  $this->doneBanners++;  break;
+                        case 'branches': $this->doneBranches++; break;
+                        case 'kit':      $this->doneKit++;      break;
+                        case 'news':     $this->doneNews++;     break;
+                        case 'persons':  $this->donePersons++;  break;
+                        case 'press':    $this->donePress++;    break;
+                        default:                                break;
+                    }
+                    $this->progress();
                 }
+
+                $multilang->delete();
             }
         }
     }

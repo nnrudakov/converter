@@ -65,6 +65,14 @@ class KitObjects extends DestinationModel
     public $sort = 0;
 
     /**
+     * @return string Таблица модели
+     */
+    public function tableName()
+    {
+        return '{{kit__objects}}';
+    }
+
+    /**
      * @return array Правила валидации.
      */
     public function rules()
