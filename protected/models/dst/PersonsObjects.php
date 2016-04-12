@@ -46,6 +46,11 @@ class PersonsObjects extends KitObjects
     const MODULE = 'persons';
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 28;
+
+    /**
      * Имя файла персоны на его странице.
      *
      * @var string

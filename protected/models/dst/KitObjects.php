@@ -41,6 +41,11 @@ class KitObjects extends DestinationModel
     const ENTITY = 'object';
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 11;
+
+    /**
      * Родительские категории.
      *
      * @var array
@@ -58,6 +63,14 @@ class KitObjects extends DestinationModel
      * @var integer
      */
     public $sort = 0;
+
+    /**
+     * @return string Таблица модели
+     */
+    public function tableName()
+    {
+        return '{{kit__objects}}';
+    }
 
     /**
      * @return array Правила валидации.
@@ -195,5 +208,24 @@ class KitObjects extends DestinationModel
         }
 
         parent::afterSave();
+    }
+
+    public function afterFind()
+    {
+        parent::afterFind();
+
+        $multilangModel = CoreMultilangLink::model()->find(
+            [
+                'condition' => 'entity_id = :entityId',
+                'params' => ['entityId' => $this->object_id],
+                'with' => [
+                    'multilang' => [
+                        'condition' => 'module_id = ' . RootController::NEWS_MODULE,
+                    ]
+                ]
+            ]
+        );
+
+        $this->multilang_id = $multilangModel->multilang_id;
     }
 }

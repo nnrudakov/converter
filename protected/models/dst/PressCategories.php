@@ -37,6 +37,11 @@ class PressCategories extends KitCategories
     const MODULE = 'press';
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 37;
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

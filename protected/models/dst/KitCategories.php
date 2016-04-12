@@ -34,11 +34,24 @@ class KitCategories extends DestinationModel
     const ENTITY = 'category';
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 11;
+
+    /**
      * Без привязки к категории.
      *
      * @var integer
      */
     const NO_CAT = 0;
+
+    /**
+     * @return string Таблица модели
+     */
+    public function tableName()
+    {
+        return '{{kit__categories}}';
+    }
 
     /**
      * @return array Правила валидации.

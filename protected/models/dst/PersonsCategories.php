@@ -37,6 +37,11 @@ class PersonsCategories extends KitCategories
     const MODULE = 'persons';
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 28;
+
+    /**
      * Категории клуба.
      */
     const CLUB_LEADS_RU    = 6;

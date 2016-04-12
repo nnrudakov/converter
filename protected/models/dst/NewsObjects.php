@@ -45,6 +45,11 @@ class NewsObjects extends KitObjects
     const MODULE = 'news';
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 27;
+
+    /**
      * Имя файла оригинала обычной новости.
      *
      * @var string

@@ -37,6 +37,11 @@ class NewsCategories extends KitCategories
     const MODULE = 'news';
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 27;
+
+    /**
      * Категория "чужих" новостей.
      * "Категории новостей" - news.
      *

@@ -36,6 +36,11 @@ class BannersCategories extends KitCategories
     const MODULE = 'banners';
 
     /**
+     * @var integer
+     */
+    const MODULE_ID = 30;
+
+    /**
      * @return string Таблица модели
      */
     public function tableName()

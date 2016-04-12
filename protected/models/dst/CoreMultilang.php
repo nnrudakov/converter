@@ -11,8 +11,8 @@
  * @property integer $import_id Идентификатор импорта.
  *
  * Доступные отношения:
- * @property CoreModules       $module
- * @property CoreMultilangLink $entities
+ * @property CoreModules         $module
+ * @property CoreMultilangLink[] $entities
  *
  * @package    converter
  * @subpackage coremultilang
@@ -48,7 +48,7 @@ class CoreMultilang extends DestinationModel
     {
         return [
             'module'   => [self::BELONGS_TO, 'CoreModules',       'module_id'],
-            'entities' => [self::HAS_MANY,   'CoreMultilangLink', 'id']
+            'entities' => [self::HAS_MANY,   'CoreMultilangLink', 'multilang_id']
         ];
     }
 
