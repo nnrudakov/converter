@@ -519,6 +519,12 @@ ORDER BY n.publish_date_on DESC'
         $k->convert();
     }
 
+    public function actionReplaceEvent()
+    {
+        $re = new ReplaceEventConverter();
+        $re->convert();
+    }
+
     protected function beforeAction($action, $params)
     {
         $this->ensureDirectory(Yii::getPathOfAlias('accordance'));

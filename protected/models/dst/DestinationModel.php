@@ -70,7 +70,7 @@ class DestinationModel extends BaseFcModel
      *
      * @var CoreModules
      */
-    private $modelModule = null;
+    private $modelModule;
 
     /**
      * @var bool
@@ -96,8 +96,8 @@ class DestinationModel extends BaseFcModel
      */
     public function __get($name)
     {
-        if ('module' == $name) {
-            if (is_null($this->modelModule)) {
+        if ('module' === $name) {
+            if (null === $this->modelModule) {
                 $const = get_class($this) . '::MODULE';
 
                 if (defined($const)) {
@@ -228,26 +228,50 @@ class DestinationModel extends BaseFcModel
 
     /**
      * @return integer
+     *
+     * @throws \CException
      */
     public function getMultilangId()
     {
+        if (!$this->multilangId) {
+            $this->multilangId = (int) $this->dbConnection->createCommand(
+                'SELECT
+                    `m`.`id` AS `id`
+                FROM
+                    `fc__core__multilang` AS `m`
+                    JOIN `fc__core__multilang_link` AS `ml`
+                        ON `ml`.`multilang_id`=`m`.`id`
+                        AND `m`.`module_id`=:module_id
+                        AND `m`.`entity`=:entity
+                        AND `ml`.`entity_id`=:entity_id'
+            )->queryScalar(
+                [
+                    ':module_id' => $this->module->module_id,
+                    ':entity'    => $this->getEntityName(),
+                    ':entity_id' => $this->getId()
+                ]
+            );
+        }
+
+        return $this->multilangId;
+    }
+
+    /**
+     * @return integer
+     *
+     * @throws CException
+     */
+    public function getMultilangLangId()
+    {
         return (int) $this->dbConnection->createCommand(
             'SELECT
-                `m`.`id` AS `id`
+                `lang_id`
             FROM
-                `fc__core__multilang` AS `m`
-                JOIN `fc__core__multilang_link` AS `ml`
-                    ON `ml`.`multilang_id`=`m`.`id`
-                    AND `m`.`module_id`=:module_id
-                    AND `m`.`entity`=:entity
-                    AND `ml`.`entity_id`=:entity_id'
-        )->queryScalar(
-            [
-                ':module_id' => $this->module->module_id,
-                ':entity'    => $this->getEntityName(),
-                ':entity_id' => $this->getId()
-            ]
-        );
+                `fc__core__multilang_link`
+            WHERE
+                `multilang_id`=:id AND
+                `entity_id`=:entity_id'
+        )->queryScalar([':id' => $this->getMultilangId(), ':entity_id' => $this->getId()]);
     }
 
     protected function afterSave()

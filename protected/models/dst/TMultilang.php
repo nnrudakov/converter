@@ -10,6 +10,11 @@
  */
 trait TMultilang {
     /**
+     * @return bool
+     */
+    public $delAllMultilang = false;
+    
+    /**
      * Создание общеязыкового идентификатора.
      */
     protected function setMultilang()
@@ -35,6 +40,29 @@ trait TMultilang {
         $multilang_link->entity_id    = $this->getId();
         $multilang_link->lang_id      = $this->lang;
         $multilang_link->save();
+
+        return true;
+    }
+
+    /**
+     * Удаление общеязыкового идентификатора.
+     *
+     * @throws \CException
+     */
+    protected function delMultilang()
+    {
+        /* @var DestinationModel $this */
+        $this->dbConnection->createCommand(
+            'DELETE
+                m,
+                ml
+            FROM
+                ' . CoreMultilang::model()->tableName() . ' as m
+                JOIN ' . CoreMultilangLink::model()->tableName() . ' as ml
+                    ON ml.multilang_id=m.id
+            WHERE
+                m.id=:id' . (!$this->delAllMultilang ? ' AND ml.lang_id=' . $this->getMultilangLangId() : '')
+        )->execute([':id' => $this->getMultilangId()]);
 
         return true;
     }

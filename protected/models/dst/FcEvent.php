@@ -5,12 +5,15 @@
  *
  * Доступные поля таблицы "{{fc__event}}":
  * @property integer $id Идентификатор.
+ * @property integer $multilang_id     Id.
  * @property integer $match_id Матч.
  * @property string  $type Тип события.
  * @property integer $gametime Время события в игре.
  * @property integer $gametimeplus Дополнительное время.
  * @property integer $team_id Команда.
  * @property integer $person_id Футболист.
+ * @property integer $person_id_out Футболист.
+ * @property integer $person_id_in Футболист.
  * @property string  $comment Комментарий.
  *
  * @package    converter
@@ -104,6 +107,9 @@ class FcEvent extends DestinationModel
      */
     const TYPE_ASSISTS = 'assists';
 
+    /** @var string */
+    const TYPE_REPLACE = 'replace';
+
     /**
      * @return string Таблица модели
      */
@@ -119,7 +125,7 @@ class FcEvent extends DestinationModel
     {
         return [
             ['match_id', 'required'],
-            ['match_id, gametime, gametimeplus, team_id, person_id', 'numerical', 'integerOnly'=>true],
+            ['match_id, gametime, gametimeplus, team_id, person_id, person_id_out, person_id_in', 'numerical', 'integerOnly'=>true],
             ['type', 'length', 'max'=>18],
             ['comment', 'safe'],
             ['id, match_id, type, gametime, gametimeplus, team_id, person_id, comment', 'safe', 'on'=>'search'],
@@ -160,5 +166,18 @@ class FcEvent extends DestinationModel
     public static function model($className = __CLASS__)
     {
         return parent::model($className);
+    }
+
+    public function afterFind()
+    {
+        parent::afterFind();
+
+        $this->getMultilangId();
+    }
+
+    public function beforeDelete()
+    {
+        $this->delMultilang();
+        return parent::beforeDelete();
     }
 }
