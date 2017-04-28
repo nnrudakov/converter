@@ -4,11 +4,13 @@
  * Модель таблицы "{{fc__season}}".
  *
  * Доступные поля таблицы "{{fc__season}}":
- * @property integer $id Идентификатор.
- * @property string $title Название.
- * @property string $description Описание.
- * @property string $fromtime Дата начала.
- * @property string $untiltime Дата окончания.
+ * @property integer $id               Идентификатор.
+ * @property integer $multilang_id     Id.
+ * @property string  $title            Название.
+ * @property string  $description      Описание.
+ * @property string  $fromtime         Дата начала.
+ * @property string  $untiltime        Дата окончания.
+ * @property integer $lang_id          Идентификатор языка.
  *
  * @package    converter
  * @subpackage fcseason
@@ -45,10 +47,11 @@ class FcSeason extends DestinationModel
     public function rules()
     {
         return [
+            ['multilang_id, lang_id', 'numerical', 'integerOnly' => true],
             ['title, fromtime, untiltime', 'required'],
-            ['title', 'length', 'max'=>128],
+            ['title', 'length', 'max' => 128],
             ['description', 'safe'],
-            ['id, title, description, fromtime, untiltime', 'safe', 'on'=>'search'],
+            ['id, title, description, fromtime, untiltime', 'safe', 'on' => 'search'],
         ];
     }
 
@@ -66,11 +69,11 @@ class FcSeason extends DestinationModel
     public function attributeLabels()
     {
         return [
-            'id' => 'Идентификатор',
-            'title' => 'Название',
+            'id'          => 'Идентификатор',
+            'title'       => 'Название',
             'description' => 'Описание',
-            'fromtime' => 'Дата начала',
-            'untiltime' => 'Дата окончания',
+            'fromtime'    => 'Дата начала',
+            'untiltime'   => 'Дата окончания',
         ];
     }
 
@@ -78,6 +81,7 @@ class FcSeason extends DestinationModel
      * Статический метод возвращения модели.
      *
      * @param string $className Имя класса.
+     *
      * @return FcSeason Модель.
      */
     public static function model($className = __CLASS__)

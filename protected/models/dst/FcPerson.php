@@ -5,22 +5,24 @@
  *
  * Доступные поля таблицы "fc__fc__person":
  *
- * @property integer $id          Идентификатор.
- * @property string  $firstname   Имя.
- * @property string  $lastname    Фамилия.
- * @property string  $middlename  Отчество.
- * @property string  $birthday    Дата рождения.
- * @property string  $citizenship Страна (гражданство).
- * @property integer $resident    Резидент.
- * @property string  $city        Город.
- * @property string  $biograpy    Биография.
- * @property string  $profile     Профиль.
- * @property string  $progress    Достижения.
- * @property string  $nickname    Прозвище.
- * @property integer $height      Рост.
- * @property integer $weight      Вес.
- * @property string  $amplua      Амплуа.
- * @property string  $post        Должность.
+ * @property integer $id               Идентификатор.
+ * @property integer $multilang_id     Id.
+ * @property string  $firstname        Имя.
+ * @property string  $lastname         Фамилия.
+ * @property string  $middlename       Отчество.
+ * @property string  $birthday         Дата рождения.
+ * @property string  $citizenship      Страна (гражданство).
+ * @property integer $resident         Резидент.
+ * @property string  $city             Город.
+ * @property string  $biograpy         Биография.
+ * @property string  $profile          Профиль.
+ * @property string  $progress         Достижения.
+ * @property string  $nickname         Прозвище.
+ * @property integer $height           Рост.
+ * @property integer $weight           Вес.
+ * @property string  $amplua           Амплуа.
+ * @property string  $post             Должность.
+ * @property integer $lang_id          Идентификатор языка.
  *
  * @package    converter
  * @subpackage fcperson
@@ -99,7 +101,7 @@ class FcPerson extends DestinationModel
     public function rules()
     {
         return [
-            ['resident, height, weight', 'numerical', 'integerOnly' => true],
+            ['multilang_id, lang_id, resident, height, weight', 'numerical', 'integerOnly' => true],
             ['firstname, lastname, middlename, citizenship, city, nickname, post', 'length', 'max' => 128],
             ['profile', 'length', 'max' => 45],
             ['amplua', 'length', 'max' => 25],

@@ -4,10 +4,12 @@
  * Модель таблицы "{{fc__championship}}".
  *
  * Доступные поля таблицы "{{fc__championship}}":
- * @property integer $id Идентификатор.
- * @property string $title Короткое название.
- * @property string $fullTitle Полное название.
- * @property string $sponsor Спонсор.
+ * @property integer   $id               Идентификатор.
+ * @property integer   $multilang_id     Id.
+ * @property string    $title            Короткое название.
+ * @property string    $fullTitle        Полное название.
+ * @property string    $sponsor          Спонсор.
+ * @property integer   $lang_id          Идентификатор языка.
  *
  * Доступные отношения:
  * @property FcStage[] $stages
@@ -47,10 +49,11 @@ class FcChampionship extends DestinationModel
     public function rules()
     {
         return [
+            ['multilang_id, lang_id', 'numerical', 'integerOnly' => true],
             ['title', 'required'],
-            ['title, sponsor', 'length', 'max'=>128],
+            ['title, sponsor', 'length', 'max' => 128],
             ['fullTitle', 'safe'],
-            ['id, title, fullTitle, sponsor', 'safe', 'on'=>'search'],
+            ['id, title, fullTitle, sponsor', 'safe', 'on' => 'search'],
         ];
     }
 
@@ -70,10 +73,10 @@ class FcChampionship extends DestinationModel
     public function attributeLabels()
     {
         return [
-            'id' => 'Идентификатор',
-            'title' => 'Короткое название',
+            'id'        => 'Идентификатор',
+            'title'     => 'Короткое название',
             'fullTitle' => 'Полное название',
-            'sponsor' => 'Спонсор',
+            'sponsor'   => 'Спонсор',
         ];
     }
 
@@ -81,6 +84,7 @@ class FcChampionship extends DestinationModel
      * Статический метод возвращения модели.
      *
      * @param string $className Имя класса.
+     *
      * @return FcChampionship Модель.
      */
     public static function model($className = __CLASS__)

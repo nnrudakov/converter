@@ -1,24 +1,26 @@
 <?php
 
 /**
- * Модель таблицы "{{fc__teams}}".
+ * Модель таблицы "{{fc__team}}".
  *
- * Доступные поля таблицы "{{fc__teams}}":
+ * Доступные поля таблицы "{{fc__team}}":
  *
- * @property integer $id      Идентификатор.
- * @property string  $title   Название.
- * @property string  $info    Информация о команде.
- * @property string  $city    Город.
- * @property string  $staff   Состав.
- * @property string  $country Страна.
- * @property string  $site    Сайт команды.
+ * @property integer       $id               Идентификатор.
+ * @property integer       $multilang_id     Id.
+ * @property string        $title            Название.
+ * @property string        $info             Информация о команде.
+ * @property string        $city             Город.
+ * @property string        $staff            Состав.
+ * @property string        $country          Страна.
+ * @property string        $site             Сайт команды.
+ * @property integer       $lang_id          Идентификатор языка.
  *
  * Доступные отношения:
  * @property FcContracts[] $contracts
- * @property FcPerson[] $persons
+ * @property FcPerson[]    $persons
  *
  * @package    converter
- * @subpackage fcteams
+ * @subpackage fcteam
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
@@ -99,7 +101,7 @@ class FcTeams extends DestinationModel
      *
      * @var FcPerson[]
      */
-    private $personsList = null;
+    private $personsList;
 
     public function __get($name)
     {
@@ -123,7 +125,7 @@ class FcTeams extends DestinationModel
      */
     public function tableName()
     {
-        return '{{fc__teams}}';
+        return '{{fc__team}}';
     }
 
     /**
@@ -132,12 +134,13 @@ class FcTeams extends DestinationModel
     public function rules()
     {
         return [
+            ['multilang_id, lang_id', 'numerical', 'integerOnly' => true],
             ['title', 'required'],
-            ['title, city, country', 'length', 'max'=>128],
-            ['site', 'length', 'max'=>255],
-            ['staff', 'length', 'max'=>20],
+            ['title, city, country', 'length', 'max' => 128],
+            ['site', 'length', 'max' => 255],
+            ['staff', 'length', 'max' => 20],
             ['info', 'safe'],
-            ['id, title, info, city, staff, country, site', 'safe', 'on'=>'search'],
+            ['id, title, info, city, staff, country, site', 'safe', 'on' => 'search'],
         ];
     }
 
@@ -170,6 +173,7 @@ class FcTeams extends DestinationModel
      * Статический метод возвращения модели.
      *
      * @param string $className Имя класса.
+     *
      * @return FcTeams Модель.
      */
     public static function model($className = __CLASS__)

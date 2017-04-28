@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Модель таблицы "{{fc__contracts}}".
+ * Модель таблицы "{{fc__contract}}".
  *
- * Доступные поля таблицы "{{fc__contracts}}":
+ * Доступные поля таблицы "{{fc__contract}}":
  * @property integer $id Идентификатор.
  * @property string $position Должность.
  * @property string $fromtime Дата начала.
@@ -17,7 +17,7 @@
  * @property FcPerson $person
  *
  * @package    converter
- * @subpackage fccontracts
+ * @subpackage fccontract
  * @author     rudnik <nnrudakov@gmail.com>
  * @copyright  2014
  */
@@ -35,7 +35,7 @@ class FcContracts extends DestinationModel
      */
     public function tableName()
     {
-        return '{{fc__contracts}}';
+        return '{{fc__contract}}';
     }
 
     /**

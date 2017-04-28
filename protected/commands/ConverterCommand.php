@@ -525,6 +525,18 @@ ORDER BY n.publish_date_on DESC'
         $re->convert();
     }
 
+    public function actionFcMultilang()
+    {
+        $k = new FcMultilangConverter();
+        $k->convert();
+    }
+
+    public function actionFcMultilangFix()
+    {
+        $k = new FcMultilangFixConverter();
+        $k->convert();
+    }
+
     protected function beforeAction($action, $params)
     {
         $this->ensureDirectory(Yii::getPathOfAlias('accordance'));

@@ -206,24 +206,21 @@ class DestinationModel extends BaseFcModel
     }
 
     /**
+     * @param integer $langId
+     *
      * @return integer
      */
-    public function getPairId()
+    public function getPairId($langId)
     {
-        if (!$this->multilangId) {
-            $this->multilangId = (int) $this->dbConnection->createCommand(
-                'SELECT
-                    `ml`.`entity_id`
-                FROM
-                    `fc__core__multilang_link` AS `ml`
-                    JOIN `fc__core__multilang` AS `m`
-                        ON `m`.`id`=`ml`.`multilang_id`
-                        AND `m`.`id`=:id
-                        AND `ml`.`lang_id`=:lang_id'
-            )->queryScalar([':id' => $this->getMultilangId(), ':lang_id' => BaseFcModel::LANG_EN]);
-        }
-
-        return $this->multilangId;
+        return (int) $this->dbConnection->createCommand(
+            'SELECT
+                `id`
+            FROM
+                `' . $this->tableName() . '`
+            WHERE
+                `multilang_id`=:m_id
+                AND `lang_id`=:lang_id'
+        )->queryScalar([':m_id' => $this->multilang_id, ':lang_id' => $langId]);
     }
 
     /**
